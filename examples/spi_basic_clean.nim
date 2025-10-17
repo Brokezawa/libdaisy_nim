@@ -1,0 +1,56 @@
+## SPI Basic Example - Clean API
+import panicoverride
+##
+## Basic SPI communication example
+
+import ../src/libdaisy
+import ../src/libdaisy_spi
+import ../src/libdaisy_serial
+useDaisyNamespace()
+
+
+proc main() =
+  var daisy = initDaisy()
+  
+  # Initialize SPI on SPI1 pins: D8 (SCK), D9 (MISO), D10 (MOSI)
+  var spi = initSPI(SPI_1, D8(), D9(), D10())
+  
+  startLog()
+  printLine("SPI Basic Example")
+  printLine()
+  
+  while true:
+    # Write some bytes
+    let writeResult = spi.write([0x01'u8, 0x02, 0x03, 0x04])
+    
+    if writeResult == SPI_OK:
+      printLine("Write: OK")
+    else:
+      printLine("Write: ERROR")
+    
+    # Read some bytes
+    let (readResult, data) = spi.read(4)
+    
+    if readResult == SPI_OK:
+      print("Read: ")
+      for b in data:
+        print(int(b))
+        print(" ")
+      printLine()
+    else:
+      printLine("Read: ERROR")
+    
+    # Full-duplex transfer
+    let (xferResult, rxData) = spi.transfer([0xAA'u8, 0xBB, 0xCC, 0xDD])
+    
+    if xferResult == SPI_OK:
+      print("Transfer RX: ")
+      for b in rxData:
+        print(int(b))
+        print(" ")
+      printLine()
+    
+    daisy.delay(1000)
+
+when isMainModule:
+  main()

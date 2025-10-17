@@ -1,0 +1,5 @@
+# Build directory
+build/
+
+# Makefile backups from test script
+*.test_bak

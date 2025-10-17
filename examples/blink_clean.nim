@@ -1,0 +1,18 @@
+## Simple LED Blink Example - Clean API
+## 
+## This example demonstrates the clean, Nim-friendly API for blinking the built-in LED
+
+import ../src/libdaisy
+useDaisyNamespace()
+
+proc main() =
+  var daisy = initDaisy()
+  var ledState = false
+  
+  while true:
+    ledState = not ledState
+    daisy.setLed(ledState)
+    daisy.delay(500)
+
+when isMainModule:
+  main()
