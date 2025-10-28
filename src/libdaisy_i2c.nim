@@ -165,14 +165,13 @@ proc write*(i2c: var I2CHandle, deviceAddr: uint16, data: openArray[uint8],
   else:
     result = I2C_OK
 
-proc read*(i2c: var I2CHandle, deviceAddr: uint16, count: int, 
-           timeout: uint32 = 100): tuple[result: I2CResult, data: seq[uint8]] =
-  ## Read bytes from an I2C device
-  result.data = newSeq[uint8](count)
-  if count > 0:
-    {.emit: [result.result, " = ", i2c, ".ReceiveBlocking(", deviceAddr, ", &", result.data, "[0], ", uint16(count), ", ", timeout, ");"].}
+proc read*(i2c: var I2CHandle, deviceAddr: uint16, buffer: var openArray[uint8], 
+           timeout: uint32 = 100): I2CResult =
+  ## Read bytes from an I2C device into provided buffer
+  if buffer.len > 0:
+    {.emit: [result, " = ", i2c, ".ReceiveBlocking(", deviceAddr, ", &", buffer, "[0], ", uint16(buffer.len), ", ", timeout, ");"].}
   else:
-    result.result = I2C_OK
+    result = I2C_OK
 
 proc writeRegister*(i2c: var I2CHandle, deviceAddr: uint16, regAddr: uint8, 
                     value: uint8, timeout: uint32 = 100): I2CResult =
@@ -196,26 +195,29 @@ proc writeRegisters*(i2c: var I2CHandle, deviceAddr: uint16, regAddr: uint8,
     result = I2C_OK
 
 proc readRegisters*(i2c: var I2CHandle, deviceAddr: uint16, regAddr: uint8,
-                    count: int, timeout: uint32 = 100): tuple[result: I2CResult, data: seq[uint8]] =
-  ## Read multiple bytes from consecutive device registers
-  result.data = newSeq[uint8](count)
-  if count > 0:
-    {.emit: [result.result, " = ", i2c, ".ReadDataAtAddress(", deviceAddr, ", ", regAddr, ", 1, &", result.data, "[0], ", uint16(count), ", ", timeout, ");"].}
+                    buffer: var openArray[uint8], timeout: uint32 = 100): I2CResult =
+  ## Read multiple bytes from consecutive device registers into provided buffer
+  if buffer.len > 0:
+    {.emit: [result, " = ", i2c, ".ReadDataAtAddress(", deviceAddr, ", ", regAddr, ", 1, &", buffer, "[0], ", uint16(buffer.len), ", ", timeout, ");"].}
   else:
-    result.result = I2C_OK
+    result = I2C_OK
 
-proc scan*(i2c: var I2CHandle, timeout: uint32 = 10): seq[uint8] =
-  ## Scan the I2C bus for devices and return responding addresses
-  ## Only works in master mode
-  result = @[]
+proc scan*(i2c: var I2CHandle, found: var openArray[uint8], timeout: uint32 = 10): int =
+  ## Scan the I2C bus for devices, storing responding addresses in provided buffer
+  ## Returns number of devices found. Only works in master mode.
+  ## Buffer should be at least 112 bytes to hold all possible addresses (0x08-0x77)
+  result = 0
   var dummy: uint8 = 0
   
   # Scan addresses 0x08 to 0x77 (valid 7-bit I2C addresses)
   for addr in 0x08'u16 .. 0x77'u16:
+    if result >= found.len:
+      break
     var res: I2CResult
     {.emit: [res, " = ", i2c, ".TransmitBlocking(", addr, ", &", dummy, ", 0, ", timeout, ");"].}
     if res == I2C_OK:
-      result.add(uint8(addr))
+      found[result] = uint8(addr)
+      inc result
 
 # Common I2C device addresses
 const

@@ -187,15 +187,15 @@ proc startLog*(waitForPc: bool = false) =
   ## ```
   {.emit: ["daisy::Logger<daisy::LOGGER_INTERNAL>::StartLog(", waitForPc, ");"].}
 
-proc print*(s: string) =
-  ## Print a string without newline
+proc print*(s: cstring) =
+  ## Print a C string without newline
   ## 
   ## Example:
   ## ```nim
   ## print("Hello ")
   ## print("World!")
   ## ```
-  {.emit: ["daisy::Logger<daisy::LOGGER_INTERNAL>::Print(", s, ".p->data);"].}
+  {.emit: ["daisy::Logger<daisy::LOGGER_INTERNAL>::Print(", s, ");"].}
 
 proc print*(i: int) =
   ## Print an integer without newline
@@ -205,14 +205,14 @@ proc print*(f: float) =
   ## Print a float without newline
   {.emit: ["daisy::Logger<daisy::LOGGER_INTERNAL>::Print(\"%f\", (double)", f, ");"].}
 
-proc printLine*(s: string) =
-  ## Print a string with newline
+proc printLine*(s: cstring) =
+  ## Print a C string with newline
   ## 
   ## Example:
   ## ```nim
   ## printLine("Hello World!")
   ## ```
-  {.emit: ["daisy::Logger<daisy::LOGGER_INTERNAL>::PrintLine(", s, ".p->data);"].}
+  {.emit: ["daisy::Logger<daisy::LOGGER_INTERNAL>::PrintLine(", s, ");"].}
 
 proc printLine*(i: int) =
   ## Print an integer with newline
@@ -241,29 +241,27 @@ proc printf*(format: cstring) {.varargs, importcpp: "daisy::Logger<daisy::LOGGER
 # Helper Functions for UART
 # =============================================================================
 
-proc blockingTransmit*(uart: var UartHandler, data: string, 
+proc blockingTransmit*(uart: var UartHandler, data: cstring, 
                        timeout: uint32 = 100): UartResult =
-  ## Transmit a string via UART (blocking)
-  result = uart.blockingTransmit(cast[ptr uint8](data.cstring), 
-                                  data.len.csize_t, timeout)
+  ## Transmit a C string via UART (blocking)
+  let len = data.len
+  result = uart.blockingTransmit(cast[ptr uint8](data), len.csize_t, timeout)
 
-proc blockingTransmit*(uart: var UartHandler, data: seq[uint8],
+proc blockingTransmit*(uart: var UartHandler, data: openArray[uint8],
                        timeout: uint32 = 100): UartResult =
-  ## Transmit a byte sequence via UART (blocking)
+  ## Transmit a byte array via UART (blocking)
   if data.len > 0:
-    result = uart.blockingTransmit(unsafeAddr data[0], data.len.csize_t, timeout)
+    {.emit: [result, " = ", uart, ".BlockingTransmit((uint8_t*)&", data, "[0], ", data.len.csize_t, ", ", timeout, ");"].}
   else:
     result = UART_OK
 
-proc blockingReceive*(uart: var UartHandler, size: int,
-                      timeout: uint32 = 100): tuple[result: UartResult, data: seq[uint8]] =
-  ## Receive data via UART (blocking)
-  result.data = newSeq[uint8](size)
-  if size > 0:
-    result.result = uart.blockingReceive(addr result.data[0], 
-                                         size.uint16, timeout)
+proc blockingReceive*(uart: var UartHandler, buffer: var openArray[uint8],
+                      timeout: uint32 = 100): UartResult =
+  ## Receive data via UART (blocking) into provided buffer
+  if buffer.len > 0:
+    result = uart.blockingReceive(addr buffer[0], buffer.len.uint16, timeout)
   else:
-    result.result = UART_OK
+    result = UART_OK
 
 # Common baud rates
 const
