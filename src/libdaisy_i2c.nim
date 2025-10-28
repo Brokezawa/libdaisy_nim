@@ -159,9 +159,8 @@ proc initI2C*(peripheral: I2CPeripheral, sclPin, sdaPin: Pin,
 proc write*(i2c: var I2CHandle, deviceAddr: uint16, data: openArray[uint8], 
             timeout: uint32 = 100): I2CResult =
   ## Write bytes to an I2C device
-  var buffer = @data
-  if buffer.len > 0:
-    {.emit: [result, " = ", i2c, ".TransmitBlocking(", deviceAddr, ", &", buffer, "[0], ", uint16(buffer.len), ", ", timeout, ");"].}
+  if data.len > 0:
+    {.emit: [result, " = ", i2c, ".TransmitBlocking(", deviceAddr, ", (uint8_t*)&", data, "[0], ", uint16(data.len), ", ", timeout, ");"].}
   else:
     result = I2C_OK
 
@@ -188,9 +187,8 @@ proc readRegister*(i2c: var I2CHandle, deviceAddr: uint16, regAddr: uint8,
 proc writeRegisters*(i2c: var I2CHandle, deviceAddr: uint16, regAddr: uint8,
                      values: openArray[uint8], timeout: uint32 = 100): I2CResult =
   ## Write multiple bytes to consecutive device registers
-  var data = @values
-  if data.len > 0:
-    {.emit: [result, " = ", i2c, ".WriteDataAtAddress(", deviceAddr, ", ", regAddr, ", 1, &", data, "[0], ", uint16(data.len), ", ", timeout, ");"].}
+  if values.len > 0:
+    {.emit: [result, " = ", i2c, ".WriteDataAtAddress(", deviceAddr, ", ", regAddr, ", 1, (uint8_t*)&", values, "[0], ", uint16(values.len), ", ", timeout, ");"].}
   else:
     result = I2C_OK
 
