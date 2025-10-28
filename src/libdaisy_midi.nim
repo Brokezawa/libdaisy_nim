@@ -50,32 +50,42 @@ import libdaisy
 useDaisyNamespace()  # MIDI needs various types
 
 {.push header: "daisy_seed.h".}
-{.push importcpp.}
 
 type
-  MidiEvent* {.importcpp: "daisy::MidiEvent".} = object
+  MidiEvent* {.importcpp: "daisy::MidiEvent", bycopy.} = object
+    mType* {.importcpp: "type".}: MidiMessageType
+    channel* {.importcpp: "channel".}: cint
+    data* {.importcpp: "data".}: array[2, uint8]
   
   MidiMessageType* {.importcpp: "daisy::MidiMessageType", size: sizeof(cint).} = enum
-    NoteOff = 0x80
-    NoteOn = 0x90
-    PolyphonicKeyPressure = 0xA0
-    ControlChange = 0xB0
-    ProgramChange = 0xC0
-    ChannelPressure = 0xD0
-    PitchBend = 0xE0
-    SystemCommon = 0xF0
-    SystemRealTime = 0xF8
+    NoteOff
+    NoteOn
+    PolyphonicKeyPressure
+    ControlChange
+    ProgramChange
+    ChannelPressure
+    PitchBend
+    SystemCommon
+    SystemRealTime
 
   MidiUsbTransport* {.importcpp: "daisy::MidiUsbTransport".} = object
   MidiUsbHandler* {.importcpp: "daisy::MidiHandler<daisy::MidiUsbTransport>".} = object
+  MidiUsbHandlerConfig* {.importcpp: "daisy::MidiHandler<daisy::MidiUsbTransport>::Config", bycopy.} = object
 
-# Low-level C++ interface - removed unused procs
+# Low-level C++ interface
+proc Listen(this: var MidiUsbHandler) {.importcpp: "#.Listen()".}
+proc HasEvents(this: var MidiUsbHandler): bool {.importcpp: "#.HasEvents()".}
+proc PopEvent(this: var MidiUsbHandler): MidiEvent {.importcpp: "#.PopEvent()".}
+proc Init(this: var MidiUsbHandler, config: MidiUsbHandlerConfig) {.importcpp: "#.Init(@)".}
+proc StartReceive(this: var MidiUsbHandler) {.importcpp: "#.StartReceive()".}
 
-{.pop.} # importcpp
+# C++ constructors
+proc cppNewMidiHandler(): MidiUsbHandler {.importcpp: "daisy::MidiHandler<daisy::MidiUsbTransport>()", constructor.}
+
+# Create a default config - this creates a stack-allocated config struct  
+proc newMidiConfig*(): MidiUsbHandlerConfig {.importcpp: "daisy::MidiHandler<daisy::MidiUsbTransport>::Config()", constructor.}
+
 {.pop.} # header
-
-# C++ constructor
-proc cppNewMidiHandler(): MidiUsbHandler {.importcpp: "daisy::MidiHandler<daisy::MidiUsbTransport>()", constructor, header: "daisy_seed.h".}
 
 # Create alias for simpler use
 type MidiHandler* = MidiUsbHandler
@@ -93,7 +103,7 @@ type
     number*: uint8
     value*: uint8
 
-template initMidi*(midi: var MidiHandler) =
+proc initMidi*(midi: var MidiHandler) =
   ## Initialize MIDI handler for USB MIDI
   ## 
   ## Usage:
@@ -101,55 +111,49 @@ template initMidi*(midi: var MidiHandler) =
   ## var midi: MidiHandler
   ## initMidi(midi)
   ## ```
-  {.emit: ["{ daisy::MidiHandler<daisy::MidiUsbTransport>::Config cfg; "].}
-  {.emit: ["  ", midi, ".Init(cfg); "].}
-  {.emit: ["  ", midi, ".StartReceive(); }"].}
+  var cfg: MidiUsbHandlerConfig  # Default constructor
+  midi.Init(cfg)
+  midi.StartReceive()
 
-proc listen*(midi: var MidiHandler) =
+proc listen*(midi: var MidiHandler) {.inline.} =
   ## Process incoming MIDI data (call this regularly in your loop)
-  {.emit: [midi, ".Listen();"].}
+  midi.Listen()
 
-proc hasEvents*(midi: var MidiHandler): bool =
+proc hasEvents*(midi: var MidiHandler): bool {.inline.} =
   ## Check if there are any MIDI events waiting
-  {.emit: [result, " = ", midi, ".HasEvents();"].}
+  result = midi.HasEvents()
 
-proc popEvent*(midi: var MidiHandler): MidiEvent =
+proc popEvent*(midi: var MidiHandler): MidiEvent {.inline.} =
   ## Get the next MIDI event from the queue
-  {.emit: [result, " = ", midi, ".PopEvent();"].}
+  result = midi.PopEvent()
 
-# MidiEvent helper properties
-proc messageType*(event: var MidiEvent): MidiMessageType =
-  ## Get the MIDI message type
-  {.emit: [result, " = ", event, ".type;"].}
+# MidiEvent helper properties - access C++ fields directly
+proc messageType*(event: MidiEvent): MidiMessageType {.importcpp: "#.type", nodecl.}
+proc channel*(event: MidiEvent): cint {.importcpp: "#.channel", nodecl.}
 
-proc channel*(event: var MidiEvent): uint8 =
-  ## Get the MIDI channel (0-15)
-  {.emit: [result, " = ", event, ".channel;"].}
-
-proc note*(event: var MidiEvent): NoteEvent =
+proc note*(event: var MidiEvent): NoteEvent {.inline.} =
   ## Parse as note event (for NoteOn/NoteOff messages)
-  {.emit: [result.number, " = ", event, ".data[0];"].}
-  {.emit: [result.velocity, " = ", event, ".data[1];"].}
+  result.number = event.data[0]
+  result.velocity = event.data[1]
 
-proc controlChange*(event: var MidiEvent): ControlChangeEvent =
+proc controlChange*(event: var MidiEvent): ControlChangeEvent {.inline.} =
   ## Parse as control change event
-  {.emit: [result.number, " = ", event, ".data[0];"].}
-  {.emit: [result.value, " = ", event, ".data[1];"].}
+  result.number = event.data[0]
+  result.value = event.data[1]
 
-proc pitchBend*(event: var MidiEvent): int16 =
+proc pitchBend*(event: var MidiEvent): int16 {.inline.} =
   ## Parse as pitch bend (-8192 to +8191)
-  var lsb, msb: uint8
-  {.emit: [lsb, " = ", event, ".data[0];"].}
-  {.emit: [msb, " = ", event, ".data[1];"].}
+  let lsb = event.data[0]
+  let msb = event.data[1]
   result = ((msb.int16 shl 7) or lsb.int16) - 8192
 
-proc programChange*(event: var MidiEvent): uint8 =
+proc programChange*(event: var MidiEvent): uint8 {.inline.} =
   ## Parse as program change (0-127)
-  {.emit: [result, " = ", event, ".data[0];"].}
+  result = event.data[0]
 
-proc channelPressure*(event: var MidiEvent): uint8 =
+proc channelPressure*(event: var MidiEvent): uint8 {.inline.} =
   ## Parse as channel pressure (0-127)
-  {.emit: [result, " = ", event, ".data[0];"].}
+  result = event.data[0]
 
 when isMainModule:
   echo "libDaisy MIDI wrapper - Clean API"

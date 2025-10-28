@@ -28,22 +28,24 @@ proc main() =
   printLine("Scanning bus...")
   printLine()
   
+  var foundDevices: array[112, uint8]  # Max 112 I2C addresses (0x08-0x77)
+  
   while true:
-    let devices = i2c.scan()
+    let deviceCount = i2c.scan(foundDevices)
     
-    if devices.len == 0:
+    if deviceCount == 0:
       printLine("No I2C devices found")
     else:
       print("Found ")
-      print(devices.len)
+      print(deviceCount)
       printLine(" device(s):")
       
-      for addr in devices:
+      for i in 0..<deviceCount:
         print("  ")
-        printHex(addr)
+        printHex(foundDevices[i])
         
         # Print device name if known
-        case addr
+        case foundDevices[i]
         of I2C_ADDR_SSD1306, I2C_ADDR_SSD1306_ALT:
           print(" - SSD1306 OLED")
         of I2C_ADDR_MPU6050:  # Also DS3231 (same address 0x68)

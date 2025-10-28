@@ -29,11 +29,12 @@ proc main() =
       printLine("Write: ERROR")
     
     # Read some bytes
-    let (readResult, data) = spi.read(4)
+    var readBuffer: array[4, uint8]
+    let readResult = spi.read(readBuffer)
     
     if readResult == SPI_OK:
       print("Read: ")
-      for b in data:
+      for b in readBuffer:
         print(int(b))
         print(" ")
       printLine()
@@ -41,7 +42,8 @@ proc main() =
       printLine("Read: ERROR")
     
     # Full-duplex transfer
-    let (xferResult, rxData) = spi.transfer([0xAA'u8, 0xBB, 0xCC, 0xDD])
+    var rxData: array[4, uint8]
+    let xferResult = spi.transfer([0xAA'u8, 0xBB, 0xCC, 0xDD], rxData)
     
     if xferResult == SPI_OK:
       print("Transfer RX: ")

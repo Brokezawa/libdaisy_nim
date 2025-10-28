@@ -82,32 +82,25 @@ proc getSdramSize*(): int =
   ## Get the total size of SDRAM in bytes
   result = SDRAM_SIZE
 
+# External linker symbols
+var ssdram_bss {.importc: "_ssdram_bss", nodecl.}: uint32
+var esdram_bss {.importc: "_esdram_bss", nodecl.}: uint32
+
 proc clearSdramBss*() =
   ## Clear all SDRAM BSS memory to zero.
   ## This should be called after SDRAM initialization if you want
   ## to ensure all SDRAM variables start at zero.
   ## 
   ## Note: This is a slow operation and may take several milliseconds.
-  {.emit: """
-  extern uint32_t _ssdram_bss;
-  extern uint32_t _esdram_bss;
-  uint32_t* start = &_ssdram_bss;
-  uint32_t* end = &_esdram_bss;
-  while(start < end) {
-    *start++ = 0;
-  }
-  """.}
-  
-  # Ensure the function body exists for C++ export
-  discard
+  var start = addr ssdram_bss
+  let theEnd = addr esdram_bss
+  while cast[uint](start) < cast[uint](theEnd):
+    start[] = 0
+    start = cast[ptr uint32](cast[uint](start) + sizeof(uint32).uint)
 
-proc getSdramBssSize*(): int =
+proc getSdramBssSize*(): int {.inline.} =
   ## Get the size of used SDRAM BSS memory
-  {.emit: """
-  extern uint32_t _ssdram_bss;
-  extern uint32_t _esdram_bss;
-  `result` = (int)((uint8_t*)&_esdram_bss - (uint8_t*)&_ssdram_bss);
-  """.}
+  result = cast[int](addr esdram_bss) - cast[int](addr ssdram_bss)
 
 # Utility macros for creating SDRAM arrays
 
@@ -219,6 +212,7 @@ proc getMemoryInfo*(): SdramMemoryInfo =
 ## ```
 
 when isMainModule:
+  import std/strutils
   echo "libDaisy SDRAM wrapper"
   echo "Provides access to 64MB external SDRAM"
   echo "Base Address: 0x", SDRAM_BASE_ADDRESS.toHex()
