@@ -120,34 +120,34 @@ type
     pimpl {.importc: "pimpl_".}: ptr SpiHandleImpl
 
 # Low-level C++ interface
-proc cppInit(this: var SpiHandle, config: SpiConfig): SpiResult {.importcpp: "#.Init(@)".}
-proc cppGetConfig(this: SpiHandle): SpiConfig {.importcpp: "#.GetConfig()".}
+proc Init(this: var SpiHandle, config: SpiConfig): SpiResult {.importcpp: "#.Init(@)".}
+proc GetConfig(this: SpiHandle): SpiConfig {.importcpp: "#.GetConfig()".}
 
-proc cppBlockingTransmit(this: var SpiHandle, buff: ptr uint8, size: csize_t, 
+proc BlockingTransmit(this: var SpiHandle, buff: ptr uint8, size: csize_t, 
                         timeout: uint32 = 100): SpiResult {.importcpp: "#.BlockingTransmit(@)".}
 
-proc cppBlockingReceive(this: var SpiHandle, buffer: ptr uint8, size: uint16, 
+proc BlockingReceive(this: var SpiHandle, buffer: ptr uint8, size: uint16, 
                        timeout: uint32): SpiResult {.importcpp: "#.BlockingReceive(@)".}
 
-proc cppBlockingTransmitAndReceive(this: var SpiHandle, tx_buff: ptr uint8, rx_buff: ptr uint8, 
+proc BlockingTransmitAndReceive(this: var SpiHandle, tx_buff: ptr uint8, rx_buff: ptr uint8, 
                                   size: csize_t, timeout: uint32 = 100): SpiResult {.importcpp: "#.BlockingTransmitAndReceive(@)".}
 
-proc cppDmaTransmit(this: var SpiHandle, buff: ptr uint8, size: csize_t, 
+proc DmaTransmit(this: var SpiHandle, buff: ptr uint8, size: csize_t, 
                    start_callback: SpiStartCallbackFunctionPtr, 
                    end_callback: SpiEndCallbackFunctionPtr, 
                    callback_context: pointer): SpiResult {.importcpp: "#.DmaTransmit(@)".}
 
-proc cppDmaReceive(this: var SpiHandle, buff: ptr uint8, size: csize_t, 
+proc DmaReceive(this: var SpiHandle, buff: ptr uint8, size: csize_t, 
                   start_callback: SpiStartCallbackFunctionPtr, 
                   end_callback: SpiEndCallbackFunctionPtr, 
                   callback_context: pointer): SpiResult {.importcpp: "#.DmaReceive(@)".}
 
-proc cppDmaTransmitAndReceive(this: var SpiHandle, tx_buff: ptr uint8, rx_buff: ptr uint8, size: csize_t, 
+proc DmaTransmitAndReceive(this: var SpiHandle, tx_buff: ptr uint8, rx_buff: ptr uint8, size: csize_t, 
                              start_callback: SpiStartCallbackFunctionPtr, 
                              end_callback: SpiEndCallbackFunctionPtr, 
                              callback_context: pointer): SpiResult {.importcpp: "#.DmaTransmitAndReceive(@)".}
 
-proc cppCheckError(this: var SpiHandle): cint {.importcpp: "#.CheckError()".}
+proc CheckError(this: var SpiHandle): cint {.importcpp: "#.CheckError()".}
 
 {.pop.} # importcpp
 {.pop.} # header
@@ -206,62 +206,61 @@ proc initSPI*(peripheral: SpiPeripheral, sclkPin, misoPin, mosiPin: Pin,
     config.clock_phase = SPI_CLOCK_PHASE_2
   else: discard
   
-  {.emit: [result, ".Init(", config, ");"].}
+  discard result.Init(config)
 
 proc transfer*(spi: var SpiHandle, txData: openArray[uint8], 
-               rxBuffer: var openArray[uint8], timeout: uint32 = 100): SpiResult =
+               rxBuffer: var openArray[uint8], timeout: uint32 = 100): SpiResult {.inline.} =
   ## Full-duplex transfer (transmit and receive simultaneously)
   ## txData and rxBuffer must be same length
   if txData.len != rxBuffer.len:
     return SPI_ERR
   if txData.len > 0:
-    {.emit: [result, " = ", spi, ".BlockingTransmitAndReceive((uint8_t*)&", txData, "[0], &", rxBuffer, "[0], ", csize_t(len(txData)), ", ", timeout, ");"].}
+    result = spi.BlockingTransmitAndReceive(addr txData[0], addr rxBuffer[0], csize_t(txData.len), timeout)
   else:
     result = SPI_OK
 
-proc write*(spi: var SpiHandle, data: openArray[uint8], timeout: uint32 = 100): SpiResult =
+proc write*(spi: var SpiHandle, data: openArray[uint8], timeout: uint32 = 100): SpiResult {.inline.} =
   ## Write data via SPI
   if data.len > 0:
-    {.emit: [result, " = ", spi, ".BlockingTransmit((uint8_t*)&", data, "[0], ", csize_t(len(data)), ", ", timeout, ");"].}
+    result = spi.BlockingTransmit(addr data[0], csize_t(data.len), timeout)
   else:
     result = SPI_OK
 
-proc read*(spi: var SpiHandle, buffer: var openArray[uint8], timeout: uint32 = 100): SpiResult =
+proc read*(spi: var SpiHandle, buffer: var openArray[uint8], timeout: uint32 = 100): SpiResult {.inline.} =
   ## Read data via SPI into provided buffer
   if buffer.len > 0:
-    var dataPtr = addr buffer[0]
-    {.emit: [result, " = ", spi, ".BlockingReceive(", dataPtr, ", ", uint16(buffer.len), ", ", timeout, ");"].}
+    result = spi.BlockingReceive(addr buffer[0], uint16(buffer.len), timeout)
   else:
     result = SPI_OK
 
-proc writeByte*(spi: var SpiHandle, data: uint8, timeout: uint32 = 100): SpiResult =
+proc writeByte*(spi: var SpiHandle, data: uint8, timeout: uint32 = 100): SpiResult {.inline.} =
   ## Write a single byte
   var b = data
-  {.emit: [result, " = ", spi, ".BlockingTransmit(&", b, ", 1, ", timeout, ");"].}
+  result = spi.BlockingTransmit(addr b, 1, timeout)
 
-proc readByte*(spi: var SpiHandle, timeout: uint32 = 100): tuple[result: SpiResult, data: uint8] =
+proc readByte*(spi: var SpiHandle, timeout: uint32 = 100): tuple[result: SpiResult, data: uint8] {.inline.} =
   ## Read a single byte
   result.data = 0
-  {.emit: [result.result, " = ", spi, ".BlockingReceive(&", result.data, ", 1, ", timeout, ");"].}
+  result.result = spi.BlockingReceive(addr result.data, 1, timeout)
 
-proc transferByte*(spi: var SpiHandle, txByte: uint8, timeout: uint32 = 100): tuple[result: SpiResult, rxByte: uint8] =
+proc transferByte*(spi: var SpiHandle, txByte: uint8, timeout: uint32 = 100): tuple[result: SpiResult, rxByte: uint8] {.inline.} =
   ## Transfer a single byte (full duplex)
   var tx = txByte
   result.rxByte = 0
-  {.emit: [result.result, " = ", spi, ".BlockingTransmitAndReceive(&", tx, ", &", result.rxByte, ", 1, ", timeout, ");"].}
+  result.result = spi.BlockingTransmitAndReceive(addr tx, addr result.rxByte, 1, timeout)
 
 proc writeRegister*(spi: var SpiHandle, regAddr: uint8, value: uint8, 
                     timeout: uint32 = 100): SpiResult =
   ## Write to a register (common SPI device pattern)
   var data: array[2, uint8] = [regAddr, value]
-  result = spi.cppBlockingTransmit(addr data[0], 2, timeout)
+  result = spi.BlockingTransmit(addr data[0], 2, timeout)
 
 proc readRegister*(spi: var SpiHandle, regAddr: uint8, 
                    timeout: uint32 = 100): tuple[result: SpiResult, value: uint8] =
   ## Read from a register
   var txData: array[2, uint8] = [regAddr, 0x00]
   var rxData: array[2, uint8]
-  result.result = spi.cppBlockingTransmitAndReceive(addr txData[0], addr rxData[0], 2, timeout)
+  result.result = spi.BlockingTransmitAndReceive(addr txData[0], addr rxData[0], 2, timeout)
   result.value = rxData[1]
 
 proc readRegisters*(spi: var SpiHandle, regAddr: uint8, buffer: var openArray[uint8],
@@ -278,7 +277,7 @@ proc readRegisters*(spi: var SpiHandle, regAddr: uint8, buffer: var openArray[ui
   txData[0] = regAddr
   var rxData: array[256, uint8]
   
-  result = spi.cppBlockingTransmitAndReceive(
+  result = spi.BlockingTransmitAndReceive(
     addr txData[0], 
     addr rxData[0], 
     csize_t(count + 1), 

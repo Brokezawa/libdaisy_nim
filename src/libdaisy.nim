@@ -334,40 +334,26 @@ proc callbackRate*(daisy: DaisySeed): float =
   ## Get the audio callback rate in Hz
   daisy.cppAudioCallbackRate()
 
-# Create wrapper callbacks that convert between Nim-friendly and C types
-# Emit C++ wrappers with correct signatures
-{.emit: """
-typedef void (*NimAudioCallbackPtr)(float**, float**, size_t);
-typedef void (*NimInterleavingCallbackPtr)(float*, float*, size_t);
+# Audio callback wrapper types - remove the unused CppAudioCallback types
+# We'll use exportc to create C-compatible wrappers
 
-static NimAudioCallbackPtr globalNimAudioCallback = nullptr;
-static NimInterleavingCallbackPtr globalNimInterleavingCallback = nullptr;
+# Global callback storage
+var globalNimAudioCallback: AudioCallback = nil
+var globalNimInterleavingCallback: InterleavingAudioCallback = nil
 
-static void audioCallbackWrapper(const float* const* in, float** out, size_t size) {
-    if (globalNimAudioCallback) {
-        globalNimAudioCallback((float**)in, out, size);
-    }
-}
+# C-compatible wrapper that calls Nim callback
+# The C++ compiler will accept this and handle const casting
+proc audioCallbackWrapper(input: ptr ptr cfloat, output: ptr ptr cfloat, size: csize_t) {.exportc: "audioCallbackWrapper", cdecl.} =
+  if not globalNimAudioCallback.isNil:
+    globalNimAudioCallback(cast[AudioBuffer](input),
+                          cast[AudioBuffer](output),
+                          size.int)
 
-static void interleavingCallbackWrapper(const float* in, float* out, size_t size) {
-    if (globalNimInterleavingCallback) {
-        globalNimInterleavingCallback((float*)in, out, size);
-    }
-}
-""".}
-
-# Internal procs that will be called from emit code
-proc libdaisy_setNimAudioCallback(cb: AudioCallback) {.exportc.} =
-  {.emit: "globalNimAudioCallback = `cb`;".}
-
-proc libdaisy_setNimInterleavingCallback(cb: InterleavingAudioCallback) {.exportc.} =
-  {.emit: "globalNimInterleavingCallback = `cb`;".}
-
-proc libdaisy_startAudioWithWrapper(hw: var DaisySeed) {.exportc.} =
-  {.emit: "`hw`.StartAudio(audioCallbackWrapper);".}
-
-proc libdaisy_startInterleavingAudioWithWrapper(hw: var DaisySeed) {.exportc.} =
-  {.emit: "`hw`.StartAudio(interleavingCallbackWrapper);".}
+proc interleavingCallbackWrapper(input: ptr cfloat, output: ptr cfloat, size: csize_t) {.exportc: "interleavingCallbackWrapper", cdecl.} =
+  if not globalNimInterleavingCallback.isNil:
+    globalNimInterleavingCallback(cast[InterleavedAudioBuffer](input),
+                                 cast[InterleavedAudioBuffer](output),
+                                 size.int)
 
 proc startAudio*(daisy: var DaisySeed, callback: AudioCallback) =
   ## Start audio processing with a multi-channel (non-interleaved) callback
@@ -383,29 +369,31 @@ proc startAudio*(daisy: var DaisySeed, callback: AudioCallback) =
   ## 
   ## daisy.startAudio(audioCallback)
   ## ```
-  libdaisy_setNimAudioCallback(callback)
-  libdaisy_startAudioWithWrapper(daisy)
+  globalNimAudioCallback = callback
+  # Use emit to properly cast the wrapper function to AudioCallback type
+  {.emit: "`daisy`.StartAudio(reinterpret_cast<daisy::AudioHandle::AudioCallback>(audioCallbackWrapper));".}
 
 proc startAudio*(daisy: var DaisySeed, callback: InterleavingAudioCallback) =
   ## Start audio processing with an interleaved callback
   ## 
   ## The callback receives interleaved samples (L, R, L, R, ...)
-  libdaisy_setNimInterleavingCallback(callback)
-  libdaisy_startInterleavingAudioWithWrapper(daisy)
+  globalNimInterleavingCallback = callback
+  # Use emit to properly cast the wrapper function to InterleavingAudioCallback type
+  {.emit: "`daisy`.StartAudio(reinterpret_cast<daisy::AudioHandle::InterleavingAudioCallback>(interleavingCallbackWrapper));".}
 
 proc changeAudioCallback*(daisy: var DaisySeed, callback: AudioCallback) =
   ## Change the audio callback while audio is running
-  libdaisy_setNimAudioCallback(callback)
+  globalNimAudioCallback = callback
 
 proc changeAudioCallback*(daisy: var DaisySeed, callback: InterleavingAudioCallback) =
   ## Change the interleaved audio callback while audio is running
-  libdaisy_setNimInterleavingCallback(callback)
+  globalNimInterleavingCallback = callback
 
 proc stopAudio*(daisy: var DaisySeed) =
   ## Stop audio processing
   daisy.cppStopAudio()
-  libdaisy_setNimAudioCallback(nil)
-  libdaisy_setNimInterleavingCallback(nil)
+  globalNimAudioCallback = nil
+  globalNimInterleavingCallback = nil
 
 # GPIO API
 proc initGpio*(pin: Pin, mode: GPIOMode = OUTPUT, 

@@ -139,41 +139,34 @@ proc checkError*(this: var UartHandler): cint {.importcpp: "CheckError".}
 {.pop.} # importcpp
 {.pop.} # header
 
-# Nim-friendly constructors
+# =============================================================================
+# High-Level Logging/Printing API
+# =============================================================================
+
+# Logger static methods (template specialization requires explicit path)
+proc cppStartLog(waitForPc: bool) {.importcpp: "daisy::Logger<daisy::LOGGER_INTERNAL>::StartLog(@)", 
+                                    header: "hid/logger.h".}
+proc cppPrintCString(s: cstring) {.importcpp: "daisy::Logger<daisy::LOGGER_INTERNAL>::Print(@)", 
+                                   header: "hid/logger.h".}
+proc cppPrintInt(i: cint) {.importcpp: "daisy::Logger<daisy::LOGGER_INTERNAL>::Print(\"%d\", #)", 
+                            header: "hid/logger.h".}
+proc cppPrintFloat(f: cfloat) {.importcpp: "daisy::Logger<daisy::LOGGER_INTERNAL>::Print(\"%f\", #)", 
+                                 header: "hid/logger.h".}
+proc cppPrintLineCString(s: cstring) {.importcpp: "daisy::Logger<daisy::LOGGER_INTERNAL>::PrintLine(@)", 
+                                       header: "hid/logger.h".}
+proc cppPrintLineInt(i: cint) {.importcpp: "daisy::Logger<daisy::LOGGER_INTERNAL>::PrintLine(\"%d\", #)", 
+                                header: "hid/logger.h".}
+proc cppPrintLineFloat(f: cfloat) {.importcpp: "daisy::Logger<daisy::LOGGER_INTERNAL>::PrintLine(\"%f\", #)", 
+                                     header: "hid/logger.h".}
+
+# C++ constructors
 proc newUartHandler*(): UartHandler {.importcpp: "daisy::UartHandler()", 
                                       constructor, header: "per/uart.h".}
 
 proc newUartConfig*(): UartConfig {.importcpp: "daisy::UartHandler::Config()",
                                     constructor, header: "per/uart.h".}
 
-# =============================================================================
-# High-Level Logging/Printing API
-# =============================================================================
-
-{.push header: "hid/logger.h".}
-{.push importcpp.}
-
-type
-  # Logger destination
-  LoggerDestination* {.importcpp: "daisy::LoggerDestination",
-                       size: sizeof(cint).} = enum
-    LOGGER_NONE = 0      ## Mute logging
-    LOGGER_INTERNAL      ## Internal USB port
-    LOGGER_EXTERNAL      ## External USB port
-    LOGGER_SEMIHOST      ## stdout/semihosting
-
-# Logger template class (using internal USB by default)
-type
-  Logger* {.importcpp: "daisy::Logger<daisy::LOGGER_INTERNAL>".} = object
-
-{.pop.} # importcpp
-{.pop.} # header
-
-# =============================================================================
-# Nim-Friendly High-Level API
-# =============================================================================
-
-proc startLog*(waitForPc: bool = false) =
+proc startLog*(waitForPc: bool = false) {.inline.} =
   ## Start the logging session. This initializes USB CDC for serial output.
   ## 
   ## Parameters:
@@ -185,9 +178,9 @@ proc startLog*(waitForPc: bool = false) =
   ## # or
   ## startLog(waitForPc = true)  # Wait for terminal to connect
   ## ```
-  {.emit: ["daisy::Logger<daisy::LOGGER_INTERNAL>::StartLog(", waitForPc, ");"].}
+  cppStartLog(waitForPc)
 
-proc print*(s: cstring) =
+proc print*(s: cstring) {.inline.} =
   ## Print a C string without newline
   ## 
   ## Example:
@@ -195,32 +188,32 @@ proc print*(s: cstring) =
   ## print("Hello ")
   ## print("World!")
   ## ```
-  {.emit: ["daisy::Logger<daisy::LOGGER_INTERNAL>::Print(", s, ");"].}
+  cppPrintCString(s)
 
-proc print*(i: int) =
+proc print*(i: int) {.inline.} =
   ## Print an integer without newline
-  {.emit: ["daisy::Logger<daisy::LOGGER_INTERNAL>::Print(\"%d\", (int)", i, ");"].}
+  cppPrintInt(i.cint)
 
-proc print*(f: float) =
+proc print*(f: float) {.inline.} =
   ## Print a float without newline
-  {.emit: ["daisy::Logger<daisy::LOGGER_INTERNAL>::Print(\"%f\", (double)", f, ");"].}
+  cppPrintFloat(f.cfloat)
 
-proc printLine*(s: cstring) =
+proc printLine*(s: cstring) {.inline.} =
   ## Print a C string with newline
   ## 
   ## Example:
   ## ```nim
   ## printLine("Hello World!")
   ## ```
-  {.emit: ["daisy::Logger<daisy::LOGGER_INTERNAL>::PrintLine(", s, ");"].}
+  cppPrintLineCString(s)
 
-proc printLine*(i: int) =
+proc printLine*(i: int) {.inline.} =
   ## Print an integer with newline
-  {.emit: ["daisy::Logger<daisy::LOGGER_INTERNAL>::PrintLine(\"%d\", (int)", i, ");"].}
+  cppPrintLineInt(i.cint)
 
-proc printLine*(f: float) =
+proc printLine*(f: float) {.inline.} =
   ## Print a float with newline
-  {.emit: ["daisy::Logger<daisy::LOGGER_INTERNAL>::PrintLine(\"%f\", (double)", f, ");"].}
+  cppPrintLineFloat(f.cfloat)
 
 proc printLine*() =
   ## Print just a newline
@@ -248,10 +241,10 @@ proc blockingTransmit*(uart: var UartHandler, data: cstring,
   result = uart.blockingTransmit(cast[ptr uint8](data), len.csize_t, timeout)
 
 proc blockingTransmit*(uart: var UartHandler, data: openArray[uint8],
-                       timeout: uint32 = 100): UartResult =
+                       timeout: uint32 = 100): UartResult {.inline.} =
   ## Transmit a byte array via UART (blocking)
   if data.len > 0:
-    {.emit: [result, " = ", uart, ".BlockingTransmit((uint8_t*)&", data, "[0], ", data.len.csize_t, ", ", timeout, ");"].}
+    result = uart.blockingTransmit(addr data[0], data.len.csize_t, timeout)
   else:
     result = UART_OK
 

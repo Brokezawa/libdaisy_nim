@@ -96,26 +96,26 @@ type
     pimpl {.importc: "pimpl_".}: ptr I2CHandleImpl
 
 # Low-level C++ interface
-proc cppInit(this: var I2CHandle, config: I2CConfig): I2CResult {.importcpp: "#.Init(@)".}
-proc cppGetConfig(this: I2CHandle): I2CConfig {.importcpp: "#.GetConfig()".}
+proc Init(this: var I2CHandle, config: I2CConfig): I2CResult {.importcpp: "#.Init(@)".}
+proc GetConfig(this: I2CHandle): I2CConfig {.importcpp: "#.GetConfig()".}
 
-proc cppTransmitBlocking(this: var I2CHandle, address: uint16, data: ptr uint8, 
+proc TransmitBlocking(this: var I2CHandle, address: uint16, data: ptr uint8, 
                         size: uint16, timeout: uint32): I2CResult {.importcpp: "#.TransmitBlocking(@)".}
 
-proc cppReceiveBlocking(this: var I2CHandle, address: uint16, data: ptr uint8, 
+proc ReceiveBlocking(this: var I2CHandle, address: uint16, data: ptr uint8, 
                        size: uint16, timeout: uint32): I2CResult {.importcpp: "#.ReceiveBlocking(@)".}
 
-proc cppTransmitDma(this: var I2CHandle, address: uint16, data: ptr uint8, size: uint16, 
+proc TransmitDma(this: var I2CHandle, address: uint16, data: ptr uint8, size: uint16, 
                    callback: I2CCallbackFunctionPtr, callback_context: pointer): I2CResult {.importcpp: "#.TransmitDma(@)".}
 
-proc cppReceiveDma(this: var I2CHandle, address: uint16, data: ptr uint8, size: uint16, 
+proc ReceiveDma(this: var I2CHandle, address: uint16, data: ptr uint8, size: uint16, 
                   callback: I2CCallbackFunctionPtr, callback_context: pointer): I2CResult {.importcpp: "#.ReceiveDma(@)".}
 
-proc cppReadDataAtAddress(this: var I2CHandle, address: uint16, mem_address: uint16,
+proc ReadDataAtAddress(this: var I2CHandle, address: uint16, mem_address: uint16,
                          mem_address_size: uint16, data: ptr uint8, data_size: uint16,
                          timeout: uint32): I2CResult {.importcpp: "#.ReadDataAtAddress(@)".}
 
-proc cppWriteDataAtAddress(this: var I2CHandle, address: uint16, mem_address: uint16,
+proc WriteDataAtAddress(this: var I2CHandle, address: uint16, mem_address: uint16,
                           mem_address_size: uint16, data: ptr uint8, data_size: uint16,
                           timeout: uint32): I2CResult {.importcpp: "#.WriteDataAtAddress(@)".}
 
@@ -154,49 +154,49 @@ proc initI2C*(peripheral: I2CPeripheral, sclPin, sdaPin: Pin,
   config.speed = speed
   config.mode = mode
   config.address = slaveAddress
-  {.emit: [result, ".Init(", config, ");"].}
+  discard result.Init(config)
 
 proc write*(i2c: var I2CHandle, deviceAddr: uint16, data: openArray[uint8], 
-            timeout: uint32 = 100): I2CResult =
+            timeout: uint32 = 100): I2CResult {.inline.} =
   ## Write bytes to an I2C device
   if data.len > 0:
-    {.emit: [result, " = ", i2c, ".TransmitBlocking(", deviceAddr, ", (uint8_t*)&", data, "[0], ", uint16(data.len), ", ", timeout, ");"].}
+    result = i2c.TransmitBlocking(deviceAddr, addr data[0], uint16(data.len), timeout)
   else:
     result = I2C_OK
 
 proc read*(i2c: var I2CHandle, deviceAddr: uint16, buffer: var openArray[uint8], 
-           timeout: uint32 = 100): I2CResult =
+           timeout: uint32 = 100): I2CResult {.inline.} =
   ## Read bytes from an I2C device into provided buffer
   if buffer.len > 0:
-    {.emit: [result, " = ", i2c, ".ReceiveBlocking(", deviceAddr, ", &", buffer, "[0], ", uint16(buffer.len), ", ", timeout, ");"].}
+    result = i2c.ReceiveBlocking(deviceAddr, addr buffer[0], uint16(buffer.len), timeout)
   else:
     result = I2C_OK
 
 proc writeRegister*(i2c: var I2CHandle, deviceAddr: uint16, regAddr: uint8, 
-                    value: uint8, timeout: uint32 = 100): I2CResult =
+                    value: uint8, timeout: uint32 = 100): I2CResult {.inline.} =
   ## Write a single byte to a device register
   var data = value
-  {.emit: [result, " = ", i2c, ".WriteDataAtAddress(", deviceAddr, ", ", regAddr, ", 1, &", data, ", 1, ", timeout, ");"].}
+  result = i2c.WriteDataAtAddress(deviceAddr, regAddr, 1, addr data, 1, timeout)
 
 proc readRegister*(i2c: var I2CHandle, deviceAddr: uint16, regAddr: uint8, 
-                   timeout: uint32 = 100): tuple[result: I2CResult, value: uint8] =
+                   timeout: uint32 = 100): tuple[result: I2CResult, value: uint8] {.inline.} =
   ## Read a single byte from a device register
   result.value = 0
-  {.emit: [result.result, " = ", i2c, ".ReadDataAtAddress(", deviceAddr, ", ", regAddr, ", 1, &", result.value, ", 1, ", timeout, ");"].}
+  result.result = i2c.ReadDataAtAddress(deviceAddr, regAddr, 1, addr result.value, 1, timeout)
 
 proc writeRegisters*(i2c: var I2CHandle, deviceAddr: uint16, regAddr: uint8,
-                     values: openArray[uint8], timeout: uint32 = 100): I2CResult =
+                     values: openArray[uint8], timeout: uint32 = 100): I2CResult {.inline.} =
   ## Write multiple bytes to consecutive device registers
   if values.len > 0:
-    {.emit: [result, " = ", i2c, ".WriteDataAtAddress(", deviceAddr, ", ", regAddr, ", 1, (uint8_t*)&", values, "[0], ", uint16(values.len), ", ", timeout, ");"].}
+    result = i2c.WriteDataAtAddress(deviceAddr, regAddr, 1, addr values[0], uint16(values.len), timeout)
   else:
     result = I2C_OK
 
 proc readRegisters*(i2c: var I2CHandle, deviceAddr: uint16, regAddr: uint8,
-                    buffer: var openArray[uint8], timeout: uint32 = 100): I2CResult =
+                    buffer: var openArray[uint8], timeout: uint32 = 100): I2CResult {.inline.} =
   ## Read multiple bytes from consecutive device registers into provided buffer
   if buffer.len > 0:
-    {.emit: [result, " = ", i2c, ".ReadDataAtAddress(", deviceAddr, ", ", regAddr, ", 1, &", buffer, "[0], ", uint16(buffer.len), ", ", timeout, ");"].}
+    result = i2c.ReadDataAtAddress(deviceAddr, regAddr, 1, addr buffer[0], uint16(buffer.len), timeout)
   else:
     result = I2C_OK
 
@@ -211,8 +211,7 @@ proc scan*(i2c: var I2CHandle, found: var openArray[uint8], timeout: uint32 = 10
   for addr in 0x08'u16 .. 0x77'u16:
     if result >= found.len:
       break
-    var res: I2CResult
-    {.emit: [res, " = ", i2c, ".TransmitBlocking(", addr, ", &", dummy, ", 0, ", timeout, ");"].}
+    let res = i2c.TransmitBlocking(addr, addr(dummy), 0, timeout)
     if res == I2C_OK:
       found[result] = uint8(addr)
       inc result

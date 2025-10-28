@@ -182,15 +182,15 @@ proc transmitExternal*(this: var UsbHandle, data: cstring): UsbResult =
 
 proc transmitInternal*(this: var UsbHandle, data: openArray[byte]): UsbResult =
   ## Transmit a byte array via internal USB
-  result = this.transmitInternal(cast[ptr uint8](unsafeAddr data[0]), data.len.csize_t)
+  result = this.transmitInternal(cast[ptr uint8](addr data[0]), data.len.csize_t)
 
 proc transmitExternal*(this: var UsbHandle, data: openArray[byte]): UsbResult =
   ## Transmit a byte array via external USB
-  result = this.transmitExternal(cast[ptr uint8](unsafeAddr data[0]), data.len.csize_t)
+  result = this.transmitExternal(cast[ptr uint8](addr data[0]), data.len.csize_t)
 
 proc tx*(this: var MidiUsbTransport, buffer: openArray[byte]) =
   ## Transmit MIDI data from a byte array
-  this.tx(cast[ptr uint8](unsafeAddr buffer[0]), buffer.len.csize_t)
+  this.tx(cast[ptr uint8](addr buffer[0]), buffer.len.csize_t)
 
 when isMainModule:
   echo "libDaisy USB wrapper"

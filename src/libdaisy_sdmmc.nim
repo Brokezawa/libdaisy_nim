@@ -244,7 +244,7 @@ proc writeFile*(path: cstring, data: openArray[uint8]): FRESULT =
     return
   
   var bytesWritten: UINT = 0
-  result = f_write(addr file, unsafeAddr data[0], UINT(len(data)), addr bytesWritten)
+  result = f_write(addr file, addr data[0], UINT(len(data)), addr bytesWritten)
   
   discard f_sync(addr file)
   discard f_close(addr file)
@@ -261,7 +261,7 @@ proc appendFile*(path: cstring, data: openArray[uint8]): FRESULT =
     return
   
   var bytesWritten: UINT = 0
-  result = f_write(addr file, unsafeAddr data[0], UINT(len(data)), addr bytesWritten)
+  result = f_write(addr file, addr data[0], UINT(len(data)), addr bytesWritten)
   
   discard f_sync(addr file)
   discard f_close(addr file)
