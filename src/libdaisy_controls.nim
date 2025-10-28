@@ -41,10 +41,9 @@
 ## ```
 
 # Import Pin type from main module
-import libdaisy
-
 # Import libdaisy which provides the macro system
 import libdaisy
+
 
 # Use the macro system for this module's compilation unit
 useDaisyModules(controls, adc)

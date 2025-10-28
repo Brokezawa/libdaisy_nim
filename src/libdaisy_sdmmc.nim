@@ -212,29 +212,33 @@ proc newFatFSConfig*(): FatFSConfig =
 
 # Higher-level convenience functions
 
-proc readFile*(path: string): tuple[result: FRESULT, data: seq[uint8]] =
-  ## Read entire file into memory
+proc readFile*(path: cstring, buffer: var openArray[uint8], 
+               bytesRead: var int): FRESULT =
+  ## Read file into provided buffer (safe for embedded)
+  ## Returns number of bytes actually read in bytesRead parameter
   var file: FIL
-  result.result = f_open(addr file, path.cstring, FA_READ)
+  result = f_open(addr file, path, FA_READ)
   
-  if result.result != FR_OK:
+  if result != FR_OK:
+    bytesRead = 0
     return
   
   let fileSize = f_size(addr file)
-  result.data = newSeq[uint8](fileSize)
+  let toRead = min(fileSize, FSIZE_t(buffer.len))
   
-  var bytesRead: UINT = 0
-  result.result = f_read(addr file, addr result.data[0], UINT(fileSize), addr bytesRead)
+  var br: UINT = 0
+  result = f_read(addr file, addr buffer[0], UINT(toRead), addr br)
+  bytesRead = int(br)
   
   discard f_close(addr file)
   
-  if bytesRead != fileSize:
-    result.result = FR_DISK_ERR
+  if br != toRead:
+    result = FR_DISK_ERR
 
-proc writeFile*(path: string, data: openArray[uint8]): FRESULT =
+proc writeFile*(path: cstring, data: openArray[uint8]): FRESULT =
   ## Write data to file (creates or overwrites)
   var file: FIL
-  result = f_open(addr file, path.cstring, FA_WRITE or FA_CREATE_ALWAYS)
+  result = f_open(addr file, path, FA_WRITE or FA_CREATE_ALWAYS)
   
   if result != FR_OK:
     return
@@ -248,10 +252,10 @@ proc writeFile*(path: string, data: openArray[uint8]): FRESULT =
   if bytesWritten != UINT(len(data)):
     result = FR_DISK_ERR
 
-proc appendFile*(path: string, data: openArray[uint8]): FRESULT =
+proc appendFile*(path: cstring, data: openArray[uint8]): FRESULT =
   ## Append data to file (creates if doesn't exist)
   var file: FIL
-  result = f_open(addr file, path.cstring, FA_WRITE or FA_OPEN_APPEND)
+  result = f_open(addr file, path, FA_WRITE or FA_OPEN_APPEND)
   
   if result != FR_OK:
     return
@@ -262,72 +266,62 @@ proc appendFile*(path: string, data: openArray[uint8]): FRESULT =
   discard f_sync(addr file)
   discard f_close(addr file)
 
-proc appendFile*(path: string, data: string): FRESULT =
-  ## Append string to file (creates if doesn't exist)
-  appendFile(path, data.toOpenArrayByte(0, data.len - 1))
-
-proc readTextFile*(path: string): tuple[result: FRESULT, text: string] =
-  ## Read text file as string
-  let readResult = readFile(path)
-  result.result = readResult.result
-  
-  if result.result == FR_OK:
-    result.text = newString(len(readResult.data))
-    for i in 0..<len(readResult.data):
-      result.text[i] = char(readResult.data[i])
-
-proc writeTextFile*(path: string, text: string): FRESULT =
-  ## Write string to text file
-  var data = newSeq[uint8](len(text))
-  for i in 0..<len(text):
-    data[i] = uint8(text[i])
-  result = writeFile(path, data)
-
-proc fileExists*(path: string): bool =
+proc fileExists*(path: cstring): bool =
   ## Check if file exists
   var info: FILINFO
-  result = f_stat(path.cstring, addr info) == FR_OK
+  result = f_stat(path, addr info) == FR_OK
 
-proc getFileSize*(path: string): int =
+proc getFileSize*(path: cstring): int =
   ## Get file size in bytes, returns -1 on error
   var info: FILINFO
-  if f_stat(path.cstring, addr info) == FR_OK:
+  if f_stat(path, addr info) == FR_OK:
     result = int(info.fsize)
   else:
     result = -1
 
-proc listDirectory*(path: string): tuple[result: FRESULT, files: seq[string]] =
-  ## List files in directory
+proc listDirectory*(path: cstring, filenames: var openArray[array[256, char]], 
+                    maxFiles: int): tuple[result: FRESULT, count: int] =
+  ## List files in directory into provided buffer
+  ## filenames: buffer for storing filenames (each up to 256 chars)
+  ## maxFiles: maximum number of files to read (should be <= filenames.len)
+  ## Returns: result code and number of files found
   var dir: DIR
-  result.result = f_opendir(addr dir, path.cstring)
+  result.result = f_opendir(addr dir, path)
+  result.count = 0
   
   if result.result != FR_OK:
     return
   
-  result.files = @[]
+  let limit = min(maxFiles, filenames.len)
   
-  while true:
+  while result.count < limit:
     var info: FILINFO
     let res = f_readdir(addr dir, addr info)
     
     if res != FR_OK or info.fname[0] == '\0':
       break
     
-    result.files.add($cast[cstring](addr info.fname[0]))
+    # Copy filename to buffer
+    var i = 0
+    while i < 255 and info.fname[i] != '\0':
+      filenames[result.count][i] = info.fname[i]
+      inc i
+    filenames[result.count][i] = '\0'
+    inc result.count
   
   discard f_closedir(addr dir)
 
-proc deleteFile*(path: string): FRESULT =
+proc deleteFile*(path: cstring): FRESULT =
   ## Delete a file
-  result = f_unlink(path.cstring)
+  result = f_unlink(path)
 
-proc renameFile*(oldPath: string, newPath: string): FRESULT =
+proc renameFile*(oldPath: cstring, newPath: cstring): FRESULT =
   ## Rename or move a file
-  result = f_rename(oldPath.cstring, newPath.cstring)
+  result = f_rename(oldPath, newPath)
 
-proc createDirectory*(path: string): FRESULT =
+proc createDirectory*(path: cstring): FRESULT =
   ## Create a directory
-  result = f_mkdir(path.cstring)
+  result = f_mkdir(path)
 
 # File attributes
 const

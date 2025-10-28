@@ -209,34 +209,30 @@ proc initSPI*(peripheral: SpiPeripheral, sclkPin, misoPin, mosiPin: Pin,
   {.emit: [result, ".Init(", config, ");"].}
 
 proc transfer*(spi: var SpiHandle, txData: openArray[uint8], 
-               timeout: uint32 = 100): tuple[result: SpiResult, rxData: seq[uint8]] =
+               rxBuffer: var openArray[uint8], timeout: uint32 = 100): SpiResult =
   ## Full-duplex transfer (transmit and receive simultaneously)
-  result.rxData = newSeq[uint8](len(txData))
-  var txBuffer = @txData
-  if txBuffer.len > 0:
-    var txPtr = addr txBuffer[0]
-    var rxPtr = addr result.rxData[0]
-    {.emit: [result.result, " = ", spi, ".BlockingTransmitAndReceive(", txPtr, ", ", rxPtr, ", ", csize_t(len(txData)), ", ", timeout, ");"].}
-  else:
-    result.result = SPI_OK
-
-proc write*(spi: var SpiHandle, data: openArray[uint8], timeout: uint32 = 100): SpiResult =
-  ## Write data via SPI
-  var buffer = @data
-  if buffer.len > 0:
-    var bufPtr = addr buffer[0]
-    {.emit: [result, " = ", spi, ".BlockingTransmit(", bufPtr, ", ", csize_t(len(data)), ", ", timeout, ");"].}
+  ## txData and rxBuffer must be same length
+  if txData.len != rxBuffer.len:
+    return SPI_ERR
+  if txData.len > 0:
+    {.emit: [result, " = ", spi, ".BlockingTransmitAndReceive((uint8_t*)&", txData, "[0], &", rxBuffer, "[0], ", csize_t(len(txData)), ", ", timeout, ");"].}
   else:
     result = SPI_OK
 
-proc read*(spi: var SpiHandle, count: int, timeout: uint32 = 100): tuple[result: SpiResult, data: seq[uint8]] =
-  ## Read data via SPI
-  result.data = newSeq[uint8](count)
-  if count > 0:
-    var dataPtr = addr result.data[0]
-    {.emit: [result.result, " = ", spi, ".BlockingReceive(", dataPtr, ", ", uint16(count), ", ", timeout, ");"].}
+proc write*(spi: var SpiHandle, data: openArray[uint8], timeout: uint32 = 100): SpiResult =
+  ## Write data via SPI
+  if data.len > 0:
+    {.emit: [result, " = ", spi, ".BlockingTransmit((uint8_t*)&", data, "[0], ", csize_t(len(data)), ", ", timeout, ");"].}
   else:
-    result.result = SPI_OK
+    result = SPI_OK
+
+proc read*(spi: var SpiHandle, buffer: var openArray[uint8], timeout: uint32 = 100): SpiResult =
+  ## Read data via SPI into provided buffer
+  if buffer.len > 0:
+    var dataPtr = addr buffer[0]
+    {.emit: [result, " = ", spi, ".BlockingReceive(", dataPtr, ", ", uint16(buffer.len), ", ", timeout, ");"].}
+  else:
+    result = SPI_OK
 
 proc writeByte*(spi: var SpiHandle, data: uint8, timeout: uint32 = 100): SpiResult =
   ## Write a single byte
@@ -268,26 +264,30 @@ proc readRegister*(spi: var SpiHandle, regAddr: uint8,
   result.result = spi.cppBlockingTransmitAndReceive(addr txData[0], addr rxData[0], 2, timeout)
   result.value = rxData[1]
 
-proc readRegisters*(spi: var SpiHandle, regAddr: uint8, count: int,
-                    timeout: uint32 = 100): tuple[result: SpiResult, data: seq[uint8]] =
-  ## Read multiple bytes from consecutive registers
-  result.data = newSeq[uint8](count + 1)
-  var txData = newSeq[uint8](count + 1)
-  txData[0] = regAddr
+proc readRegisters*(spi: var SpiHandle, regAddr: uint8, buffer: var openArray[uint8],
+                    timeout: uint32 = 100): SpiResult =
+  ## Read multiple bytes from consecutive registers into provided buffer
+  let count = buffer.len
+  if count == 0:
+    return SPI_OK
   
-  if count > 0:
-    result.result = spi.cppBlockingTransmitAndReceive(
-      addr txData[0], 
-      addr result.data[0], 
-      csize_t(count + 1), 
-      timeout
-    )
-    
-    # Remove the first byte (echo of register address)
-    if result.result == SPI_OK:
-      result.data.delete(0)
-  else:
-    result.result = SPI_OK
+  var txData: array[256, uint8]  # Max SPI transfer size
+  if count >= 256:
+    return SPI_ERR
+  
+  txData[0] = regAddr
+  var rxData: array[256, uint8]
+  
+  result = spi.cppBlockingTransmitAndReceive(
+    addr txData[0], 
+    addr rxData[0], 
+    csize_t(count + 1), 
+    timeout
+  )
+  
+  if result == SPI_OK:
+    for i in 0..<count:
+      buffer[i] = rxData[i + 1]
 
 # Common SPI modes
 const

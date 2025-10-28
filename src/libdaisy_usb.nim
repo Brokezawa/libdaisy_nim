@@ -171,14 +171,14 @@ proc newMidiUsbTransportConfig*(): MidiUsbTransportConfig {.importcpp: "daisy::M
 # Helper procs for USBHostConfig initialization
 proc newUSBHostConfig*(): USBHostConfig {.importcpp: "daisy::USBHostHandle::Config()", constructor, header: "hid/usb_host.h".}
 
-# Convenience procs for transmitting strings
-proc transmitInternal*(this: var UsbHandle, data: string): UsbResult =
-  ## Transmit a string via internal USB
-  result = this.transmitInternal(cast[ptr uint8](unsafeAddr data[0]), data.len.csize_t)
+# Convenience procs for transmitting data
+proc transmitInternal*(this: var UsbHandle, data: cstring): UsbResult =
+  ## Transmit a C string via internal USB
+  result = this.transmitInternal(cast[ptr uint8](data), data.len.csize_t)
 
-proc transmitExternal*(this: var UsbHandle, data: string): UsbResult =
-  ## Transmit a string via external USB
-  result = this.transmitExternal(cast[ptr uint8](unsafeAddr data[0]), data.len.csize_t)
+proc transmitExternal*(this: var UsbHandle, data: cstring): UsbResult =
+  ## Transmit a C string via external USB
+  result = this.transmitExternal(cast[ptr uint8](data), data.len.csize_t)
 
 proc transmitInternal*(this: var UsbHandle, data: openArray[byte]): UsbResult =
   ## Transmit a byte array via internal USB
