@@ -37,6 +37,35 @@ const adcTypedefs* = [
   "AdcChannelConfig::MuxPin MuxPin"
 ]
 
+# PWM module typedefs
+const pwmTypedefs* = [
+  "PWMHandle PwmHandle",
+  "PWMHandle::Config PwmConfig",
+  "PWMHandle::Config::Peripheral PwmPeripheral",
+  "PWMHandle::Result PwmResult",
+  "PWMHandle::Channel PwmChannel",
+  "PWMHandle::Channel::Config PwmChannelConfig",
+  "PWMHandle::Channel::Config::Polarity PwmPolarity"
+]
+
+# OLED module typedefs
+const oledTypedefs* = [
+  "SSD130xI2CTransport SSD130xI2CTransport",
+  "SSD130xI2CTransport::Config SSD130xI2CTransportConfig",
+  "SSD130x4WireSpiTransport SSD130x4WireSpiTransport",
+  "SSD130x4WireSpiTransport::Config SSD130x4WireSpiTransportConfig",
+  "SSD130xI2c128x64Driver OledDisplay128x64I2c",
+  "SSD130xI2c128x32Driver OledDisplay128x32I2c",
+  "SSD130xI2c64x48Driver OledDisplay64x48I2c",
+  "SSD130xI2c64x32Driver OledDisplay64x32I2c",
+  "SSD130x4WireSpi128x64Driver OledDisplay128x64Spi",
+  "SSD130x4WireSpi128x32Driver OledDisplay128x32Spi",
+  "SSD130x4WireSpi64x48Driver OledDisplay64x48Spi",
+  "SSD130x4WireSpi64x32Driver OledDisplay64x32Spi",
+  "SSD130xI2c128x64Driver::Config OledDisplayI2cConfig",
+  "SSD130x4WireSpi128x64Driver::Config OledDisplaySpiConfig"
+]
+
 # I2C module typedefs
 const i2cTypedefs* = [
   "I2CHandle::Config I2CConfig",
@@ -71,8 +100,8 @@ const usbTypedefs* = [
 ]
 
 # All typedefs combined (for full inclusion)
-const daisyTypedefsList* = @coreTypedefs & @controlsTypedefs & @adcTypedefs & 
-                           @i2cTypedefs & @spiTypedefs & @sdramTypedefs & @usbTypedefs
+const daisyTypedefsList* = @coreTypedefs & @controlsTypedefs & @adcTypedefs & @pwmTypedefs &
+                           @oledTypedefs & @i2cTypedefs & @spiTypedefs & @sdramTypedefs & @usbTypedefs
 
 # ============================================================================
 # C++ Header Includes
@@ -91,6 +120,12 @@ proc getModuleHeaders*(moduleName: string): string =
 """
   of "adc":
     """#include "per/adc.h"
+"""
+  of "pwm":
+    """#include "per/pwm.h"
+"""
+  of "oled":
+    """#include "dev/oled_ssd130x.h"
 """
   of "i2c":
     """#include "per/i2c.h"
@@ -121,6 +156,8 @@ const daisyHeaders* = """
 #include "per/spi.h"
 #include "per/uart.h"
 #include "per/adc.h"
+#include "per/pwm.h"
+#include "dev/oled_ssd130x.h"
 """
 
 # ============================================================================
@@ -234,6 +271,8 @@ macro useDaisyModules*(modules: varargs[untyped]): untyped =
   ## - `core` - Always included automatically (GPIO, SampleRate, BoardVersion)
   ## - `controls` - Switches, encoders (Switch types)
   ## - `adc` - ADC types (AdcChannelConfig, OverSampling, etc.)
+  ## - `pwm` - PWM types (PwmPeripheral, PwmChannel, etc.)
+  ## - `oled` - OLED display types (OledDisplay128x64I2c, etc.)
   ## - `i2c` - I2C types (Speed, Peripheral, Mode)
   ## - `spi` - SPI types (Peripheral, Mode, ClockPolarity, etc.)
   ## - `serial` - UART types
@@ -259,6 +298,8 @@ macro useDaisyModules*(modules: varargs[untyped]): untyped =
   # Collect which modules to include
   var includeControls = false
   var includeAdc = false
+  var includePwm = false
+  var includeOled = false
   var includeI2c = false
   var includeSpi = false
   var includeSerial = false
@@ -271,6 +312,8 @@ macro useDaisyModules*(modules: varargs[untyped]): untyped =
     case moduleName
     of "controls": includeControls = true
     of "adc": includeAdc = true
+    of "pwm": includePwm = true
+    of "oled": includeOled = true
     of "i2c": includeI2c = true
     of "spi": includeSpi = true
     of "serial": includeSerial = true
@@ -279,13 +322,15 @@ macro useDaisyModules*(modules: varargs[untyped]): untyped =
     of "core": discard  # Always included
     else:
       error("Unknown module: " & moduleName & 
-            ". Available: core, controls, adc, i2c, spi, serial, sdram, usb")
+            ". Available: core, controls, adc, pwm, oled, i2c, spi, serial, sdram, usb")
   
   # Build headers string
   var headersStr = "/*INCLUDESECTION*/\n"
   headersStr.add(getModuleHeaders("core"))
   if includeControls: headersStr.add(getModuleHeaders("controls"))
   if includeAdc: headersStr.add(getModuleHeaders("adc"))
+  if includePwm: headersStr.add(getModuleHeaders("pwm"))
+  if includeOled: headersStr.add(getModuleHeaders("oled"))
   if includeI2c: headersStr.add(getModuleHeaders("i2c"))
   if includeSpi: headersStr.add(getModuleHeaders("spi"))
   if includeSerial: headersStr.add(getModuleHeaders("serial"))
@@ -318,6 +363,8 @@ macro useDaisyModules*(modules: varargs[untyped]): untyped =
   typedefsStr.add(buildTypedefsString(coreTypedefs))
   if includeControls: typedefsStr.add(buildTypedefsString(controlsTypedefs))
   if includeAdc: typedefsStr.add(buildTypedefsString(adcTypedefs))
+  if includePwm: typedefsStr.add(buildTypedefsString(pwmTypedefs))
+  if includeOled: typedefsStr.add(buildTypedefsString(oledTypedefs))
   if includeI2c: typedefsStr.add(buildTypedefsString(i2cTypedefs))
   if includeSpi: typedefsStr.add(buildTypedefsString(spiTypedefs))
   if includeSdram: typedefsStr.add(buildTypedefsString(sdramTypedefs))

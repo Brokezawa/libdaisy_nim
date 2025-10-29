@@ -94,7 +94,7 @@ git checkout -b fix/bug-description
 **5. Testing**
 - Add test cases
 - Test on real hardware
-- Report bugs
+ Report bugs
 
 ## Wrapper Development Guide
 
