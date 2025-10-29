@@ -39,14 +39,14 @@ The wrapper follows these core principles:
 
 ```
 ┌─────────────────────────────────────┐
-│   User Nim Code (examples/*.nim)   │
+│   User Nim Code (examples/*.nim)    │
 ├─────────────────────────────────────┤
-│   Wrapper Modules (src/*.nim)      │
+│   Wrapper Modules (src/*.nim)       │
 │   - Type definitions                │
 │   - Nim proc declarations           │
 │   - Macro-generated {.emit.}        │
 ├─────────────────────────────────────┤
-│   Nim → C++ FFI (importcpp, emit)  │
+│   Nim → C++ FFI (importcpp, emit)   │
 ├─────────────────────────────────────┤
 │   libDaisy C++ Library              │
 │   - Hardware abstraction            │
