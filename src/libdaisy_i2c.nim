@@ -97,13 +97,13 @@ type
 
 # Low-level C++ interface
 proc Init(this: var I2CHandle, config: I2CConfig): I2CResult {.importcpp: "#.Init(@)".}
-proc GetConfig(this: I2CHandle): I2CConfig {.importcpp: "#.GetConfig()".}
+proc GetConfig(this: I2CHandle): I2CConfig {.importcpp: "#.GetConfig()", inline.}
 
 proc TransmitBlocking(this: var I2CHandle, address: uint16, data: ptr uint8, 
-                        size: uint16, timeout: uint32): I2CResult {.importcpp: "#.TransmitBlocking(@)".}
+                        size: uint16, timeout: uint32): I2CResult {.importcpp: "#.TransmitBlocking(@)", inline.}
 
 proc ReceiveBlocking(this: var I2CHandle, address: uint16, data: ptr uint8, 
-                       size: uint16, timeout: uint32): I2CResult {.importcpp: "#.ReceiveBlocking(@)".}
+                       size: uint16, timeout: uint32): I2CResult {.importcpp: "#.ReceiveBlocking(@)", inline.}
 
 proc TransmitDma(this: var I2CHandle, address: uint16, data: ptr uint8, size: uint16, 
                    callback: I2CCallbackFunctionPtr, callback_context: pointer): I2CResult {.importcpp: "#.TransmitDma(@)".}
@@ -123,7 +123,7 @@ proc WriteDataAtAddress(this: var I2CHandle, address: uint16, mem_address: uint1
 {.pop.} # header
 
 # C++ constructor
-proc cppNewI2CHandle(): I2CHandle {.importcpp: "daisy::I2CHandle()", constructor, header: "daisy_seed.h".}
+proc cppNewI2CHandle(): I2CHandle {.importcpp: "daisy::I2CHandle()", constructor, header: "daisy_seed.h", inline.}
 
 # =============================================================================
 # High-Level Nim-Friendly API

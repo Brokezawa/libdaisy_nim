@@ -40,7 +40,7 @@ git clone https://github.com/YOUR_USERNAME/libdaisy_nim
 cd libdaisy_nim
 
 # Add upstream remote
-git remote add upstream https://github.com/ORIGINAL/libdaisy_nim
+git remote add upstream https://github.com/Brokezawa/libdaisy_nim
 ```
 
 ## Development Setup
@@ -643,60 +643,40 @@ Any other information...
 
 ### High Priority
 
-**1. ADC Wrapper**
-- **Files:** `src/per/adc.h`
-- **Difficulty:** Medium
-- **Impact:** High (needed for CV inputs, knobs)
-- **Status:** Not started
-
-**2. PWM Wrapper**
-- **Files:** `src/per/pwm.h`
-- **Difficulty:** Low
-- **Impact:** Medium (LED dimming, motor control)
-- **Status:** Not started
-
-**3. OLED Display Driver**
-- **Files:** `src/dev/oled_ssd130x.h`
-- **Difficulty:** Medium
-- **Impact:** High (visual feedback)
-- **Status:** Not started
-
-### Medium Priority
-
-**4. DAC Wrapper**
+**1. DAC Wrapper**
 - **Files:** `src/per/dac.h`
 - **Difficulty:** Low
 - **Impact:** Medium (CV outputs)
 - **Status:** Not started
 
-**5. WavPlayer Utility**
+**2. WavPlayer Utility**
 - **Files:** `src/util/wavplayer.h`
 - **Difficulty:** Medium
 - **Impact:** High (audio playback)
 - **Status:** Not started
 
-**6. More Board Support**
+**3. More Board Support**
 - **Files:** `src/daisy_patch.h`, etc.
 - **Difficulty:** Low to Medium
 - **Impact:** Medium (community value)
 - **Status:** Daisy Patch partially documented
 
-### Low Priority (But Welcome!)
+### Medium Priority
 
-**7. Additional Device Drivers**
+**4. Additional Device Drivers**
 - IMU, codecs, sensors, etc.
 - See TECHNICAL_REPORT.md for full list
 
-**8. UI Framework Wrapper**
+**5. UI Framework Wrapper**
 - Menu system
 - Button/Pot monitoring
 
-**9. More Examples**
+**6. More Examples**
 - Complex audio processing
 - Multi-peripheral integration
 - Real-world applications
 
-**10. Documentation**
+**7. Documentation**
 - Tutorials
 - API reference expansion
 - Example explanations

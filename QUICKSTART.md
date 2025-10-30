@@ -105,7 +105,7 @@ Clone this wrapper as a sibling to libDaisy:
 cd ~/Projects  # Same parent as libDaisy
 
 # Clone the wrapper
-git clone https://github.com/yourusername/libdaisy_nim
+git clone https://github.com/Brokezawa/libdaisy_nim
 
 # Your structure should be:
 # ~/Projects/
