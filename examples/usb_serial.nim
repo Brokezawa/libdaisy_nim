@@ -1,4 +1,4 @@
-## USB Serial Echo Example - Clean API
+## USB Serial Echo Example
 ## 
 ## This example demonstrates USB CDC (Communications Device Class) for serial communication.
 ## It creates a virtual serial port that echoes back any data received.

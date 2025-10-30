@@ -56,7 +56,7 @@ make
 
 ```bash
 cd /path/to/libdaisy_nim/examples
-./test_all_clean.sh
+./test_all.sh
 ```
 
 All examples should compile successfully.
@@ -257,7 +257,7 @@ emitDacIncludes()
 
 **Step 6: Create Example**
 
-Create `examples/dac_simple_clean.nim`:
+Create `examples/dac_simple.nim`:
 
 ```nim
 import ../src/libdaisy
@@ -288,7 +288,7 @@ when isMainModule:
 ```bash
 cd examples
 # Update Makefile TARGET
-sed -i 's/TARGET = .*/TARGET = dac_simple_clean/' Makefile
+sed -i "s/TARGET = .*/TARGET = dac_simple/" Makefile/' Makefile
 make
 # Test on hardware
 make program-dfu
@@ -312,7 +312,7 @@ Digital to Analog Converter for CV outputs.
 - `init(dac, config)` - Initialize DAC
 - `writeValue(dac, channel, value)` - Write 12-bit value (0-4095)
 
-**Example:** See `examples/dac_simple_clean.nim`
+**Example:** See `examples/dac_simple.nim`
 ```
 
 ### Common Pitfalls
@@ -366,7 +366,7 @@ All examples must compile:
 
 ```bash
 cd examples
-./test_all_clean.sh
+./test_all.sh
 ```
 
 Expected output:
@@ -395,11 +395,11 @@ Ensure you haven't broken existing functionality:
 
 ```bash
 # Test that existing examples still compile
-./test_all_clean.sh
+./test_all.sh
 
 # Try 2-3 existing examples on hardware
-make TARGET=blink_clean program-dfu
-make TARGET=i2c_scanner_clean program-dfu
+make TARGET=blink program-dfu
+make TARGET=i2c_scanner program-dfu
 ```
 
 ## Code Style Guidelines

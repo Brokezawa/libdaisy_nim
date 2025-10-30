@@ -1,4 +1,4 @@
-## SDRAM Test Example - Clean API
+## SDRAM Test Example
 ## 
 ## This example demonstrates using external SDRAM for large data buffers.
 ## It allocates a buffer in SDRAM, fills it with test data, and verifies access.

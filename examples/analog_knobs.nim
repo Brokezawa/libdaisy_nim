@@ -1,4 +1,4 @@
-## Analog Knob Control Example - Clean API
+## Analog Knob Control Example
 import panicoverride
 ##
 ## This example reads analog inputs from potentiometers

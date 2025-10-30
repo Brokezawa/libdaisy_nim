@@ -3,7 +3,7 @@ pass=0
 fail=0
 failed_examples=""
 
-for example in *_clean.nim; do
+for example in *.nim; do
   base="${example%.nim}"
   echo "========================================" 
   echo "Testing: $example"

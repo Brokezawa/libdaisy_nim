@@ -1,4 +1,4 @@
-## Button and LED Example - Clean API
+## Button and LED Example
 ##
 ## This example shows how to use a button to control the LED
 

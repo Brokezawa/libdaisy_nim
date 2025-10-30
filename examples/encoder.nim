@@ -1,4 +1,4 @@
-## Encoder Control Example - Clean API
+## Encoder Control Example
 import panicoverride
 ##
 ## This example shows using a rotary encoder to control a parameter
