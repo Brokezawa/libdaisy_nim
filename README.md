@@ -283,14 +283,17 @@ Contributions are welcome! See **[CONTRIBUTING.md](CONTRIBUTING.md)** for:
 
 ## Status
 
-**Current Version:** 0.1.0 (Pre-release)
+**Current Version:** 0.2.0 
 
 **Stability:**
 - ✅ Core API - Stable, tested
 - ✅ Peripherals - I2C, SPI, UART working
 - ✅ USB - CDC and MIDI working
 - ✅ Storage - SD card and SDRAM working  
-- 🚧 ADC/DAC - Planned
+- ✅ ADC - ADC multiplexing working  
+- ✅ PWM - working  
+- ✅ OLED screen (SSD1306) - working  
+- 🚧 DAC - Planned
 - 🚧 Other boards - Planned (Patch, Pod, Field, etc.)
 
 **Production Readiness:** Experimental - use at your own risk. APIs may change.
