@@ -143,7 +143,7 @@ Each example is a complete, working program that compiles and runs on hardware.
 
 - **[QUICKSTART.md](QUICKSTART.md)** - Get started in 5 minutes
 - **[API_REFERENCE.md](API_REFERENCE.md)** - Complete API documentation
-- **[EXAMPLES.md](EXAMPLES.md)** - Detailed example descriptions
+- **[EXAMPLES.md](examples/EXAMPLES.md)** - Detailed example descriptions
 - **[TECHNICAL_REPORT.md](TECHNICAL_REPORT.md)** - How the wrapper works internally
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - How to contribute to the project
 
@@ -156,9 +156,7 @@ libdaisy_nim/
 ├── API_REFERENCE.md       # Complete API documentation
 ├── TECHNICAL_REPORT.md    # Technical internals & architecture
 ├── CHANGELOG.md           # Version history
-├── RELEASE_NOTES_v0.2.0.md # v0.2.0 release details
 ├── CONTRIBUTING.md        # Contribution guide
-├── EXAMPLES.md            # Example descriptions
 ├── LICENSE                # License file
 ├── libdaisy_nim.nimble    # Nimble package file
 │
@@ -183,7 +181,6 @@ libdaisy_nim/
     ├── nim.cfg               # Nim compiler configuration
     ├── test_all.sh     # Test all examples
     ├── *.nim           # Example programs
-    └── .gitignore
 ```
 
 ## Technical Highlights
