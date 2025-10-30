@@ -121,16 +121,16 @@ type
 
 # Low-level C++ interface
 proc Init(this: var SpiHandle, config: SpiConfig): SpiResult {.importcpp: "#.Init(@)".}
-proc GetConfig(this: SpiHandle): SpiConfig {.importcpp: "#.GetConfig()".}
+proc GetConfig(this: SpiHandle): SpiConfig {.importcpp: "#.GetConfig()", inline.}
 
 proc BlockingTransmit(this: var SpiHandle, buff: ptr uint8, size: csize_t, 
-                        timeout: uint32 = 100): SpiResult {.importcpp: "#.BlockingTransmit(@)".}
+                        timeout: uint32 = 100): SpiResult {.importcpp: "#.BlockingTransmit(@)", inline.}
 
 proc BlockingReceive(this: var SpiHandle, buffer: ptr uint8, size: uint16, 
-                       timeout: uint32): SpiResult {.importcpp: "#.BlockingReceive(@)".}
+                       timeout: uint32): SpiResult {.importcpp: "#.BlockingReceive(@)", inline.}
 
 proc BlockingTransmitAndReceive(this: var SpiHandle, tx_buff: ptr uint8, rx_buff: ptr uint8, 
-                                  size: csize_t, timeout: uint32 = 100): SpiResult {.importcpp: "#.BlockingTransmitAndReceive(@)".}
+                                  size: csize_t, timeout: uint32 = 100): SpiResult {.importcpp: "#.BlockingTransmitAndReceive(@)", inline.}
 
 proc DmaTransmit(this: var SpiHandle, buff: ptr uint8, size: csize_t, 
                    start_callback: SpiStartCallbackFunctionPtr, 
@@ -153,7 +153,7 @@ proc CheckError(this: var SpiHandle): cint {.importcpp: "#.CheckError()".}
 {.pop.} # header
 
 # Nim-friendly constructors and helpers
-proc cppNewSpiHandle(): SpiHandle {.importcpp: "daisy::SpiHandle()", constructor, header: "daisy_seed.h".}
+proc cppNewSpiHandle(): SpiHandle {.importcpp: "daisy::SpiHandle()", constructor, header: "daisy_seed.h", inline.}
 
 # =============================================================================
 # High-Level Nim-Friendly API

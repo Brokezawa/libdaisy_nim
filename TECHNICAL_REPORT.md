@@ -4,8 +4,8 @@
 
 This document explains the technical architecture of the libdaisy_nim wrapper, how it bridges Nim and C++ code, what features from libDaisy are currently implemented, what's missing, and how to contribute.
 
-**Author:** libdaisy_nim contributors  
-**Version:** 0.1.0  
+**Author:** Maxime Sidibe
+**Version:** 0.2.0  
 **Date:** October 2025  
 **Target:** Developers, contributors, and technical users
 
@@ -62,6 +62,8 @@ The wrapper follows these core principles:
 src/
 ├── libdaisy.nim           # Core: DaisySeed, GPIO, Audio, System
 ├── libdaisy_macros.nim    # Compile-time include generation
+├── libdaisy_adc.nim       # ADC (Analog to Digital Converter)
+├── libdaisy_pwm.nim       # PWM (Pulse Width Modulation)
 ├── libdaisy_i2c.nim       # I2C communication
 ├── libdaisy_spi.nim       # SPI communication
 ├── libdaisy_serial.nim    # UART serial
@@ -69,6 +71,7 @@ src/
 ├── libdaisy_usb.nim       # USB Device CDC, USB MIDI, USB Host
 ├── libdaisy_sdmmc.nim     # SD card with FatFS
 ├── libdaisy_sdram.nim     # External SDRAM memory
+├── libdaisy_oled.nim      # OLED display driver (SSD1306)
 ├── libdaisy_controls.nim  # Switches, encoders, controls
 └── panicoverride.nim      # Embedded panic handler
 ```
@@ -311,19 +314,41 @@ This happens entirely at compile time - zero runtime cost!
 - **Control types** - Various input abstractions
 - **Status:** Working
 
+#### ADC (`libdaisy_adc.nim`) - **NEW in v0.2.0**
+- **Multi-channel** - Up to 8 single-ended or 4 differential channels
+- **Multiplexed inputs** - 4 channels x 8 mux inputs = 32 analog inputs
+- **Oversampling** - Configurable oversampling ratios
+- **DMA-based** - Continuous background conversion
+- **Float conversion** - Direct 0.0-1.0 values for convenience
+- **Status:** Production ready, fully tested
+
+#### PWM (`libdaisy_pwm.nim`) - **NEW in v0.2.0**
+- **Multiple timers** - TIM1, TIM2, TIM3, TIM4, TIM5, TIM8
+- **4 channels per timer** - Independent duty cycle control
+- **Configurable frequency** - Via prescaler and period
+- **Float API** - 0.0-1.0 duty cycle or raw values
+- **LED dimming** - Perfect for RGB LEDs
+- **Servo control** - Precise angle control
+- **Status:** Production ready, tested
+
+#### OLED Display (`libdaisy_oled.nim`) - **NEW in v0.2.0**
+- **SSD1306 driver** - Industry-standard OLED controller
+- **Multiple sizes** - 128x64, 128x32, 96x16 support
+- **I2C transport** - Standard I2C communication
+- **SPI transport** - High-speed SPI alternative
+- **Generic templates** - Type-safe size selection
+- **Graphics** - Pixel drawing, lines, shapes, text
+- **Status:** Production ready, tested
+
 ### 🚧 Partially Implemented
 
-#### ADC (Analog to Digital Converter)
-- **Current:** Basic ADC reading possible via GPIO
-- **Missing:** Multi-channel ADC wrapper, calibration, oversampling
-- **Priority:** High - needed for CV inputs, knobs
-- **Difficulty:** Medium
+#### Device Drivers (`src/dev/`)
+libDaisy includes drivers for many external devices. Some are wrapped:
 
-#### PWM (Pulse Width Modulation)
-- **Current:** Not wrapped
-- **Missing:** PWM timer configuration, duty cycle control
-- **Priority:** Medium - useful for LED dimming, motor control
-- **Difficulty:** Low
+**Displays:**
+- ✅ OLED SSD1306 (wrapped in v0.2.0)
+- ⏳ Other OLEDs (SH1106, SSD1327, SSD1351)
+- ⏳ LCD (HD44780)
 
 ### ❌ Not Yet Implemented
 
@@ -344,11 +369,12 @@ Currently only **Daisy Seed** is supported. Other boards need wrappers:
 **Difficulty:** Low (similar to Seed, just different pin configs)
 
 #### Device Drivers (`src/dev/`)
-libDaisy includes drivers for many external devices. None are wrapped yet:
+libDaisy includes drivers for many external devices. Some are wrapped:
 
 **Displays:**
-- OLED (SH1106, SSD1306, SSD1327, SSD1351)
-- LCD (HD44780)
+- ✅ OLED SSD1306 (wrapped in v0.2.0)
+- ⏳ Other OLEDs (SH1106, SSD1327, SSD1351)
+- ⏳ LCD (HD44780)
 
 **Sensors:**
 - IMU (ICM20948)
@@ -613,27 +639,12 @@ emitMyPeripheralIncludes()
 
 These would have immediate impact:
 
-**1. ADC Wrapper** (High Priority)
-- Wrap `per/adc.h`
-- Multi-channel support
-- Example reading CV inputs
-
-**2. PWM Wrapper** (Medium Priority)
-- Wrap `per/pwm.h`
-- Duty cycle control
-- Example for LED dimming
-
-**3. OLED Display Driver** (High Impact)
-- Wrap `dev/oled_ssd130x.h`
-- Basic graphics functions
-- Example displaying text
-
-**4. WavPlayer** (High Impact)
+**1. WavPlayer** (High Impact)
 - Wrap `util/wavplayer.h`
 - Audio file playback
 - Example playing WAV from SD
 
-**5. More Boards** (Community Value)
+**2. More Boards** (Community Value)
 - Daisy Patch wrapper
 - Daisy Pod wrapper
 - Pin mapping utilities
@@ -697,18 +708,21 @@ proc importantFunc*(param: int): bool =
 
 ## Future Roadmap
 
-### Version 0.2.0 (Next Release)
-- ✅ ADC wrapper with examples
-- ✅ PWM wrapper with examples
-- ✅ OLED display driver (SSD1306)
-- ✅ More comprehensive examples
+### Version 0.2.0 (Current Release) ✅
+- ✅ ADC wrapper with multi-channel and multiplexed support
+- ✅ PWM wrapper with 4-channel timer support
+- ✅ OLED display driver (SSD1306) with I2C and SPI
+- ✅ Generic template system for compile-time type safety
+- ✅ Comprehensive examples (24+ working examples)
+- ✅ Performance optimizations (inline pragmas for hot paths)
 - ✅ Improved documentation
 
-### Version 0.3.0
-- ✅ DAC wrapper
-- ✅ WavPlayer/WavWriter utilities
-- ✅ Daisy Patch board support
-- ✅ Performance optimizations
+### Version 0.3.0 (Next Release)
+- ⏳ DAC wrapper for analog output
+- ⏳ WavPlayer/WavWriter utilities for audio files
+- ⏳ Daisy Patch board support
+- ⏳ More OLED drivers (SH1106, SSD1327)
+- ⏳ Additional device drivers (codecs, sensors)
 
 ### Version 0.4.0
 - ✅ More device drivers (IMU, codecs)

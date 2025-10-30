@@ -17,6 +17,7 @@ This wrapper allows you to write firmware for the Daisy Seed embedded audio boar
 - ✅ **Comprehensive** - Covers core audio, peripherals, USB, storage, and more
 - ✅ **Production ready** - 14 tested examples demonstrating real-world usage
 - ✅ **Well documented** - Complete API reference and technical documentation
+- ✅ **Many examples** - 24+ working examples covering all features
 
 ## Quick Start
 
@@ -84,9 +85,9 @@ The Daisy Seed is a powerful embedded audio platform perfect for:
 - ✅ **I2C** - 4 buses, master/slave modes, up to 1MHz
 - ✅ **SPI** - 6 buses, master/slave, full-duplex
 - ✅ **UART** - 6 ports, configurable baud rates
-- ✅ **ADC** - Analog inputs, multi-channel (coming soon)
-- ✅ **PWM** - Hardware PWM output (coming soon)
-- ✅ **DAC** - Analog outputs (coming soon)
+- ✅ **ADC** - Analog inputs, multi-channel, multiplexed
+- ✅ **PWM** - Hardware PWM output, 4 channels per timer
+- ⏳ **DAC** - Analog outputs (coming in v0.3.0)
 
 ### USB
 - ✅ **USB Device CDC** - Virtual serial port over USB
@@ -102,10 +103,11 @@ The Daisy Seed is a powerful embedded audio platform perfect for:
 - ✅ **Switches** - Debounced switch handling, multiple types
 - ✅ **Encoders** - Rotary encoder support with button
 - ✅ **Controls** - Analog knobs, CV inputs (uses ADC)
+- ✅ **OLED Displays** - SSD1306 driver with I2C/SPI support
 
 ## Examples
 
-The `examples/` directory contains 14 production-ready examples:
+The `examples/` directory contains 24+ production-ready examples:
 
 | Category | Example | Description |
 |----------|---------|-------------|
@@ -114,17 +116,25 @@ The `examples/` directory contains 14 production-ready examples:
 | | `gpio_input_clean.nim` | Reading GPIO pins |
 | **Audio** | `audio_passthrough_clean.nim` | Pass audio input to output |
 | | `distortion_effect_clean.nim` | Simple overdrive effect |
-| | `sine_generator_clean.nim` | Generate sine waves (coming soon) |
+| | `sine_wave_clean.nim` | Generate sine waves |
+| **ADC** | `adc_simple_clean.nim` | Single analog input |
+| | `adc_multichannel_clean.nim` | Multiple ADC channels |
+| | `adc_multiplexed_clean.nim` | Multiplexed inputs |
+| | `adc_config_clean.nim` | Custom ADC configuration |
+| | `analog_knobs_clean.nim` | Real-world analog controls |
+| **PWM** | `pwm_led_clean.nim` | LED brightness control |
+| | `pwm_rgb_clean.nim` | RGB LED color mixing |
+| | `pwm_servo_clean.nim` | Servo motor control |
+| **Displays** | `oled_basic_clean.nim` | Basic OLED text |
+| | `oled_graphics_clean.nim` | Drawing shapes and graphics |
+| | `oled_spi_clean.nim` | SPI-based OLED |
+| | `oled_visualizer_clean.nim` | Audio level visualizer |
 | **Peripherals** | `i2c_scanner_clean.nim` | Scan I2C bus for devices |
 | | `spi_basic_clean.nim` | Basic SPI communication |
-| | `serial_echo_clean.nim` | UART echo test |
 | **Advanced** | `midi_input_clean.nim` | MIDI note input |
 | | `encoder_clean.nim` | Rotary encoder reading |
-| | `adc_simple_clean.nim` | Read analog inputs |
-| | `analog_knobs_clean.nim` | Multiple analog controls |
-| **USB/Storage** | `usb_serial_clean.nim` | USB CDC serial port |
-| | `sdram_audio_clean.nim` | Audio delay using SDRAM (coming soon) |
-| | `sdcard_files_clean.nim` | SD card file operations (coming soon) |
+| | `usb_serial_clean.nim` | USB CDC serial port |
+| | `sdram_test_clean.nim` | External memory test |
 
 Each example is a complete, working program that compiles and runs on hardware.
 
@@ -142,8 +152,10 @@ Each example is a complete, working program that compiles and runs on hardware.
 libdaisy_nim/
 ├── README.md              # This file
 ├── QUICKSTART.md          # Quick start guide
-├── API_REFERENCE.md       # API documentation
-├── TECHNICAL_REPORT.md    # Technical internals
+├── API_REFERENCE.md       # Complete API documentation
+├── TECHNICAL_REPORT.md    # Technical internals & architecture
+├── CHANGELOG.md           # Version history
+├── RELEASE_NOTES_v0.2.0.md # v0.2.0 release details
 ├── CONTRIBUTING.md        # Contribution guide
 ├── EXAMPLES.md            # Example descriptions
 ├── LICENSE                # License file
@@ -152,6 +164,9 @@ libdaisy_nim/
 ├── src/                   # Wrapper source code
 │   ├── libdaisy.nim          # Core API (GPIO, audio, system)
 │   ├── libdaisy_macros.nim   # Compile-time macro system
+│   ├── libdaisy_adc.nim      # ADC (analog input)
+│   ├── libdaisy_pwm.nim      # PWM (pulse width modulation)
+│   ├── libdaisy_oled.nim     # OLED displays (SSD1306)
 │   ├── libdaisy_i2c.nim      # I2C communication
 │   ├── libdaisy_spi.nim      # SPI communication
 │   ├── libdaisy_serial.nim   # UART serial
@@ -162,7 +177,7 @@ libdaisy_nim/
 │   ├── libdaisy_controls.nim # Switches & encoders
 │   └── panicoverride.nim     # Embedded panic handler
 │
-└── examples/              # Example programs
+└── examples/              # Example programs (24+)
     ├── Makefile              # Build system
     ├── nim.cfg               # Nim compiler configuration
     ├── test_all_clean.sh     # Test all examples

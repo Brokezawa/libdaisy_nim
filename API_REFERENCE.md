@@ -86,6 +86,320 @@ DPin0..DPin31  # 32 GPIO pins
 
 ---
 
+## ADC Module (libdaisy_adc.nim)
+
+**Import:**
+```nim
+import src/libdaisy_adc
+```
+
+### AdcHandle Object
+
+Analog to Digital Converter for reading analog inputs.
+
+**Configuration:**
+```nim
+type
+  AdcChannelConfig* = object
+    InitMux*: bool        # Enable multiplexed inputs
+    MuxChannels*: uint8   # Number of mux channels (1-8)
+
+var adc: AdcHandle
+var channel1, channel2: AdcChannelConfig
+
+# Simple single-ended channel
+channel1.InitMux = false
+adc.init(addr channel1, 1)  # 1 channel
+
+# Multiplexed channel (4 mux inputs)
+channel2.InitMux = true
+channel2.MuxChannels = 4
+adc.init(addr channel2, 1)  # 1 channel x 4 mux = 4 inputs
+```
+
+**Reading Values:**
+```nim
+# Start continuous conversion
+adc.start()
+
+# Read raw 12-bit value (0-4095)
+let raw = adc.get(0)  # Channel 0
+
+# Read as float (0.0 - 1.0)
+let normalized = adc.getFloat(0)
+
+# Read multiplexed input
+let muxValue = adc.getMuxFloat(0, 2)  # Channel 0, Mux index 2
+
+# Stop conversion
+adc.stop()
+```
+
+**Pin Assignment:**
+Analog pins on Daisy Seed:
+- `PIN_ADC_0` through `PIN_ADC_7` - 8 ADC-capable pins
+- Can be single-ended or differential pairs
+- Multiplexed channels allow 32 total inputs
+
+**High-Level API:**
+```nim
+# Create with specific channels
+let adc = createAdc(1)  # 1 simple channel
+let adc = createAdcMux(1, 8)  # 1 channel with 8 mux inputs
+
+# Read values
+let value = adc.read(0)  # Returns float 0.0-1.0
+```
+
+**Example:**
+```nim
+import src/libdaisy
+import src/libdaisy_adc
+
+var hw = newDaisySeed()
+hw.init()
+
+# Configure ADC for 2 channels
+var channels: array[2, AdcChannelConfig]
+channels[0].InitMux = false
+channels[1].InitMux = false
+
+var adc = newAdcHandle()
+discard adc.init(addr channels[0], 2)
+adc.start()
+
+while true:
+  let knob1 = adc.getFloat(0)
+  let knob2 = adc.getFloat(1)
+  # Use knob values...
+  hw.delayMs(10)
+```
+
+---
+
+## PWM Module (libdaisy_pwm.nim)
+
+**Import:**
+```nim
+import src/libdaisy_pwm
+```
+
+### PwmHandle Object
+
+Pulse Width Modulation for controlling servos, LEDs, motors.
+
+**Configuration:**
+```nim
+type
+  PwmPeripheral* = enum
+    TIM_1, TIM_2, TIM_3, TIM_4, TIM_5, TIM_8
+
+  PwmPolarity* = enum
+    PWM_POL_NORMAL   # High during pulse
+    PWM_POL_INVERTED # Low during pulse
+
+var pwm: PwmHandle
+var pwmCfg: PwmConfig
+var ch1Cfg: PwmChannelConfig
+
+# Configure timer (frequency = clock / (prescaler * period))
+pwmCfg.periph = TIM_2
+pwmCfg.prescaler = 0
+pwmCfg.period = 47999  # ~1kHz at 48MHz clock
+
+# Configure channel
+ch1Cfg.pin = DPin10
+ch1Cfg.polarity = PWM_POL_NORMAL
+
+discard pwm.init(pwmCfg)
+discard pwm.channel1().init(ch1Cfg)
+```
+
+**Setting Duty Cycle:**
+```nim
+# Using float (0.0 = 0%, 1.0 = 100%)
+pwm.channel1().set(0.5)  # 50% duty cycle
+
+# Using raw value
+pwm.channel1().setRaw(24000)  # 50% of period (47999)
+```
+
+**Channel Access:**
+```nim
+var ch1 = pwm.channel1()  # Channel 1
+var ch2 = pwm.channel2()  # Channel 2
+var ch3 = pwm.channel3()  # Channel 3
+var ch4 = pwm.channel4()  # Channel 4
+```
+
+**High-Level API:**
+```nim
+# Create PWM with frequency in Hz
+let pwm = createPwm(TIM_2, 1000)  # 1kHz
+
+# Setup a channel
+pwm.setupChannel(1, DPin10)  # Channel 1 on pin 10
+
+# Set duty cycle
+pwm.setDutyCycle(1, 0.75)  # 75% duty
+```
+
+**Example - LED Dimming:**
+```nim
+import src/libdaisy
+import src/libdaisy_pwm
+
+var hw = newDaisySeed()
+hw.init()
+
+let pwm = createPwm(TIM_2, 1000)  # 1kHz
+pwm.setupChannel(1, DPin10)
+
+var brightness = 0.0
+while true:
+  pwm.setDutyCycle(1, brightness)
+  brightness += 0.01
+  if brightness > 1.0:
+    brightness = 0.0
+  hw.delayMs(20)
+```
+
+**Example - Servo Control:**
+```nim
+# Servo: 50Hz, 1-2ms pulse width
+let pwm = createPwm(TIM_2, 50)  # 50Hz
+pwm.setupChannel(1, DPin10)
+
+proc setServoAngle(pwm: PwmHandle, angle: float) =
+  # Map angle (0-180) to duty (0.05-0.10)
+  let duty = 0.05 + (angle / 180.0) * 0.05
+  pwm.setDutyCycle(1, duty)
+
+pwm.setServoAngle(90.0)  # Center position
+```
+
+---
+
+## OLED Display Module (libdaisy_oled.nim)
+
+**Import:**
+```nim
+import src/libdaisy_oled
+```
+
+### SSD1306 OLED Driver
+
+Generic driver supporting multiple screen sizes and transports.
+
+**Supported Configurations:**
+- **Sizes:** 128x64, 128x32, 96x16 pixels
+- **Transports:** I2C, SPI (4-wire)
+
+**Creating a Display:**
+```nim
+# I2C transport
+var display = newOledDisplay[OledSize128x64, OledI2cTransport]()
+
+# SPI transport
+var display = newOledDisplay[OledSize128x64, OledSpiTransport]()
+```
+
+**Configuration:**
+```nim
+var cfg: OledDisplayConfig[OledI2cTransport]
+
+# I2C configuration
+cfg.transport.periph = I2C_PERIPH_1
+cfg.transport.speed = I2C_400KHZ
+cfg.transport.pin_config.scl = DPin11
+cfg.transport.pin_config.sda = DPin12
+cfg.transport.address = 0x3C
+
+# SPI configuration (for SPI transport)
+cfg.transport.periph = SPI_PERIPH_1
+cfg.transport.pin_config.sclk = DPin8
+cfg.transport.pin_config.mosi = DPin10
+cfg.transport.pin_config.dc = DPin9   # Data/Command
+cfg.transport.pin_config.reset = DPin30
+
+display.init(cfg)
+```
+
+**Basic Drawing:**
+```nim
+# Clear display
+display.fill(false)
+
+# Set individual pixel
+display.drawPixel(x, y, true)  # true = on, false = off
+
+# Get display dimensions
+let w = display.width()
+let h = display.height()
+
+# Send buffer to display
+display.update()
+```
+
+**Drawing Functions:**
+```nim
+proc drawPixel*(x, y: uint32, on: bool)
+proc drawLine*(x0, y0, x1, y1: uint32, on: bool)
+proc drawRect*(x, y, width, height: uint32, on: bool, fill: bool)
+proc drawCircle*(x, y, radius: uint32, on: bool)
+proc drawChar*(ch: char, x, y: uint32, on: bool)
+proc drawString*(str: string, x, y: uint32, on: bool)
+```
+
+**Example - Basic Text:**
+```nim
+import src/libdaisy
+import src/libdaisy_oled
+
+var hw = newDaisySeed()
+hw.init()
+
+var display = newOledDisplay[OledSize128x64, OledI2cTransport]()
+var cfg: OledDisplayConfig[OledI2cTransport]
+cfg.transport = getDefaultI2cConfig(I2C_PERIPH_1, DPin11, DPin12)
+cfg.transport.address = 0x3C
+
+display.init(cfg)
+display.fill(false)
+display.drawString("Hello Daisy!", 0, 0, true)
+display.update()
+```
+
+**Example - Graphics:**
+```nim
+display.fill(false)
+
+# Draw a box
+display.drawRect(10, 10, 50, 30, true, false)
+
+# Draw a filled circle
+display.drawCircle(80, 32, 20, true)
+
+# Draw a line
+display.drawLine(0, 0, 127, 63, true)
+
+display.update()
+```
+
+**Example - Animation:**
+```nim
+var x = 0
+while true:
+  display.fill(false)
+  display.drawCircle(x, 32, 5, true)
+  display.update()
+  
+  x = (x + 1) mod 128
+  hw.delayMs(10)
+```
+
+---
+
 ## I2C Module (libdaisy_i2c.nim)
 
 **Import:**

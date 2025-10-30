@@ -114,29 +114,29 @@ proc Stop(this: var AdcHandle)
   {.importcpp: "#.Stop()", header: "daisy_seed.h".}
 
 proc Get(this: AdcHandle, chn: uint8): uint16 
-  {.importcpp: "#.Get(@)", header: "daisy_seed.h".}
+  {.importcpp: "#.Get(@)", header: "daisy_seed.h", inline.}
 
 proc GetPtr(this: AdcHandle, chn: uint8): ptr uint16 
-  {.importcpp: "#.GetPtr(@)", header: "daisy_seed.h".}
+  {.importcpp: "#.GetPtr(@)", header: "daisy_seed.h", inline.}
 
 proc GetFloat(this: AdcHandle, chn: uint8): cfloat 
-  {.importcpp: "#.GetFloat(@)", header: "daisy_seed.h".}
+  {.importcpp: "#.GetFloat(@)", header: "daisy_seed.h", inline.}
 
 proc GetMux(this: AdcHandle, chn: uint8, idx: uint8): uint16 
-  {.importcpp: "#.GetMux(@)", header: "daisy_seed.h".}
+  {.importcpp: "#.GetMux(@)", header: "daisy_seed.h", inline.}
 
 proc GetMuxPtr(this: AdcHandle, chn: uint8, idx: uint8): ptr uint16 
-  {.importcpp: "#.GetMuxPtr(@)", header: "daisy_seed.h".}
+  {.importcpp: "#.GetMuxPtr(@)", header: "daisy_seed.h", inline.}
 
 proc GetMuxFloat(this: AdcHandle, chn: uint8, idx: uint8): cfloat 
-  {.importcpp: "#.GetMuxFloat(@)", header: "daisy_seed.h".}
+  {.importcpp: "#.GetMuxFloat(@)", header: "daisy_seed.h", inline.}
 
 # C++ constructors
 proc cppNewAdcChannelConfig(): AdcChannelConfig 
-  {.importcpp: "daisy::AdcChannelConfig()", constructor, header: "daisy_seed.h".}
+  {.importcpp: "daisy::AdcChannelConfig()", constructor, header: "daisy_seed.h", inline.}
 
 proc cppNewAdcHandle(): AdcHandle 
-  {.importcpp: "daisy::AdcHandle()", constructor, header: "daisy_seed.h".}
+  {.importcpp: "daisy::AdcHandle()", constructor, header: "daisy_seed.h", inline.}
 
 # =============================================================================
 # High-Level Nim-Friendly API
