@@ -6,7 +6,7 @@ This directory contains example programs demonstrating how to use the libDaisy N
 
 Before running these examples, you need:
 
-1. **Nim compiler** (version 1.6.0 or later)
+1. **Nim compiler** (version 2.0.0 or later)
 2. **ARM GNU Toolchain** (arm-none-eabi-gcc)
 3. **libDaisy** compiled for your Daisy Seed
 4. **dfu-util** for flashing firmware to the Daisy Seed
@@ -17,7 +17,7 @@ Before running these examples, you need:
 
 1. Copy `Makefile.template` to `Makefile`
 2. Copy `nim.cfg.template` to `nim.cfg`
-3. Edit the paths in both files to match your libDaisy installation
+3. Edit the paths in both `Makefile` and `nim.cfg`to match your libDaisy installation
 4. Build an example:
 
 ```bash
@@ -382,7 +382,7 @@ After trying these examples:
 - [libDaisy Documentation](https://daisy.audio/software/)
 - [Nim Manual](https://nim-lang.org/docs/manual.html)
 - [Daisy Forum](https://forum.electro-smith.com/)
-- [Main README](../README_NIM.md)
+- [Main README](../README.md)
 
 ## Contributing
 

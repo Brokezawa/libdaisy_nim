@@ -1,4 +1,4 @@
-## Simple ADC Example - Clean API
+## Simple ADC Example
 import panicoverride
 ## 
 ## Reading a single analog input

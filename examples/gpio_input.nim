@@ -1,4 +1,4 @@
-## GPIO Input Example - Clean API
+## GPIO Input Example
 ##
 ## Reading a digital input and controlling LED
 

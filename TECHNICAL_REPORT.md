@@ -493,7 +493,7 @@ The build system uses a traditional Makefile approach familiar to embedded devel
 **File:** `examples/Makefile`
 
 ```makefile
-TARGET = blink_clean       # Program to build
+TARGET = blink       # Program to build
 LIBDAISY_DIR = ../../libDaisy
 BUILD_DIR = build          # All outputs here
 
@@ -559,7 +559,7 @@ make program-stlink
 
 **1. Compilation Tests**
 - All examples must compile without errors
-- Script: `test_all_clean.sh`
+- Script: `test_all.sh`
 - Runs: Before each release
 - Coverage: All 14 examples
 
@@ -575,7 +575,7 @@ make program-stlink
 ### Current Test Coverage
 
 ```
-examples/test_all_clean.sh results:
+examples/test_all.sh results:
   ✓ 14/14 examples compile
   ✓ Binary sizes reasonable (64-200KB)
   ✓ No compilation warnings (expected)
@@ -621,7 +621,7 @@ emitMyPeripheralIncludes()
 ```
 
 **4. Create Example**
-- Add `my_peripheral_clean.nim` to examples/
+- Add `my_peripheral.nim` to examples/
 - Demonstrate basic usage
 - Test on hardware if possible
 
@@ -757,4 +757,4 @@ With your help, we can expand coverage of libDaisy features and make Nim a first
 
 **Questions?** Open a GitHub issue or start a discussion!  
 **Want to help?** See [CONTRIBUTING.md](CONTRIBUTING.md)!  
-**Ready to build?** Check out [EXAMPLES.md](EXAMPLES.md)!
+**Ready to build?** Check out [EXAMPLES.md](examples/EXAMPLES.md)!

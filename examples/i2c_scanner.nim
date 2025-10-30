@@ -1,4 +1,4 @@
-## I2C Scanner Example - Clean API
+## I2C Scanner Example
 import panicoverride
 ## 
 ## Scans the I2C bus for connected devices

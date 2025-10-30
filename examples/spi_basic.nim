@@ -1,4 +1,4 @@
-## SPI Basic Example - Clean API
+## SPI Basic Example
 import panicoverride
 ##
 ## Basic SPI communication example

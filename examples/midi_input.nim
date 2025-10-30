@@ -1,4 +1,4 @@
-## MIDI Input Example - Clean API
+## MIDI Input Example
 import panicoverride
 ## 
 ## Receiving MIDI messages and reacting to notes

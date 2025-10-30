@@ -34,25 +34,26 @@ This wrapper allows you to write firmware for the Daisy Seed embedded audio boar
 
 ### Installation
 
-1. **Clone libDaisy** (required dependency):
+1. **Clone this wrapper with submodules**:
 ```bash
 cd /path/to/your/projects
-git clone https://github.com/electro-smith/libDaisy
+git clone --recursive https://github.com/yourusername/libdaisy_nim
+cd libdaisy_nim
+```
+
+2. **Build libDaisy** (required dependency):
+```bash
 cd libDaisy
 make
+cd ..
 ```
 
-2. **Clone this wrapper** (sibling to libDaisy):
-```bash
-cd /path/to/your/projects
-git clone https://github.com/yourusername/libdaisy_nim
+Your directory structure will be:
 ```
-
-Your directory structure should be:
-```
-/path/to/your/projects/
-├── libDaisy/          # C++ library
-└── libdaisy_nim/      # This wrapper
+libdaisy_nim/
+├── libDaisy/          # C++ library (submodule)
+├── src/               # Nim wrapper
+└── examples/          # Example programs
 ```
 
 3. **Try an example**:
@@ -111,30 +112,30 @@ The `examples/` directory contains 24+ production-ready examples:
 
 | Category | Example | Description |
 |----------|---------|-------------|
-| **Basic** | `blink_clean.nim` | LED blink - your first program |
-| | `button_led_clean.nim` | Button input controlling LED |
-| | `gpio_input_clean.nim` | Reading GPIO pins |
-| **Audio** | `audio_passthrough_clean.nim` | Pass audio input to output |
-| | `distortion_effect_clean.nim` | Simple overdrive effect |
-| | `sine_wave_clean.nim` | Generate sine waves |
-| **ADC** | `adc_simple_clean.nim` | Single analog input |
-| | `adc_multichannel_clean.nim` | Multiple ADC channels |
-| | `adc_multiplexed_clean.nim` | Multiplexed inputs |
-| | `adc_config_clean.nim` | Custom ADC configuration |
-| | `analog_knobs_clean.nim` | Real-world analog controls |
-| **PWM** | `pwm_led_clean.nim` | LED brightness control |
-| | `pwm_rgb_clean.nim` | RGB LED color mixing |
-| | `pwm_servo_clean.nim` | Servo motor control |
-| **Displays** | `oled_basic_clean.nim` | Basic OLED text |
-| | `oled_graphics_clean.nim` | Drawing shapes and graphics |
-| | `oled_spi_clean.nim` | SPI-based OLED |
-| | `oled_visualizer_clean.nim` | Audio level visualizer |
-| **Peripherals** | `i2c_scanner_clean.nim` | Scan I2C bus for devices |
-| | `spi_basic_clean.nim` | Basic SPI communication |
-| **Advanced** | `midi_input_clean.nim` | MIDI note input |
-| | `encoder_clean.nim` | Rotary encoder reading |
-| | `usb_serial_clean.nim` | USB CDC serial port |
-| | `sdram_test_clean.nim` | External memory test |
+| **Basic** | `blink.nim` | LED blink - your first program |
+| | `button_led.nim` | Button input controlling LED |
+| | `gpio_input.nim` | Reading GPIO pins |
+| **Audio** | `audio_passthrough.nim` | Pass audio input to output |
+| | `distortion_effect.nim` | Simple overdrive effect |
+| | `sine_wave.nim` | Generate sine waves |
+| **ADC** | `adc_simple.nim` | Single analog input |
+| | `adc_multichannel.nim` | Multiple ADC channels |
+| | `adc_multiplexed.nim` | Multiplexed inputs |
+| | `adc_config.nim` | Custom ADC configuration |
+| | `analog_knobs.nim` | Real-world analog controls |
+| **PWM** | `pwm_led.nim` | LED brightness control |
+| | `pwm_rgb.nim` | RGB LED color mixing |
+| | `pwm_servo.nim` | Servo motor control |
+| **Displays** | `oled_basic.nim` | Basic OLED text |
+| | `oled_graphics.nim` | Drawing shapes and graphics |
+| | `oled_spi.nim` | SPI-based OLED |
+| | `oled_visualizer.nim` | Audio level visualizer |
+| **Peripherals** | `i2c_scanner.nim` | Scan I2C bus for devices |
+| | `spi_basic.nim` | Basic SPI communication |
+| **Advanced** | `midi_input.nim` | MIDI note input |
+| | `encoder.nim` | Rotary encoder reading |
+| | `usb_serial.nim` | USB CDC serial port |
+| | `sdram_test.nim` | External memory test |
 
 Each example is a complete, working program that compiles and runs on hardware.
 
@@ -180,8 +181,8 @@ libdaisy_nim/
 └── examples/              # Example programs (24+)
     ├── Makefile              # Build system
     ├── nim.cfg               # Nim compiler configuration
-    ├── test_all_clean.sh     # Test all examples
-    ├── *_clean.nim           # Example programs
+    ├── test_all.sh     # Test all examples
+    ├── *.nim           # Example programs
     └── .gitignore
 ```
 

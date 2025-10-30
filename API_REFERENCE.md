@@ -759,7 +759,7 @@ when isMainModule:
 
 ---
 
-For more examples, see [EXAMPLES.md](EXAMPLES.md).
+For more examples, see [EXAMPLES.md](examples/EXAMPLES.md).
 
 For technical details, see [TECHNICAL_REPORT.md](TECHNICAL_REPORT.md).
 

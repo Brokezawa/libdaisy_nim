@@ -1,4 +1,4 @@
-## Sine Wave Generator - Clean API
+## Sine Wave Generator
 ##
 ## This example generates a simple sine wave using the audio callback
 

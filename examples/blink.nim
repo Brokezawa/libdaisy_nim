@@ -1,4 +1,4 @@
-## Simple LED Blink Example - Clean API
+## Simple LED Blink Example
 ## 
 ## This example demonstrates the clean, Nim-friendly API for blinking the built-in LED
 

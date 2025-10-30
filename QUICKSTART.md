@@ -77,16 +77,31 @@ brew install stlink
 sudo apt-get install stlink-tools
 ```
 
-## Step 2: Get libDaisy
+## Step 2: Get libdaisy_nim
 
-Clone and build the C++ libDaisy library:
+Clone this wrapper with its libDaisy submodule:
 
 ```bash
 # Navigate to your projects directory
 cd ~/Projects  # or wherever you keep projects
 
-# Clone libDaisy
-git clone https://github.com/electro-smith/libDaisy
+# Clone with submodules
+git clone --recursive https://github.com/Brokezawa/libdaisy_nim
+cd libdaisy_nim
+
+# Your structure will be:
+# ~/Projects/libdaisy_nim/
+# ├── libDaisy/         # Submodule
+# ├── src/              # Nim wrapper
+# └── examples/         # Examples
+```
+
+## Step 3: Build libDaisy
+
+Build the C++ libDaisy library:
+
+```bash
+# In libdaisy_nim directory
 cd libDaisy
 
 # Build it (takes 2-3 minutes)
@@ -94,23 +109,9 @@ make
 
 # Verify build succeeded
 ls build/libdaisy.a  # Should exist
-```
 
-## Step 3: Get libdaisy_nim
-
-Clone this wrapper as a sibling to libDaisy:
-
-```bash
-# Go back to projects directory
-cd ~/Projects  # Same parent as libDaisy
-
-# Clone the wrapper
-git clone https://github.com/Brokezawa/libdaisy_nim
-
-# Your structure should be:
-# ~/Projects/
-# ├── libDaisy/
-# └── libdaisy_nim/
+# Go back to main directory
+cd ..
 ```
 
 ## Step 4: Build Your First Example
@@ -118,14 +119,14 @@ git clone https://github.com/Brokezawa/libdaisy_nim
 ```bash
 cd libdaisy_nim/examples
 
-# The Makefile is already configured for blink_clean
+# The Makefile is already configured for blink
 # Just build it:
 make
 
 # You should see output ending with:
 # Binary size:
 #    text    data     bss     dec     hex filename
-#   64468    1596   27904   93968   16f10 build/blink_clean.elf
+#   64468    1596   27904   93968   16f10 build/blink.elf
 ```
 
 **Success!** You've compiled your first Nim program for Daisy!
@@ -149,7 +150,7 @@ make program-dfu
 
 You should see:
 ```
-Flashing build/blink_clean.bin via DFU...
+Flashing build/blink.bin via DFU...
 dfu-util ...
 Download [=========================] 100%
 File downloaded successfully
@@ -170,32 +171,32 @@ Edit the `TARGET` in the Makefile to try different examples:
 
 ```bash
 # Open Makefile and change the TARGET line:
-TARGET = button_led_clean  # or any other example
+TARGET = button_led  # or any other example
 
 make clean
 make
 make program-dfu
 ```
 
-Available examples (see `ls *_clean.nim`):
-- `blink_clean.nim` - LED blink
-- `button_led_clean.nim` - Button controls LED
-- `gpio_input_clean.nim` - Read GPIO
-- `audio_passthrough_clean.nim` - Audio I/O
-- `i2c_scanner_clean.nim` - Scan I2C bus
-- `spi_basic_clean.nim` - SPI communication
-- `midi_input_clean.nim` - MIDI input
-- `encoder_clean.nim` - Rotary encoder
-- `adc_simple_clean.nim` - Analog input
-- `analog_knobs_clean.nim` - Multiple knobs
-- `distortion_effect_clean.nim` - Audio effect
-- `serial_echo_clean.nim` - UART echo
-- `usb_serial_clean.nim` - USB serial port
-- `sdram_delay_clean.nim` - Audio delay (coming soon)
+Available examples (see `ls *.nim`):
+- `blink.nim` - LED blink
+- `button_led.nim` - Button controls LED
+- `gpio_input.nim` - Read GPIO
+- `audio_passthrough.nim` - Audio I/O
+- `i2c_scanner.nim` - Scan I2C bus
+- `spi_basic.nim` - SPI communication
+- `midi_input.nim` - MIDI input
+- `encoder.nim` - Rotary encoder
+- `adc_simple.nim` - Analog input
+- `analog_knobs.nim` - Multiple knobs
+- `distortion_effect.nim` - Audio effect
+- `serial_echo.nim` - UART echo
+- `usb_serial.nim` - USB serial port
+- `sdram_delay.nim` - Audio delay (coming soon)
 
 Or test all examples at once:
 ```bash
-./test_all_clean.sh
+./test_all.sh
 ```
 
 ## Step 7: Create Your Own Project
@@ -204,7 +205,7 @@ Or test all examples at once:
 
 ```bash
 cd examples
-cp blink_clean.nim my_project.nim
+cp blink.nim my_project.nim
 
 # Edit my_project.nim with your code
 
@@ -261,8 +262,8 @@ make program-dfu
 Key variables in the Makefile:
 
 ```makefile
-TARGET = blink_clean           # Your program name (without .nim)
-LIBDAISY_DIR = ../../libDaisy  # Path to libDaisy
+TARGET = blink           # Your program name (without .nim)
+LIBDAISY_DIR = ../libDaisy     # Path to libDaisy (submodule)
 BUILD_DIR = build              # Where outputs go
 ```
 
@@ -305,16 +306,22 @@ arm-none-eabi-gcc --version
 
 ### "Cannot find libdaisy.a"
 
-libDaisy not built or wrong path.
+libDaisy submodule not initialized or not built.
 
 **Fix:**
 ```bash
-cd ~/Projects/libDaisy  # Or wherever you cloned it
+# Make sure submodule is initialized
+cd ~/Projects/libdaisy_nim
+git submodule update --init --recursive
+
+# Build libDaisy
+cd libDaisy
 make
 ls build/libdaisy.a     # Verify it exists
+cd ..
 ```
 
-Then check `LIBDAISY_DIR` in your Makefile points to the right location.
+If you're using a custom project, check that `LIBDAISY_DIR` in your Makefile points to the libDaisy directory (default is `../libDaisy` relative to your project).
 
 ### "dfu-util: Cannot open DFU device"
 
@@ -456,7 +463,7 @@ when isMainModule:
 **Congratulations!** You're now ready to develop Daisy Seed firmware in Nim! 🎉
 
 For more advanced topics, continue with:
-- **[EXAMPLES.md](EXAMPLES.md)** - Detailed example walkthroughs
+- **[EXAMPLES.md](examples/EXAMPLES.md)** - Detailed example walkthroughs
 - **[API_REFERENCE.md](API_REFERENCE.md)** - Complete API documentation
 - **[TECHNICAL_REPORT.md](TECHNICAL_REPORT.md)** - How the wrapper works
 

@@ -1,4 +1,4 @@
-## Audio Passthrough Example - Clean API
+## Audio Passthrough Example
 ## 
 ## This example demonstrates simple audio passthrough using the clean Nim-friendly API
 

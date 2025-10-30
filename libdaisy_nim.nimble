@@ -10,7 +10,7 @@ skipFiles     = @[]
 
 # Dependencies
 
-requires "nim >= 1.6.0"
+requires "nim >= 2.0.0"
 
 # Note: This package provides Nim bindings only.
 # You must have libDaisy compiled and available for your target platform.

@@ -1,4 +1,4 @@
-## Audio Distortion Effect - Clean API
+## Audio Distortion Effect
 ##
 ## Simple distortion/overdrive audio effect
 
