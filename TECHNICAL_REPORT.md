@@ -429,9 +429,7 @@ This section catalogs features present in libDaisy but not yet exposed in the Ni
 
 | Feature | libDaisy Path | Priority | Difficulty | Notes |
 |---------|---------------|----------|------------|-------|
-| ADC Multi-channel | `per/adc.h` | High | Medium | Critical for analog I/O |
 | DAC | `per/dac.h` | Medium | Low | CV outputs |
-| PWM | `per/pwm.h` | Medium | Low | LED dimming, motors |
 | RNG | `per/rng.h` | Low | Low | Random number generation |
 | QSPI | `per/qspi.h` | Low | Medium | External flash |
 | Timer | `per/tim.h` | Low | Low | Precise timing |
@@ -452,7 +450,7 @@ This section catalogs features present in libDaisy but not yet exposed in the Ni
 ### Device Drivers Needed
 
 **High Priority** (commonly used):
-- OLED displays (SSD1306, SH1106) - Essential for many projects
+- OLED displays (SH1106) - Essential for many projects
 - WavPlayer/WavWriter - Audio file I/O
 - IMU sensors - Motion sensing
 
