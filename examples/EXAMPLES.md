@@ -1,257 +1,433 @@
-# Nim Examples for libDaisy
+# libdaisy_nim Examples - Testing Reference
 
-This directory contains example programs demonstrating how to use the libDaisy Nim wrapper.
+This document provides a comprehensive testing reference for all examples in libdaisy_nim. Use this to verify hardware behavior and track any discrepancies between expected and actual behavior.
 
-## Prerequisites
+## Table of Contents
 
-Before running these examples, you need:
+- [How to Use This Guide](#how-to-use-this-guide)
+- [Example Testing Matrix](#example-testing-matrix)
+- [Hardware Setup Requirements](#hardware-setup-requirements)
+- [Building and Running Examples](#building-and-running-examples)
+- [Common Patterns](#common-patterns)
+- [Troubleshooting](#troubleshooting)
 
-1. **Nim compiler** (version 2.0.0 or later)
-2. **ARM GNU Toolchain** (arm-none-eabi-gcc)
-3. **libDaisy** compiled for your Daisy Seed
-4. **dfu-util** for flashing firmware to the Daisy Seed
+## How to Use This Guide
 
-## Building Examples
+### For Testing
 
-### Option 1: Using the Makefile Template
+1. **Build and flash** the example to your Daisy Seed
+2. **Observe behavior** against the "Expected Behavior" column
+3. **Mark status** in your test report:
+   - ✅ **PASS** - Behaves exactly as expected
+   - ⚠️ **PARTIAL** - Works but with minor differences
+   - ❌ **FAIL** - Does not work or crashes
+   - ⏭️ **SKIP** - Hardware not available
 
-1. Copy `Makefile.template` to `Makefile`
-2. Copy `nim.cfg.template` to `nim.cfg`
-3. Edit the paths in both `Makefile` and `nim.cfg`to match your libDaisy installation
-4. Build an example:
+4. **Document differences** if behavior doesn't match exactly
 
-```bash
-make TARGET=blink
-```
+### Reporting Issues
 
-5. Flash to Daisy Seed:
+If you find a discrepancy:
 
-```bash
-make program-dfu
-```
+1. Check the "Common Issues" column first
+2. Verify your hardware setup matches requirements
+3. If still failing, open a GitHub issue with:
+   - Example name
+   - Expected vs actual behavior
+   - Hardware setup
+   - Test results from working examples
 
-### Option 2: Manual Compilation
+---
 
-Use the Nim compiler directly with appropriate flags:
-
-```bash
-nim cpp \
-  --cpu:arm \
-  --os:standalone \
-  --gc:arc \
-  --nimcache:.nimcache \
-  --passC:"-mcpu=cortex-m7 -mthumb -mfpu=fpv5-d16 -mfloat-abi=hard" \
-  --passL:"-mcpu=cortex-m7 -mthumb -mfpu=fpv5-d16 -mfloat-abi=hard" \
-  --passL:"-L../build -ldaisy" \
-  --passL:"-T../core/STM32H750IB_flash.lds" \
-  --gcc.exe:arm-none-eabi-gcc \
-  --gcc.linkerexe:arm-none-eabi-g++ \
-  blink.nim
-```
-
-Then create a binary and flash:
-
-```bash
-arm-none-eabi-objcopy -O binary blink blink.bin
-dfu-util -a 0 -s 0x08000000:leave -D blink.bin
-```
-
-## Examples Overview
+## Example Testing Matrix
 
 ### Basic Examples
 
-#### `blink.nim`
-Simple LED blink example. Great for testing your setup.
-
-**Features:**
-- Basic initialization
-- LED control
-- Delay timing
-
-#### `gpio_input.nim`
-Demonstrates reading digital inputs.
-
-**Hardware Setup:**
-- Connect button between D0 and GND
-
-**Features:**
-- GPIO input configuration
-- Pull-up resistors
-- Reading digital states
+| Example | Category | Hardware Required | Expected Behavior | Common Issues | Status |
+|---------|----------|-------------------|-------------------|---------------|--------|
+| **blink.nim** | Basic | None (onboard LED) | Onboard LED blinks at ~2Hz (500ms on, 500ms off). Should continue indefinitely. | None - simplest example | ⬜ |
+| **button_led.nim** | GPIO | Button on D0 | LED turns ON when button pressed, OFF when released. No debounce delay, instant response. | If inverted, check button wiring (needs pull-up) | ⬜ |
+| **gpio_input.nim** | GPIO | Button on D0 | Reads digital input state. LED mirrors button state. Console output shows pin state changes. | Check pull-up/pull-down configuration | ⬜ |
 
 ### Audio Examples
 
-#### `audio_passthrough.nim`
-Simple audio passthrough - input goes directly to output.
+| Example | Category | Hardware Required | Expected Behavior | Common Issues | Status |
+|---------|----------|-------------------|-------------------|---------------|--------|
+| **audio_passthrough.nim** | Audio | Audio input/output | Clean audio passthrough with minimal latency (<3ms typical). Input signal appears unmodified at output. | Silence = check audio connections; Distortion = check levels | ⬜ |
+| **sine_wave.nim** | Audio | Audio output | Generates clean 440Hz sine wave (A4 note) on both channels. Should be pure tone with no harmonics or clicks. | Clicking = buffer issue; Wrong pitch = sample rate mismatch | ⬜ |
+| **distortion_effect.nim** | Audio | Audio input/output | Clean passthrough by default. Warm overdrive distortion when activated. LED indicates effect on/off. | Harsh distortion = gain too high; No effect = bypass stuck | ⬜ |
 
-**Features:**
-- Audio callback setup
-- Stereo audio processing
-- Non-interleaved buffer handling
+### ADC (Analog Input) Examples
 
-#### `sine_generator.nim`
-Generates a 440Hz sine wave tone.
+| Example | Category | Hardware Required | Expected Behavior | Common Issues | Status |
+|---------|----------|-------------------|-------------------|---------------|--------|
+| **adc_simple.nim** | ADC | Potentiometer on A0 | Reads single analog input (0-3.3V). LED brightness or console output reflects pot position. Updates continuously. | Noisy readings = add capacitor; Inverted = check wiring | ⬜ |
+| **adc_multichannel.nim** | ADC | Pots on A0, A1, A2 | Reads 3 independent analog channels simultaneously. Each channel updates independently. Console shows all values. | Channel crosstalk = ADC config issue | ⬜ |
+| **adc_multiplexed.nim** | ADC | External ADC mux chip | Reads multiple inputs through multiplexer. Sequentially scans all mux channels. May have slight delay between channels. | Switching glitches = add settling time | ⬜ |
+| **adc_config.nim** | ADC | Potentiometer on A0 | Demonstrates custom ADC configuration (resolution, speed, oversampling). Behavior similar to adc_simple but with specific timing. | Configuration errors = check libDaisy compatibility | ⬜ |
+| **analog_knobs.nim** | ADC | 4 pots on A0-A3 | Real-world analog control demo. Smooth value changes, optional smoothing/filtering. May include deadzone handling. | Jitter = enable filtering; Jumps = check connections | ⬜ |
 
-**Features:**
-- Audio synthesis
-- Phase accumulation
-- Mathematical operations in audio callbacks
+### PWM Examples
 
-#### `distortion_effect.nim`
-Audio effect that applies waveshaping distortion.
+| Example | Category | Hardware Required | Expected Behavior | Common Issues | Status |
+|---------|----------|-------------------|-------------------|---------------|--------|
+| **pwm_led.nim** | PWM | LED on D0 (PWM capable) | LED brightness fades smoothly from 0% to 100% and repeats. No visible flickering or steps. | Flickering = PWM freq too low; No change = pin not PWM | ⬜ |
+| **pwm_rgb.nim** | PWM | RGB LED on D0,D1,D2 | RGB LED cycles through rainbow colors smoothly. Red→Yellow→Green→Cyan→Blue→Magenta→Red. ~5s per cycle. | Wrong colors = check LED pinout; Dim = check current limit | ⬜ |
+| **pwm_servo.nim** | PWM | Servo motor on D0 | Servo sweeps from 0° to 180° and back continuously. Smooth motion, ~2s per sweep. Standard 50Hz servo signal. | Jitter = power supply issue; Wrong range = calibrate limits | ⬜ |
 
-**Features:**
-- Real-time audio processing
-- Effect bypass switching
-- Non-linear signal processing
+### Display Examples (OLED)
+
+| Example | Category | Hardware Required | Expected Behavior | Common Issues | Status |
+|---------|----------|-------------------|-------------------|---------------|--------|
+| **oled_basic.nim** | OLED/I2C | SSD1306 I2C OLED (128x64) | Display initializes and shows text "Hello Daisy!". Text should be crisp and readable. May show demo pattern or counter. | Blank screen = check I2C address (0x3C or 0x3D) | ⬜ |
+| **oled_graphics.nim** | OLED/I2C | SSD1306 I2C OLED | Draws shapes (rectangles, circles, lines). Shapes should be clean with no artifacts. May animate or update periodically. | Corrupted graphics = timing issue; Partial = buffer problem | ⬜ |
+| **oled_spi.nim** | OLED/SPI | SSD1306 SPI OLED | Same as oled_basic but using SPI interface. Faster updates than I2C version. Text or graphics displayed clearly. | Blank = check CS/DC pins; Shifted = clock issue | ⬜ |
+| **oled_visualizer.nim** | OLED/Audio | SSD1306 + Audio input | Real-time audio level meter or waveform display. Bars or scope trace react to audio input. 10-30 FPS typical. | No movement = audio not connected; Slow = optimize drawing | ⬜ |
+
+### Communication Examples
+
+| Example | Category | Hardware Required | Expected Behavior | Common Issues | Status |
+|---------|----------|-------------------|-------------------|---------------|--------|
+| **i2c_scanner.nim** | I2C | I2C devices on bus | Scans addresses 0x03-0x77. Reports found devices via console/LED. Empty bus shows "No devices found". | False positives = pull-up resistor issue | ⬜ |
+| **spi_basic.nim** | SPI | SPI device (EEPROM/sensor) | Sends/receives SPI data. May write then read back for verification. Success indicated by LED or console. | No response = check MISO/MOSI; Wrong data = clock polarity | ⬜ |
+| **usb_serial.nim** | USB | USB cable to computer | Creates virtual serial port. Text typed in terminal echoes back. Baud rate doesn't matter (USB CDC). | Not detected = enter DFU mode first; No echo = driver issue | ⬜ |
+| **midi_input.nim** | MIDI | MIDI controller (USB/UART) | Receives MIDI note on/off messages. LED flashes on note events. Console shows note number and velocity. | No response = check MIDI mode (USB vs UART) | ⬜ |
 
 ### Control Examples
 
-#### `switch_example.nim`
-Demonstrates using momentary switches with debouncing.
+| Example | Category | Hardware Required | Expected Behavior | Common Issues | Status |
+|---------|----------|-------------------|-------------------|---------------|--------|
+| **encoder.nim** | Encoder | Rotary encoder on D0,D1,D2 | Turning encoder changes value (displayed on LED/console). Button press may reset. Detents should feel accurate (no skips). | Skips = debounce issue; Reversed = swap A/B pins | ⬜ |
 
-**Hardware Setup:**
-- Connect switches between D0, D1, D2 and GND
+### Storage Examples
 
-**Features:**
-- Multiple switch handling
-- Debouncing
-- Edge detection
-- State management
+| Example | Category | Hardware Required | Expected Behavior | Common Issues | Status |
+|---------|----------|-------------------|-------------------|---------------|--------|
+| **sdram_test.nim** | SDRAM | External SDRAM chip | Writes test pattern to SDRAM, reads back and verifies. LED blinks on success, stays on for failure. May test full 64MB. | Fails = check SDRAM soldering/power | ⬜ |
 
-#### `encoder_control.nim`
-Shows how to use a rotary encoder for parameter control.
+### DAC Examples
 
-**Hardware Setup:**
-- Connect rotary encoder:
-  - A pin to D0
-  - B pin to D1
-  - Button to D2
+| Example | Category | Hardware Required | Expected Behavior | Common Issues | Status |
+|---------|----------|-------------------|-------------------|---------------|--------|
+| **dac_simple.nim** | DAC | Voltmeter or scope on DAC pins | Outputs ramping voltage on DAC channel 1. Voltage sweeps from 0V to 3.3V continuously. ~1V per second typical. | Flat line = DAC not enabled; Wrong range = 12-bit config | ⬜ |
 
-**Features:**
-- Rotary encoder reading
-- Parameter control
-- Button integration
+### Board-Specific Examples
 
-### MIDI Examples
+| Example | Category | Hardware Required | Expected Behavior | Common Issues | Status |
+|---------|----------|-------------------|-------------------|---------------|--------|
+| **patch_simple.nim** | Patch Board | Daisy Patch | Initializes Patch hardware. May test controls (encoder, gate inputs) and OLED display. Audio passthrough with patch-specific routing. | Controls not working = check Patch Init board variant | ⬜ |
 
-#### `midi_input.nim`
-Receives and processes MIDI messages.
+### Special Examples
 
-**Hardware Setup:**
-- Connect MIDI input to UART1 pins (or use USB MIDI)
+| Example | Category | Hardware Required | Expected Behavior | Common Issues | Status |
+|---------|----------|-------------------|-------------------|---------------|--------|
+| **panicoverride.nim** | System | None | Demonstrates custom panic handler. Intentionally crashes to show LED blink pattern on panic. LED blinks rapidly (SOS pattern). | Normal - this example is supposed to crash! | ⬜ |
 
-**Features:**
-- MIDI initialization
-- Message parsing
-- Note on/off handling
+---
 
-### I2C Examples
+## Hardware Setup Requirements
 
-#### `i2c_scanner.nim`
-Scans the I2C bus for connected devices.
+### Minimal Setup (No External Hardware)
 
-**Hardware Setup:**
-- Connect I2C devices to:
-  - SCL: Pin D11 (PB8)
-  - SDA: Pin D12 (PB9)
-  - Use 4.7kΩ pull-up resistors
+These examples work with Daisy Seed alone:
+- ✅ `blink.nim` - Onboard LED only
+- ✅ `panicoverride.nim` - Onboard LED only
 
-**Features:**
-- I2C bus scanning
-- Device detection
-- Address reporting
+### Basic GPIO Setup
 
-#### `i2c_oled_basic.nim`
-Initializes and controls an SSD1306 OLED display.
+**Required:** Breadboard, jumper wires, push button, 10kΩ resistor
 
-**Hardware Setup:**
-- Connect SSD1306 OLED:
-  - SCL: Pin D11 (PB8)
-  - SDA: Pin D12 (PB9)
-  - VCC: 3.3V or 5V
-  - GND: GND
+```
+Examples: button_led.nim, gpio_input.nim
 
-**Features:**
-- I2C initialization
-- SSD1306 command sending
-- Display clearing
-- Basic display control
+Wiring:
+  D0 ────────┬──── Button ──── GND
+             │
+            10kΩ
+             │
+            3.3V
+```
 
-#### `i2c_sensor_read.nim`
-Reads data from an I2C sensor (MPU6050 IMU example).
+### Audio Setup
 
-**Hardware Setup:**
-- Connect MPU6050 or similar I2C sensor:
-  - SCL: Pin D11 (PB8)
-  - SDA: Pin D12 (PB9)
-  - Pull-up resistors
+**Required:** Audio cable, headphones or amp
 
-**Features:**
-- Register reading and writing
-- Multi-byte data reads
-- Sensor initialization
-- Periodic data sampling
+```
+Examples: audio_passthrough.nim, sine_wave.nim, distortion_effect.nim
 
-### SD Card Examples
+Connections:
+  IN_L  ──── Audio source left
+  IN_R  ──── Audio source right
+  OUT_L ──── Headphones/amp left
+  OUT_R ──── Headphones/amp right
+  AGND  ──── Audio ground
+```
 
-#### `sdcard_basic.nim`
-Basic SD card initialization and file I/O test.
+### ADC Setup
 
-**Hardware Setup:**
-- Insert SD card into Daisy Seed's SD card slot
-- Pins are fixed by hardware (see SDCARD_REFERENCE.md)
+**Required:** Potentiometers (10kΩ recommended), breadboard
 
-**Features:**
-- SDMMC initialization
-- FatFS mounting
-- File writing and reading
-- Error indication via LED
+```
+Examples: adc_simple.nim, adc_multichannel.nim, analog_knobs.nim
 
-#### `sdcard_files.nim`
-Demonstrates various file operations.
+Wiring (per pot):
+  Pin 1 (CCW) ──── GND
+  Pin 2 (Wiper) ─── A0 (or A1, A2, etc.)
+  Pin 3 (CW) ───── 3.3V
+```
 
-**Hardware Setup:**
-- Insert SD card into Daisy Seed's SD card slot
+### PWM Setup
 
-**Features:**
-- Creating and writing files
-- Reading files
-- Directory operations
-- File deletion and renaming
-- Directory listing
+**Required for LED:** LED, 220Ω resistor
 
-#### `sdcard_audio_record.nim`
-Records audio input to SD card as raw PCM data.
+```
+Example: pwm_led.nim
 
-**Hardware Setup:**
-- Insert SD card
-- Connect audio input
+Wiring:
+  D0 ──── 220Ω ──── LED+ ──── LED- ──── GND
+```
 
-**Features:**
-- Audio buffering
-- PCM format conversion
-- SD card writing
-- Recording management
+**Required for RGB:** Common cathode RGB LED, 3x 220Ω resistors
+
+```
+Example: pwm_rgb.nim
+
+Wiring:
+  D0 ──── 220Ω ──── LED Red
+  D1 ──── 220Ω ──── LED Green
+  D2 ──── 220Ω ──── LED Blue
+  Common cathode ──── GND
+```
+
+**Required for Servo:** Servo motor, external 5V power supply
+
+```
+Example: pwm_servo.nim
+
+Wiring:
+  D0 ────────────── Servo signal (yellow/white)
+  5V (external) ─── Servo power (red)
+  GND ──┬────────── Servo ground (brown/black)
+        └────────── External PSU ground
+```
+
+### I2C Setup
+
+**Required:** I2C device (OLED/sensor), 2x 4.7kΩ pull-up resistors
+
+```
+Examples: i2c_scanner.nim, oled_basic.nim, oled_graphics.nim
+
+Wiring:
+  D11 (SCL) ──┬──── Device SCL
+              │
+            4.7kΩ
+              │
+             3.3V
+
+  D12 (SDA) ──┬──── Device SDA
+              │
+            4.7kΩ
+              │
+             3.3V
+
+  3.3V ──────────── Device VCC (or 5V if device supports)
+  GND ───────────── Device GND
+```
+
+**Note:** Many I2C breakout boards include pull-ups. Check before adding external resistors.
+
+### SPI Setup
+
+**Required:** SPI device (EEPROM, sensor, or SD card)
+
+```
+Example: spi_basic.nim
+
+Standard SPI wiring:
+  D7 (MOSI) ──── Device MOSI (or SDI)
+  D8 (MISO) ──── Device MISO (or SDO)
+  D9 (SCK)  ──── Device SCK
+  D10 (CS)  ──── Device CS (or SS)
+  3.3V ─────────  Device VCC
+  GND ──────────── Device GND
+```
+
+**For OLED SPI:**
+
+```
+Example: oled_spi.nim
+
+  D7 (MOSI) ──── OLED MOSI/SDA
+  D9 (SCK)  ──── OLED SCK
+  D10 (CS)  ──── OLED CS
+  D11 ──────────  OLED DC (data/command)
+  D13 ──────────  OLED RST (reset)
+  3.3V ─────────  OLED VCC
+  GND ──────────── OLED GND
+```
+
+### USB Setup
+
+**Required:** USB cable (same cable used for programming)
+
+```
+Example: usb_serial.nim
+
+Connection:
+  - Connect Daisy Seed to computer via USB
+  - After flashing, device appears as virtual COM port
+  - Open serial terminal (115200 baud or any - USB CDC ignores baud rate)
+```
+
+### MIDI Setup
+
+**Option 1: USB MIDI** (easiest)
+
+```
+Example: midi_input.nim (configure for USB)
+
+Connection:
+  - Connect Daisy Seed to computer via USB
+  - Use MIDI controller software or hardware MIDI-to-USB adapter
+```
+
+**Option 2: Hardware UART MIDI**
+
+```
+Example: midi_input.nim (configure for UART)
+
+MIDI Input (5-pin DIN):
+  MIDI Pin 4 ──── UART RX (via optocoupler circuit)
+  MIDI Pin 5 ──── 220Ω ──── UART RX
+  MIDI Pin 2 ──── GND
+
+(Requires standard MIDI input circuit with 6N138 optocoupler)
+```
+
+### Encoder Setup
+
+**Required:** Rotary encoder with button
+
+```
+Example: encoder.nim
+
+Wiring:
+  Encoder A ──── D0
+  Encoder B ──── D1
+  Encoder SW ─── D2
+  Encoder GND ── GND
+  Common ──────── GND (if separate from switch ground)
+```
+
+### SDRAM Setup
+
+**Required:** Daisy Seed with SDRAM chip soldered (optional hardware mod)
+
+```
+Example: sdram_test.nim
+
+No external wiring needed - SDRAM is surface-mount chip on Daisy Seed.
+If SDRAM not installed, example will fail immediately.
+```
+
+### DAC Setup
+
+**Required:** Voltmeter or oscilloscope
+
+```
+Example: dac_simple.nim
+
+Connections:
+  DAC1 (Pin 22) ──── Voltmeter/scope probe
+  GND ───────────────  Voltmeter/scope ground
+
+Expected: 0-3.3V ramping output
+```
+
+### Daisy Patch Setup
+
+**Required:** Daisy Patch board (not Daisy Seed)
+
+```
+Example: patch_simple.nim
+
+No additional wiring - Patch has built-in:
+  - 4 knobs
+  - 4 CV inputs
+  - 2 gate inputs
+  - Encoder with button
+  - OLED display
+  - Audio I/O (1/8" jacks)
+```
+
+---
+
+## Building and Running Examples
+
+### Quick Start
+
+```bash
+cd examples
+
+# Build specific example
+sed -i "s/^TARGET = .*/TARGET = blink/" Makefile
+make clean && make
+
+# Flash to Daisy Seed
+make program-dfu
+```
+
+### Test All Examples (Compilation Only)
+
+```bash
+cd examples
+./test_all.sh
+
+# Expected output:
+# ========================================
+# SUMMARY:
+#   Passed: 27
+#   Failed: 0
+# ========================================
+```
+
+### Build System Details
+
+The build system uses:
+- **Makefile** - Controls ARM GCC toolchain
+- **nim.cfg** - Nim cross-compilation settings
+- **TARGET variable** (line 9 of Makefile) - Selects which example to build
+
+Build artifacts go into `build/` directory:
+- `build/*.elf` - Executable with debug symbols
+- `build/*.bin` - Binary for flashing
+- `build/*.map` - Memory map
+
+---
 
 ## Common Patterns
 
-### Initialization Sequence
+### Standard Initialization
 
 All examples follow this pattern:
 
 ```nim
-var hw = newDaisySeed()
+import ../src/libdaisy
+import ../src/libdaisy_module  # If using specific peripheral
+
+useDaisyNamespace()  # Macro for C++ includes
+
+var hw: DaisySeed  # Global hardware object
 
 proc main() =
-  hw.init()
-  startLog()  # Optional but recommended
+  hw = initDaisy()  # Initialize hardware
   
   # Your setup code here
   
   while true:
-    # Your main loop
-    hw.delayMs(1)
+    # Main loop
+    hw.delay(100)
 
 when isMainModule:
   main()
@@ -261,133 +437,208 @@ when isMainModule:
 
 ```nim
 proc audioCallback(input: ptr ptr cfloat, output: ptr ptr cfloat, size: csize_t) {.cdecl.} =
+  ## Real-time audio processing
+  ## RULES:
+  ## - No allocations (no seq, no string)
+  ## - No printing/logging
+  ## - No delays or blocking calls
+  ## - Keep processing fast and deterministic
+  
   for i in 0..<size:
-    # Process samples
+    # Process left channel
     output[0][i] = processLeft(input[0][i])
+    # Process right channel
     output[1][i] = processRight(input[1][i])
+
+proc main() =
+  hw = initDaisy()
+  hw.startAudio(audioCallback)  # Register callback
+  
+  while true:
+    # Main loop runs independently from audio
+    hw.delay(10)
 ```
 
-### GPIO Handling
+### GPIO Pattern
 
 ```nim
-var pin = newGPIO()
-pin.init(D0, INPUT, PULLUP)
+var pin: GPIO
 
-# In main loop:
-let state = pin.read()
+proc main() =
+  hw = initDaisy()
+  
+  pin.init(DPin0, MODE_INPUT, PULL_UP)
+  
+  while true:
+    let state = pin.read()
+    hw.setLed(state)
+    hw.delay(10)
 ```
 
-### I2C Communication
+### I2C Pattern
 
 ```nim
-var i2c = newI2CHandle()
-var config = newI2CConfig()
-config.periph = I2C_1
-config.speed = I2C_400KHZ
-config.mode = I2C_MASTER
-config.pin_config.scl = D11
-config.pin_config.sda = D12
+var i2c: I2CHandle
 
-if i2c.init(config) != I2C_OK:
-  # Handle error
-  return
-
-# Write/read operations
-discard i2c.writeRegister(0x48, 0x01, 0xFF)
-let (result, value) = i2c.readRegister(0x48, 0x00)
+proc main() =
+  hw = initDaisy()
+  
+  var cfg = createI2CConfig()
+  cfg.periph = I2C_PERIPH_1
+  cfg.speed = I2C_SPEED_400KHZ
+  cfg.pin_config.scl = DPin11
+  cfg.pin_config.sda = DPin12
+  
+  discard i2c.init(cfg)
+  
+  # Write to device
+  discard i2c.transmitBlocking(0x3C, addr data, 1, 1000)
 ```
 
-## Tips and Best Practices
-
-### Memory Management
-
-- Use `--gc:arc` for embedded systems
-- Avoid allocations in audio callbacks
-- Pre-allocate buffers at initialization
-
-### Audio Callbacks
-
-- Keep audio callbacks fast and deterministic
-- Avoid system calls (no printing, no delays)
-- Use global variables for audio state
-- Process audio in small blocks
-
-### Timing
-
-- Use `hw.delayMs()` for blocking delays
-- For periodic tasks, use the audio callback or timers
-- Control debouncing happens at specified update rates
-
-### Debugging
-
-- Use the serial logger for debugging
-- Print before starting audio (audio callbacks can't print)
-- Use LED for simple status indication
+---
 
 ## Troubleshooting
 
-### Compilation Errors
+### Compilation Issues
 
-**Error: Cannot find libdaisy**
-- Check that libDaisy is compiled in `../build/`
-- Verify paths in nim.cfg or Makefile
+| Error | Cause | Solution |
+|-------|-------|----------|
+| `Error: cannot open file 'libdaisy.nim'` | Wrong directory | Run from `examples/` directory |
+| `undefined reference to daisy::DaisySeed` | libDaisy not built | `cd libDaisy && make` |
+| `arm-none-eabi-gcc: command not found` | Toolchain not installed | Install ARM embedded toolchain |
+| `Error: undeclared identifier` | Missing import | Add required `import ../src/libdaisy_*` |
 
-**Error: Undefined reference**
-- Make sure you're linking with `-ldaisy`
-- Check that all required C++ symbols are properly imported
+### Flashing Issues
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| `dfu-util: Cannot open DFU device` | Not in DFU mode | Hold BOOT, press RESET, release BOOT |
+| `No DFU capable USB device available` | Driver issue (Windows) | Install Zadig drivers for DFU device |
+| `Lost device after RESET` | Normal | Device rebooted - not an error |
+| `Error during download` | Corrupted binary | `make clean && make` |
 
 ### Runtime Issues
 
-**No audio output**
-- Verify audio callback is registered: `hw.startAudio(callback)`
-- Check audio cable connections
-- Verify sample rate matches your expectations
+#### No LED Activity
 
-**LED doesn't blink**
-- Check that hardware is initialized: `hw.init()`
-- Verify you're calling `hw.setLed(true/false)`
-- Test with a different example
+1. Check hardware initialization: `hw.init()`
+2. Try `blink.nim` (simplest example)
+3. Verify power supply (USB or external 3.3-5V)
+4. Check for panic crash (LED might blink SOS pattern)
 
-**MIDI not working**
-- Verify MIDI mode matches hardware connection
-- Check baud rate and hardware wiring
-- Try USB MIDI mode for testing
+#### No Audio Output
 
-**I2C not working**
-- Check pull-up resistors (4.7kΩ typical)
-- Verify correct pins (D11=SCL, D12=SDA for I2C_1)
-- Use i2c_scanner.nim to detect devices
-- Check device address (7-bit vs 8-bit addressing)
-- Verify device power supply
+1. Verify audio callback registered: `hw.startAudio(callback)`
+2. Check audio cable connections (input and output)
+3. Test with `sine_wave.nim` (doesn't need input)
+4. Verify sample rate matches hardware (48kHz default)
+5. Check volume level on amp/headphones
 
-**SD card not working**
-- Check SD card is inserted properly
-- Format as FAT32
-- Try slower speed (SD_STANDARD instead of SD_FAST)
-- Check card is not write-protected
-- Verify adequate power supply
-- Try different SD card
+#### Peripheral Not Working
 
-## Next Steps
+**I2C:**
+- Run `i2c_scanner.nim` to detect devices
+- Check pull-up resistors (4.7kΩ to 3.3V)
+- Verify device address (7-bit: 0x3C, not 8-bit: 0x78)
+- Check power supply to peripheral (3.3V or 5V)
 
-After trying these examples:
+**SPI:**
+- Verify MOSI/MISO not swapped
+- Check clock polarity/phase settings
+- Confirm CS pin actively driven
+- Scope the signals if available
 
-1. Modify them to experiment with different parameters
-2. Combine multiple examples (e.g., encoder controlling audio effect)
-3. Create your own audio processors
-4. Explore the full libDaisy API
+**ADC:**
+- Ensure voltage range 0-3.3V (exceeding may damage chip!)
+- Check pot wiring (wiper to ADC pin, ends to GND/3.3V)
+- Add 100nF capacitor for noise filtering
+- Verify ADC pin supports analog input (A0-A11)
+
+**PWM:**
+- Confirm pin supports PWM (not all GPIO pins do)
+- Check PWM frequency (visible flicker = too low)
+- Verify duty cycle range (0-100%)
+- Test with different pins if issue persists
+
+### Performance Issues
+
+**Audio Glitches/Clicks:**
+- Audio callback taking too long
+- Remove logging/printing from callback
+- Reduce buffer processing complexity
+- Increase audio buffer size (tradeoff: more latency)
+
+**Slow Display Updates:**
+- I2C speed too low (use 400kHz)
+- Drawing too much per frame
+- Use partial updates instead of full clears
+- SPI faster than I2C for displays
+
+**Controls Feel Sluggish:**
+- Main loop has delays too large
+- Reduce `hw.delay()` duration
+- Use hardware timers for precise timing
+- Check update rate in control library
+
+---
+
+## Test Report Template
+
+When testing examples, use this format to report results:
+
+```markdown
+### Test Report: [Example Name]
+
+**Tester:** [Your Name/GitHub]
+**Date:** YYYY-MM-DD
+**Hardware:** Daisy Seed [+ any peripherals]
+**Firmware:** v0.X.X
+
+**Test Result:** ✅ PASS / ⚠️ PARTIAL / ❌ FAIL
+
+**Expected Behavior:**
+[Copy from table above]
+
+**Actual Behavior:**
+[What actually happened]
+
+**Differences Noted:**
+- [Any deviations from expected behavior]
+
+**Hardware Setup:**
+- [List components and wiring]
+
+**Additional Notes:**
+[Any other observations]
+
+**Photos/Scope Captures:** [If applicable]
+```
+
+---
+
+## Contributing New Examples
+
+When adding a new example:
+
+1. **Add row to testing matrix** with expected behavior
+2. **Test on hardware** before submitting
+3. **Document hardware requirements** clearly
+4. **Include comments** explaining key sections
+5. **Follow naming conventions**: `category_description.nim`
+6. **Update `test_all.sh`** if needed
+
+See [CONTRIBUTING.md](../CONTRIBUTING.md) for full guidelines.
+
+---
 
 ## Resources
 
-- [libDaisy Documentation](https://daisy.audio/software/)
-- [Nim Manual](https://nim-lang.org/docs/manual.html)
-- [Daisy Forum](https://forum.electro-smith.com/)
-- [Main README](../README.md)
+- **[API Reference](../API_REFERENCE.md)** - Complete API documentation
+- **[Technical Report](../TECHNICAL_REPORT.md)** - How wrappers work
+- **[Hardware Testing Guide](../HARDWARE_TESTING.md)** - Community testing procedures
+- **[libDaisy Docs](https://github.com/electro-smith/DaisyWiki/wiki)** - Hardware documentation
+- **[Nim Manual](https://nim-lang.org/docs/manual.html)** - Nim language reference
 
-## Contributing
+---
 
-Have an interesting example? Contributions are welcome! Submit a pull request with:
-
-- Well-commented code
-- Hardware setup description
-- Clear explanation of what it demonstrates
+**Questions?** Open a GitHub discussion or issue!
