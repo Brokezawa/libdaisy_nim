@@ -26,6 +26,7 @@
 ## ```
 
 import libdaisy_macros
+import libdaisy  # For Pin type
 
 {.define: useGateIn.}
 emitGateInIncludes()
@@ -34,7 +35,7 @@ type
   GateIn* {.importcpp: "daisy::GateIn", header: "hid/gatein.h".} = object
     ## Gate input handler for eurorack-style gate/trigger signals
 
-proc init*(this: var GateIn, pin: DaisyPin, invert: bool = true)
+proc init*(this: var GateIn, pin: Pin, invert: bool = true)
   {.importcpp: "#.Init(#, #)".} =
   ## Initialize gate input on specified pin
   ##

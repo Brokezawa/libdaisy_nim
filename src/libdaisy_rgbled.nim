@@ -31,6 +31,8 @@
 ## ```
 
 import libdaisy_macros
+import libdaisy  # For Pin type
+import libdaisy_color  # For Color type
 
 {.define: useRgbLed.}
 emitRgbLedIncludes()
@@ -39,7 +41,7 @@ type
   RgbLed* {.importcpp: "daisy::RgbLed", header: "hid/rgb_led.h".} = object
     ## RGB LED (3x LED configured as RGB unit)
 
-proc init*(this: var RgbLed, red, green, blue: DaisyPin, invert: bool)
+proc init*(this: var RgbLed, red, green, blue: Pin, invert: bool)
   {.importcpp: "#.Init(#, #, #, #)".} =
   ## Initialize RGB LED with 3 pins
   ##

@@ -29,6 +29,7 @@
 ## ```
 
 import libdaisy_macros
+import libdaisy  # For Pin type
 
 {.define: useSwitch3.}
 emitSwitch3Includes()
@@ -44,7 +45,7 @@ type
   Switch3* {.importcpp: "daisy::Switch3", header: "hid/switch3.h".} = object
     ## 3-position switch handler
 
-proc init*(this: var Switch3, pina, pinb: DaisyPin)
+proc init*(this: var Switch3, pina, pinb: Pin)
   {.importcpp: "#.Init(#, #)".} =
   ## Initialize 3-position switch
   ##

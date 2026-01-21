@@ -26,6 +26,7 @@
 ## ```
 
 import libdaisy_macros
+import libdaisy  # For Pin type
 
 {.define: useLed.}
 emitLedIncludes()
@@ -34,7 +35,7 @@ type
   Led* {.importcpp: "daisy::Led", header: "hid/led.h".} = object
     ## Single LED with software PWM control
 
-proc init*(this: var Led, pin: DaisyPin, invert: bool, samplerate: cfloat = 1000.0)
+proc init*(this: var Led, pin: Pin, invert: bool, samplerate: cfloat = 1000.0)
   {.importcpp: "#.Init(#, #, #)".} =
   ## Initialize LED on specified pin
   ##
