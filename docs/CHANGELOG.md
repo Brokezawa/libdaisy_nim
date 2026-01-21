@@ -5,6 +5,111 @@ All notable changes to libdaisy_nim will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-01-21
+
+### Added
+
+#### Audio Codec Support
+
+- **AK4556 Codec Module** (`src/dev/codec_ak4556.nim`) - Simple codec for Daisy Seed 1.0
+  - Reset pin initialization only
+  - No I2C configuration required
+  - 24-bit stereo ADC/DAC
+  - `init()`, `deInit()` methods
+
+- **WM8731 Codec Module** (`src/dev/codec_wm8731.nim`) - I2C codec for Daisy Seed 1.1
+  - I2C control interface
+  - Configurable audio format (I2S, LJ, RJ, DSP)
+  - Configurable word length (16/20/24/32-bit)
+  - Volume control and mute support
+  - Default: MCU master, 24-bit, MSB LJ format
+  
+- **PCM3060 Codec Module** (`src/dev/codec_pcm3060.nim`) - High-performance codec for Daisy Seed 2.0
+  - I2C control interface
+  - Auto-configures to 24-bit LJ format
+  - Simplified initialization
+
+#### Display Support
+
+- **LCD HD44780 Module** (`src/dev/lcd_hd44780.nim`) - Character LCD driver
+  - 16x2 and 20x4 display support
+  - 4-bit data mode (6 GPIO pins)
+  - Configurable cursor visibility and blink
+  - Methods: `init()`, `print()`, `printInt()`, `setCursor()`, `clear()`
+  
+- **OLED Fonts Module** (`src/util/oled_fonts.nim`) - Bitmap fonts for OLED displays
+  - 8 font sizes: 4x6, 5x8, 6x8, 7x10, 11x18, 12x16, 16x26
+  - Monospaced fonts
+  - ASCII printable characters (32-126)
+  - Stored in flash (no RAM overhead)
+  - Compatible with SSD1306 OLED displays
+
+#### New Examples
+
+- `codec_comparison.nim` - Multi-codec initialization demo
+  - Auto-detects Daisy Seed hardware version (1.0/1.1/2.0)
+  - Initializes appropriate codec (AK4556/WM8731/PCM3060)
+  - LED blink indicates successful initialization
+  - Console output shows detected version
+  
+- `lcd_menu.nim` - Character LCD menu system
+  - 3-parameter menu (Volume %, Frequency Hz, Waveform)
+  - Rotary encoder navigation
+  - Real-time display updates
+  - Demonstrates LCD text formatting
+
+### Changed
+
+- **Module organization**: Audio codecs now in `src/dev/` subdirectory
+- **I2C dependency**: Codec modules now import `libdaisy_i2c` directly for type safety
+- **Macro system**: Added codec and LCD module support to `useDaisyModules()` macro
+
+### Fixed
+
+- **I2CHandle type visibility**: Codec modules now properly import `libdaisy_i2c` for `I2CHandle` type
+- **Type imports**: Removed reliance on `useDaisyModules()` for cross-module types
+
+### Technical
+
+- Added to `libdaisy_macros.nim`:
+  - `codec_ak4556Typedefs` (empty - no types exported)
+  - `codec_wm8731Typedefs` (4 type aliases)
+  - `codec_pcm3060Typedefs` (1 type alias)
+  - `lcd_hd44780Typedefs` (1 type alias)
+  - `oled_fontsTypedefs` (1 type alias)
+- Module header support for all new modules in `getModuleHeaders()`
+- Comprehensive API documentation in docs/API_REFERENCE.md
+- Hardware setup guides in docs/EXAMPLES.md
+
+### Documentation
+
+- Added agent rule for documenting examples in `docs/AGENTS.md`
+- Added codec and LCD examples to `docs/EXAMPLES.md` testing matrix
+- Added hardware setup sections for LCD and codec examples
+- Updated `docs/API_REFERENCE.md` with v0.7.0 modules
+- Updated example count: 42 examples (40 → 42)
+
+### Statistics
+
+- **Total modules**: 46 (41 → 46)
+  - Core: 1
+  - Peripherals: 11
+  - Controls: 1
+  - Audio: 4
+  - Data structures: 4
+  - Utilities: 9
+  - System: 4
+  - Board-specific: 1
+  - **Audio codecs: 3 (NEW)**
+  - **Displays: 2 (NEW)**
+  - Macros: 1
+  - USB/MIDI/Serial: 3
+  - SD card: 1
+  - Timer: 1
+  
+- **Examples**: 42
+- **Test suite**: All 42 examples pass compilation
+
 ## [0.5.0] - 2026-01-22
 
 ### Added

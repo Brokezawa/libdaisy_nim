@@ -1800,6 +1800,275 @@ let cvVolts = mapValueBipolar(adcValue, -5.0, 5.0)
 
 ---
 
+## Audio Codecs & Displays (v0.7.0)
+
+### AK4556 Codec Module (codec_ak4556.nim)
+
+**Import:**
+```nim
+import src/dev/codec_ak4556
+```
+
+**Description:**
+Simple 24-bit stereo audio codec used on Daisy Seed 1.0. Requires only reset pin initialization - no I2C configuration.
+
+**Types:**
+```nim
+type
+  Ak4556* = object
+    ## AK4556 codec driver
+```
+
+**Methods:**
+```nim
+proc init*(this: var Ak4556, resetPin: Pin)
+  ## Initialize codec with reset pin
+  
+proc deInit*(this: var Ak4556)
+  ## Deinitialize codec
+```
+
+**Example:**
+```nim
+import src/libdaisy
+import src/dev/codec_ak4556
+
+var codec: Ak4556
+codec.init(getPin(0))  # Reset pin on D0
+# Audio hardware now configured for Daisy Seed 1.0
+codec.deInit()  # Clean up when done
+```
+
+---
+
+### WM8731 Codec Module (codec_wm8731.nim)
+
+**Import:**
+```nim
+import src/libdaisy_i2c
+import src/dev/codec_wm8731
+```
+
+**Description:**
+I2C-controlled 24-bit stereo codec used on Daisy Seed 1.1. Provides configurable audio format and word length.
+
+**Types:**
+```nim
+type
+  Wm8731Result* = enum
+    OK   ## Success
+    ERR  ## Failure
+    
+  Wm8731Format* = enum
+    MSB_FIRST_RJ  ## MSB first, right-justified
+    MSB_FIRST_LJ  ## MSB first, left-justified (default)
+    I2S           ## I2S format
+    DSP           ## DSP format
+    
+  Wm8731WordLength* = enum
+    BITS_16  ## 16-bit samples
+    BITS_20  ## 20-bit samples
+    BITS_24  ## 24-bit samples (default)
+    BITS_32  ## 32-bit samples
+    
+  Wm8731Config* = object
+    mcu_is_master*: bool        ## MCU master mode
+    lr_swap*: bool              ## Swap L/R channels
+    csb_pin_state*: bool        ## CSB pin state
+    fmt*: Wm8731Format          ## Audio format
+    wl*: Wm8731WordLength       ## Word length
+```
+
+**Methods:**
+```nim
+proc defaults*(this: var Wm8731Config)
+  ## Set default configuration
+  ## MCU master, 24-bit, MSB LJ format
+  
+proc init*(this: var Wm8731, config: Wm8731Config, i2c: I2CHandle): Wm8731Result
+  ## Initialize codec via I2C
+```
+
+**Example:**
+```nim
+import src/libdaisy
+import src/libdaisy_i2c
+import src/dev/codec_wm8731
+
+var i2c = initI2C(I2C_1, getPin(11), getPin(12), I2C_400KHZ)
+var codec: Wm8731
+var config: Wm8731Config
+
+config.defaults()  # Standard config
+config.fmt = Wm8731Format.I2S  # Override to I2S if needed
+
+if codec.init(config, i2c) == Wm8731Result.OK:
+  echo "WM8731 initialized successfully"
+```
+
+---
+
+### PCM3060 Codec Module (codec_pcm3060.nim)
+
+**Import:**
+```nim
+import src/libdaisy_i2c
+import src/dev/codec_pcm3060
+```
+
+**Description:**
+High-performance 24-bit stereo codec used on Daisy Seed 2.0. Auto-configures to 24-bit LJ format.
+
+**Types:**
+```nim
+type
+  Pcm3060Result* = enum
+    OK   ## Success
+    ERR  ## Failure
+```
+
+**Methods:**
+```nim
+proc init*(this: var Pcm3060, i2c: I2CHandle): Pcm3060Result
+  ## Initialize codec via I2C
+  ## Auto-configures to 24-bit LJ format
+```
+
+**Example:**
+```nim
+import src/libdaisy
+import src/libdaisy_i2c
+import src/dev/codec_pcm3060
+
+var i2c = initI2C(I2C_1, getPin(11), getPin(12), I2C_400KHZ)
+var codec: Pcm3060
+
+if codec.init(i2c) == Pcm3060Result.OK:
+  echo "PCM3060 initialized successfully"
+```
+
+---
+
+### HD44780 LCD Module (lcd_hd44780.nim)
+
+**Import:**
+```nim
+import src/dev/lcd_hd44780
+```
+
+**Description:**
+Character LCD driver for HD44780-compatible displays (16x2, 20x4). Uses 4-bit data mode with 6 GPIO connections.
+
+**Types:**
+```nim
+type
+  LcdHD44780Config* = object
+    cursor_on*: bool      ## Show cursor
+    cursor_blink*: bool   ## Blink cursor
+    rs*: Pin              ## Register select pin
+    en*: Pin              ## Enable pin
+    d4*: Pin              ## Data bit 4
+    d5*: Pin              ## Data bit 5
+    d6*: Pin              ## Data bit 6
+    d7*: Pin              ## Data bit 7
+```
+
+**Methods:**
+```nim
+proc init*(this: var LcdHD44780, config: LcdHD44780Config)
+  ## Initialize LCD with configuration
+  
+proc print*(this: var LcdHD44780, text: cstring)
+  ## Print text at current cursor position
+  
+proc printInt*(this: var LcdHD44780, value: cint)
+  ## Print integer value
+  
+proc setCursor*(this: var LcdHD44780, row: uint8, col: uint8)
+  ## Set cursor position (row 0-1, col 0-15 for 16x2)
+  
+proc clear*(this: var LcdHD44780)
+  ## Clear display and reset cursor
+```
+
+**Example:**
+```nim
+import src/libdaisy
+import src/dev/lcd_hd44780
+
+var lcd: LcdHD44780
+var config: LcdHD44780Config
+
+config.cursor_on = false
+config.cursor_blink = false
+config.rs = getPin(1)
+config.en = getPin(2)
+config.d4 = getPin(3)
+config.d5 = getPin(4)
+config.d6 = getPin(5)
+config.d7 = getPin(6)
+
+lcd.init(config)
+lcd.clear()
+lcd.setCursor(0, 0)  # Row 0, Column 0
+lcd.print("Hello Daisy!")
+lcd.setCursor(1, 0)  # Row 1, Column 0
+lcd.print("Volume: ")
+lcd.printInt(75)  # Print "75"
+```
+
+---
+
+### OLED Fonts Module (oled_fonts.nim)
+
+**Import:**
+```nim
+import src/util/oled_fonts
+```
+
+**Description:**
+Font data for OLED displays. Provides 8 bitmap fonts in various sizes for use with SSD1306 and similar displays.
+
+**Types:**
+```nim
+type
+  FontDef* = object
+    ## Font definition structure
+    ## Contains character bitmap data and dimensions
+```
+
+**Available Fonts:**
+```nim
+var Font_4x6*: FontDef      ## 4x6 pixel font (smallest)
+var Font_5x8*: FontDef      ## 5x8 pixel font
+var Font_6x8*: FontDef      ## 6x8 pixel font  
+var Font_7x10*: FontDef     ## 7x10 pixel font
+var Font_11x18*: FontDef    ## 11x18 pixel font
+var Font_12x16*: FontDef    ## 12x16 pixel font
+var Font_16x26*: FontDef    ## 16x26 pixel font (largest)
+```
+
+**Usage:**
+```nim
+import src/libdaisy_oled
+import src/util/oled_fonts
+
+var display: OledDisplay
+# ... initialize display ...
+
+# Use font with OLED display
+display.setFont(Font_7x10)
+display.writeString("Hello", Font_7x10, true)  # true = white text
+```
+
+**Font Characteristics:**
+- All fonts are monospaced (fixed width)
+- Characters are ASCII printable (32-126)
+- Stored in flash memory (no RAM overhead)
+- Compatible with common OLED libraries
+
+---
+
 For more examples, see [EXAMPLES.md](EXAMPLES.md).
 
 For technical details, see [TECHNICAL_REPORT.md](TECHNICAL_REPORT.md).

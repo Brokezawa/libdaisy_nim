@@ -263,14 +263,15 @@ using namespace daisy;
 
 ### Step-by-Step Process
 
-1. **Study C++ interface** in `libDaisy/src/per/peripheral.h`
-2. **Create module** `src/libdaisy_peripheral.nim`
+1. **Study C++ interface** in `libDaisy/src/per/peripheral.h` or `libDaisy/src/dev/device.h`
+2. **Create module** `src/libdaisy_peripheral.nim` or `src/dev/device_name.nim`
 3. **Add types** using `importcpp` pragma
 4. **Add procedures** with correct `importcpp` patterns
-5. **Add macro** to `src/libdaisy_macros.nim` for includes
+5. **Add macro support** to `src/libdaisy_macros.nim` for includes and typedefs
 6. **Create example** in `examples/peripheral_test.nim`
-7. **Test compilation** with `./test_all.sh`
-8. **Document** in module comments and `API_REFERENCE.md`
+7. **Document example in EXAMPLES.md** (see "Contributing New Examples" below)
+8. **Test compilation** with `./test_all.sh`
+9. **Document API** in module comments and `API_REFERENCE.md`
 
 See CONTRIBUTING.md lines 99-317 for detailed tutorial.
 
