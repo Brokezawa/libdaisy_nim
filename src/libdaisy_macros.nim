@@ -99,9 +99,22 @@ const usbTypedefs* = [
   "UsbHandle::UsbPeriph UsbPeriph"
 ]
 
+# SDMMC module typedefs
+const sdmmcTypedefs* = [
+  "SdmmcHandler::Result SdmmcResult",
+  "SdmmcHandler::BusWidth SdmmcBusWidth",
+  "SdmmcHandler::Speed SdmmcSpeed",
+  "SdmmcHandler::Config SdmmcConfig",
+  "SdmmcHandler SdmmcHandler",
+  "FatFSInterface::Result FatFSResult",
+  "FatFSInterface::Config::Media FatFSMedia",
+  "FatFSInterface::Config FatFSConfig",
+  "FatFSInterface FatFSInterface"
+]
+
 # All typedefs combined (for full inclusion)
 const daisyTypedefsList* = @coreTypedefs & @controlsTypedefs & @adcTypedefs & @pwmTypedefs &
-                           @oledTypedefs & @i2cTypedefs & @spiTypedefs & @sdramTypedefs & @usbTypedefs
+                           @oledTypedefs & @i2cTypedefs & @spiTypedefs & @sdramTypedefs & @usbTypedefs & @sdmmcTypedefs
 
 # ============================================================================
 # C++ Header Includes
@@ -484,6 +497,16 @@ macro emitRgbLedIncludes*(): untyped =
   else:
     result = newStmtList()
 
+macro emitSwitchIncludes*(): untyped =
+  ## Emit Switch header includes when useSwitch is defined
+  when defined(useSwitch):
+    result = quote do:
+      {.emit: """/*INCLUDESECTION*/
+#include "hid/switch.h"
+""".}
+  else:
+    result = newStmtList()
+
 macro emitSwitch3Includes*(): untyped =
   ## Emit Switch3 header includes when useSwitch3 is defined
   when defined(useSwitch3):
@@ -530,6 +553,57 @@ macro emitMappedValueIncludes*(): untyped =
     result = quote do:
       {.emit: """/*INCLUDESECTION*/
 #include "util/MappedValue.h"
+""".}
+  else:
+    result = newStmtList()
+
+macro emitWavParserIncludes*(): untyped =
+  ## Emit WavParser header includes when useWavParser is defined
+  when defined(useWavParser):
+    result = quote do:
+      {.emit: """/*INCLUDESECTION*/
+#include "util/WavParser.h"
+#include "util/FileReader.h"
+""".}
+  else:
+    result = newStmtList()
+
+macro emitWavPlayerIncludes*(): untyped =
+  ## Emit WavPlayer header includes when useWavPlayer is defined
+  when defined(useWavPlayer):
+    result = quote do:
+      {.emit: """/*INCLUDESECTION*/
+#include "util/WavPlayer.h"
+""".}
+  else:
+    result = newStmtList()
+
+macro emitWavWriterIncludes*(): untyped =
+  ## Emit WavWriter header includes when useWavWriter is defined
+  when defined(useWavWriter):
+    result = quote do:
+      {.emit: """/*INCLUDESECTION*/
+#include "util/WavWriter.h"
+""".}
+  else:
+    result = newStmtList()
+
+macro emitWaveTableLoaderIncludes*(): untyped =
+  ## Emit WaveTableLoader header includes when useWaveTableLoader is defined
+  when defined(useWaveTableLoader):
+    result = quote do:
+      {.emit: """/*INCLUDESECTION*/
+#include "util/WaveTableLoader.h"
+""".}
+  else:
+    result = newStmtList()
+
+macro emitQSPIIncludes*(): untyped =
+  ## Emit QSPI header includes when useQSPI is defined
+  when defined(useQSPI):
+    result = quote do:
+      {.emit: """/*INCLUDESECTION*/
+#include "per/qspi.h"
 """.}
   else:
     result = newStmtList()

@@ -95,17 +95,36 @@ type
 
   FatFSInterface* {.importcpp: "daisy::FatFSInterface".} = object
 
-# SDMMC Handler methods
-proc init*(this: var SdmmcHandler, cfg: SdmmcConfig): SdmmcResult {.importcpp: "Init".}
+{.pop.} # importcpp
+{.pop.} # header
+
+# Low-level C++ interface - capital letter names matching libDaisy C++ API
+proc Init*(this: var SdmmcHandler, cfg: SdmmcConfig): SdmmcResult 
+  {.importcpp: "#.Init(@)", header: "daisy_seed.h".}
+
+proc Init*(this: var FatFSInterface, cfg: FatFSConfig): FatFSResult 
+  {.importcpp: "#.Init(@)", header: "daisy_seed.h".}
+
+proc Init*(this: var FatFSInterface, media: uint8): FatFSResult 
+  {.importcpp: "#.Init(@)", header: "daisy_seed.h".}
+
+{.push header: "daisy_seed.h".}
+{.push importcpp.}
 
 # FatFS Interface methods
-proc init*(this: var FatFSInterface, cfg: FatFSConfig): FatFSResult {.importcpp: "Init".}
-proc init*(this: var FatFSInterface, media: FatFSMedia): FatFSResult {.importcpp: "Init".}
-proc deInit*(this: var FatFSInterface): FatFSResult {.importcpp: "DeInit".}
-proc initialized*(this: FatFSInterface): bool {.importcpp: "Initialized".}
-proc getConfig*(this: FatFSInterface): FatFSConfig {.importcpp: "GetConfig".}
-proc getSDPath*(this: FatFSInterface): cstring {.importcpp: "GetSDPath".}
-proc getUSBPath*(this: FatFSInterface): cstring {.importcpp: "GetUSBPath".}
+proc DeInit*(this: var FatFSInterface): FatFSResult 
+  {.importcpp: "#.DeInit()", header: "daisy_seed.h".}
+proc Initialized*(this: FatFSInterface): bool 
+  {.importcpp: "#.Initialized()", header: "daisy_seed.h".}
+
+proc GetConfig*(this: FatFSInterface): FatFSConfig 
+  {.importcpp: "#.GetConfig()", header: "daisy_seed.h".}
+
+proc GetSDPath*(this: FatFSInterface): cstring 
+  {.importcpp: "#.GetSDPath()", header: "daisy_seed.h".}
+
+proc GetUSBPath*(this: FatFSInterface): cstring 
+  {.importcpp: "#.GetUSBPath()", header: "daisy_seed.h".}
 
 {.pop.} # importcpp
 {.pop.} # header
@@ -209,6 +228,42 @@ proc newSdmmcConfig*(): SdmmcConfig =
 proc newFatFSConfig*(): FatFSConfig =
   ## Creates a new FatFS configuration
   result.media = uint8(MEDIA_SD)
+
+# =============================================================================
+# High-Level Nim-Friendly API
+# =============================================================================
+
+proc init*(sdmmc: var SdmmcHandler, cfg: SdmmcConfig): SdmmcResult =
+  ## Initialize SDMMC handler with configuration
+  sdmmc.Init(cfg)
+
+proc init*(fatfs: var FatFSInterface, cfg: FatFSConfig): FatFSResult =
+  ## Initialize FatFS interface with configuration
+  fatfs.Init(cfg)
+
+proc init*(fatfs: var FatFSInterface, media: FatFSMedia): FatFSResult =
+  ## Initialize FatFS interface with media type (convenience)
+  fatfs.Init(uint8(media))
+
+proc deInit*(fatfs: var FatFSInterface): FatFSResult =
+  ## Deinitialize FatFS interface
+  fatfs.DeInit()
+
+proc initialized*(fatfs: FatFSInterface): bool =
+  ## Check if FatFS is initialized
+  fatfs.Initialized()
+
+proc getConfig*(fatfs: FatFSInterface): FatFSConfig =
+  ## Get FatFS configuration
+  fatfs.GetConfig()
+
+proc getSDPath*(fatfs: FatFSInterface): cstring =
+  ## Get SD card mount path
+  fatfs.GetSDPath()
+
+proc getUSBPath*(fatfs: FatFSInterface): cstring =
+  ## Get USB mount path
+  fatfs.GetUSBPath()
 
 # Higher-level convenience functions
 
