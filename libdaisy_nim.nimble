@@ -5,7 +5,7 @@ author        = "libDaisy Nim Wrapper Contributors"
 description   = "Nim bindings for libDaisy - Hardware Abstraction Library for the Daisy Audio Platform"
 license       = "MIT"
 srcDir        = "."
-skipDirs      = @["examples", "examples_nim", "tests", "doc", "Drivers", "Middlewares", "core", "cmake", "ci", "resources"]
+skipDirs      = @["examples", "examples_nim", "tests", "docs", "Drivers", "Middlewares", "core", "cmake", "ci", "resources"]
 skipFiles     = @[]
 
 # Dependencies

@@ -63,7 +63,7 @@ make                    # Builds current TARGET
 make program-dfu        # Flash to Daisy via USB
 ```
 
-See **[QUICKSTART.md](QUICKSTART.md)** for detailed setup instructions.
+See **[QUICKSTART.md](docs/QUICKSTART.md)** for detailed setup instructions.
 
 ## What Can You Build?
 
@@ -145,27 +145,34 @@ Each example is a complete, working program that compiles and runs on hardware.
 
 ## Documentation
 
-- **[QUICKSTART.md](QUICKSTART.md)** - Get started in 5 minutes
-- **[API_REFERENCE.md](API_REFERENCE.md)** - Complete API documentation
-- **[EXAMPLES.md](examples/EXAMPLES.md)** - Example testing matrix with expected behavior
-- **[TESTING_CHECKLIST.md](TESTING_CHECKLIST.md)** - Printable hardware testing checklist
-- **[TECHNICAL_REPORT.md](TECHNICAL_REPORT.md)** - How the wrapper works internally
-- **[ROADMAP.md](ROADMAP.md)** - v1.0.0 roadmap and development plan
-- **[CONTRIBUTING.md](CONTRIBUTING.md)** - How to contribute to the project
-- **[HARDWARE_TESTING.md](HARDWARE_TESTING.md)** - Community hardware testing guide
+- **[QUICKSTART.md](docs/QUICKSTART.md)** - Get started in 5 minutes
+- **[API_REFERENCE.md](docs/API_REFERENCE.md)** - Complete API documentation
+- **[EXAMPLES.md](docs/EXAMPLES.md)** - Example testing matrix with expected behavior
+- **[TESTING_CHECKLIST.md](docs/TESTING_CHECKLIST.md)** - Printable hardware testing checklist
+- **[TECHNICAL_REPORT.md](docs/TECHNICAL_REPORT.md)** - How the wrapper works internally
+- **[ROADMAP.md](docs/ROADMAP.md)** - v1.0.0 roadmap and development plan
+- **[CONTRIBUTING.md](docs/CONTRIBUTING.md)** - How to contribute to the project
+- **[HARDWARE_TESTING.md](docs/HARDWARE_TESTING.md)** - Community hardware testing guide
 
 ## Project Structure
 
 ```
 libdaisy_nim/
 ├── README.md              # This file
-├── QUICKSTART.md          # Quick start guide
-├── API_REFERENCE.md       # Complete API documentation
-├── TECHNICAL_REPORT.md    # Technical internals & architecture
-├── CHANGELOG.md           # Version history
-├── CONTRIBUTING.md        # Contribution guide
 ├── LICENSE                # License file
 ├── libdaisy_nim.nimble    # Nimble package file
+│
+├── docs/                  # Documentation
+│   ├── QUICKSTART.md         # Quick start guide
+│   ├── API_REFERENCE.md      # Complete API documentation
+│   ├── EXAMPLES.md           # Example testing matrix
+│   ├── TESTING_CHECKLIST.md  # Hardware testing checklist
+│   ├── TECHNICAL_REPORT.md   # Technical internals & architecture
+│   ├── ROADMAP.md            # v1.0.0 development plan
+│   ├── CONTRIBUTING.md       # Contribution guide
+│   ├── HARDWARE_TESTING.md   # Community testing guide
+│   ├── CHANGELOG.md          # Version history
+│   └── AGENTS.md             # AI agent guide
 │
 ├── src/                   # Wrapper source code
 │   ├── libdaisy.nim          # Core API (GPIO, audio, system)
@@ -186,8 +193,8 @@ libdaisy_nim/
 └── examples/              # Example programs (24+)
     ├── Makefile              # Build system
     ├── nim.cfg               # Nim compiler configuration
-    ├── test_all.sh     # Test all examples
-    ├── *.nim           # Example programs
+    ├── test_all.sh           # Test all examples
+    └── *.nim                 # Example programs
 ```
 
 ## Technical Highlights
@@ -273,7 +280,7 @@ This wrapper follows the same MIT license as libDaisy. See [LICENSE](LICENSE) fi
 
 ## Contributing
 
-Contributions are welcome! See **[CONTRIBUTING.md](CONTRIBUTING.md)** for:
+Contributions are welcome! See **[CONTRIBUTING.md](docs/CONTRIBUTING.md)** for:
 - Development setup
 - Code style guidelines
 - Testing requirements
@@ -320,4 +327,4 @@ Contributions are welcome! See **[CONTRIBUTING.md](CONTRIBUTING.md)** for:
 
 ---
 
-**Ready to build something amazing?** Start with **[QUICKSTART.md](QUICKSTART.md)**!
+**Ready to build something amazing?** Start with **[QUICKSTART.md](docs/QUICKSTART.md)**!

@@ -774,4 +774,4 @@ With your help, we can expand coverage of libDaisy features and make Nim a first
 
 **Questions?** Open a GitHub issue or start a discussion!  
 **Want to help?** See [CONTRIBUTING.md](CONTRIBUTING.md)!  
-**Ready to build?** Check out [EXAMPLES.md](examples/EXAMPLES.md)!
+**Ready to build?** Check out [EXAMPLES.md](EXAMPLES.md)!

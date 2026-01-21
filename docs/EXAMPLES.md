@@ -627,15 +627,15 @@ When adding a new example:
 5. **Follow naming conventions**: `category_description.nim`
 6. **Update `test_all.sh`** if needed
 
-See [CONTRIBUTING.md](../CONTRIBUTING.md) for full guidelines.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 
 ---
 
 ## Resources
 
-- **[API Reference](../API_REFERENCE.md)** - Complete API documentation
-- **[Technical Report](../TECHNICAL_REPORT.md)** - How wrappers work
-- **[Hardware Testing Guide](../HARDWARE_TESTING.md)** - Community testing procedures
+- **[API Reference](API_REFERENCE.md)** - Complete API documentation
+- **[Technical Report](TECHNICAL_REPORT.md)** - How wrappers work
+- **[Hardware Testing Guide](HARDWARE_TESTING.md)** - Community testing procedures
 - **[libDaisy Docs](https://github.com/electro-smith/DaisyWiki/wiki)** - Hardware documentation
 - **[Nim Manual](https://nim-lang.org/docs/manual.html)** - Nim language reference
 

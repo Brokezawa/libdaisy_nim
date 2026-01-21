@@ -463,7 +463,7 @@ when isMainModule:
 **Congratulations!** You're now ready to develop Daisy Seed firmware in Nim! 🎉
 
 For more advanced topics, continue with:
-- **[EXAMPLES.md](examples/EXAMPLES.md)** - Detailed example walkthroughs
+- **[EXAMPLES.md](EXAMPLES.md)** - Detailed example walkthroughs
 - **[API_REFERENCE.md](API_REFERENCE.md)** - Complete API documentation
 - **[TECHNICAL_REPORT.md](TECHNICAL_REPORT.md)** - How the wrapper works
 
