@@ -195,6 +195,24 @@ proc getModuleHeaders*(moduleName: string): string =
   of "oled_fonts":
     """#include "util/oled_fonts.h"
 """
+  of "icm20948":
+    """#include "dev/icm20948.h"
+"""
+  of "apds9960":
+    """#include "dev/apds9960.h"
+"""
+  of "dps310":
+    """#include "dev/dps310.h"
+"""
+  of "tlv493d":
+    """#include "dev/tlv493d.h"
+"""
+  of "mpr121":
+    """#include "dev/mpr121.h"
+"""
+  of "neotrellis":
+    """#include "dev/neotrellis.h"
+"""
   else: ""
 
 # All headers combined (for full inclusion)
@@ -362,6 +380,12 @@ macro useDaisyModules*(modules: varargs[untyped]): untyped =
   var includeCodecPcm3060 = false
   var includeLcdHd44780 = false
   var includeOledFonts = false
+  var includeIcm20948 = false
+  var includeApds9960 = false
+  var includeDps310 = false
+  var includeTlv493d = false
+  var includeMpr121 = false
+  var includeNeotrellis = false
   
   # Parse module arguments
   for module in modules:
@@ -381,11 +405,18 @@ macro useDaisyModules*(modules: varargs[untyped]): untyped =
     of "codec_pcm3060": includeCodecPcm3060 = true
     of "lcd_hd44780": includeLcdHd44780 = true
     of "oled_fonts": includeOledFonts = true
+    of "icm20948": includeIcm20948 = true
+    of "apds9960": includeApds9960 = true
+    of "dps310": includeDps310 = true
+    of "tlv493d": includeTlv493d = true
+    of "mpr121": includeMpr121 = true
+    of "neotrellis": includeNeotrellis = true
     of "core": discard  # Always included
     else:
       error("Unknown module: " & moduleName & 
             ". Available: core, controls, adc, pwm, oled, i2c, spi, serial, sdram, usb, " &
-            "codec_ak4556, codec_wm8731, codec_pcm3060, lcd_hd44780, oled_fonts")
+            "codec_ak4556, codec_wm8731, codec_pcm3060, lcd_hd44780, oled_fonts, " &
+            "icm20948, apds9960, dps310, tlv493d, mpr121, neotrellis")
   
   # Build headers string
   var headersStr = "/*INCLUDESECTION*/\n"
@@ -404,6 +435,12 @@ macro useDaisyModules*(modules: varargs[untyped]): untyped =
   if includeCodecPcm3060: headersStr.add(getModuleHeaders("codec_pcm3060"))
   if includeLcdHd44780: headersStr.add(getModuleHeaders("lcd_hd44780"))
   if includeOledFonts: headersStr.add(getModuleHeaders("oled_fonts"))
+  if includeIcm20948: headersStr.add(getModuleHeaders("icm20948"))
+  if includeApds9960: headersStr.add(getModuleHeaders("apds9960"))
+  if includeDps310: headersStr.add(getModuleHeaders("dps310"))
+  if includeTlv493d: headersStr.add(getModuleHeaders("tlv493d"))
+  if includeMpr121: headersStr.add(getModuleHeaders("mpr121"))
+  if includeNeotrellis: headersStr.add(getModuleHeaders("neotrellis"))
   
   # 1. Emit header includes
   let includesEmit = newNimNode(nnkPragma)
