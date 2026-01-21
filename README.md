@@ -15,9 +15,10 @@ This wrapper allows you to write firmware for the Daisy Seed embedded audio boar
 - ✅ **Type safety** - Nim's strong type system catches errors at compile time
 - ✅ **Clean API** - Idiomatic Nim interfaces to libDaisy functionality
 - ✅ **Comprehensive** - Covers core audio, peripherals, USB, storage, and more
-- ✅ **Production ready** - 14 tested examples demonstrating real-world usage
+- ✅ **Production ready** - 30 tested examples demonstrating real-world usage
 - ✅ **Well documented** - Complete API reference and technical documentation
-- ✅ **Many examples** - 24+ working examples covering all features
+- ✅ **Many examples** - 30 working examples covering all features
+- ✅ **35 modules** - Comprehensive hardware and utility coverage
 
 ## Quick Start
 
@@ -106,13 +107,23 @@ The Daisy Seed is a powerful embedded audio platform perfect for:
 - ✅ **Controls** - Analog knobs, CV inputs (uses ADC)
 - ✅ **OLED Displays** - SSD1306 driver with I2C/SPI support
 
+### Data Structures & Utilities (NEW in v0.5.0)
+- ✅ **FIFO Queue** - Lock-free queue for audio/event buffering
+- ✅ **Stack** - Fixed-capacity LIFO stack
+- ✅ **RingBuffer** - Circular buffer for delay effects
+- ✅ **FixedStr** - Stack-allocated string for displays
+- ✅ **Parameter Mapping** - Curve-based control mapping (exp/log/cubic)
+- ✅ **MappedValue** - Value scaling and quantization utilities
+- ✅ **UniqueId** - STM32 device unique identifier
+- ✅ **CpuLoad** - Real-time CPU usage monitoring
+
 ### Boards
 - ✅ **Daisy Seed** - Core development board
 - ✅ **Daisy Patch** - Eurorack module format (NEW in v0.3.0)
 
 ## Examples
 
-The `examples/` directory contains 24+ production-ready examples:
+The `examples/` directory contains 30 production-ready examples:
 
 | Category | Example | Description |
 |----------|---------|-------------|
@@ -136,6 +147,9 @@ The `examples/` directory contains 24+ production-ready examples:
 | | `oled_visualizer.nim` | Audio level visualizer |
 | **Peripherals** | `i2c_scanner.nim` | Scan I2C bus for devices |
 | | `spi_basic.nim` | Basic SPI communication |
+| **Data & Utils** | `data_structures.nim` | FIFO/Stack/RingBuffer with audio delay |
+| | `control_mapping.nim` | Parameter curves and value mapping |
+| | `system_info.nim` | Device ID and CPU load monitoring |
 | **Advanced** | `midi_input.nim` | MIDI note input |
 | | `encoder.nim` | Rotary encoder reading |
 | | `usb_serial.nim` | USB CDC serial port |
@@ -174,7 +188,7 @@ libdaisy_nim/
 │   ├── CHANGELOG.md          # Version history
 │   └── AGENTS.md             # AI agent guide
 │
-├── src/                   # Wrapper source code
+├── src/                   # Wrapper source code (35 modules)
 │   ├── libdaisy.nim          # Core API (GPIO, audio, system)
 │   ├── libdaisy_macros.nim   # Compile-time macro system
 │   ├── libdaisy_adc.nim      # ADC (analog input)
@@ -188,9 +202,17 @@ libdaisy_nim/
 │   ├── libdaisy_sdmmc.nim    # SD card & FatFS
 │   ├── libdaisy_sdram.nim    # External SDRAM
 │   ├── libdaisy_controls.nim # Switches & encoders
+│   ├── libdaisy_fifo.nim     # Lock-free FIFO queue (v0.5.0)
+│   ├── libdaisy_stack.nim    # Fixed-capacity stack (v0.5.0)
+│   ├── libdaisy_ringbuffer.nim # Circular buffer (v0.5.0)
+│   ├── libdaisy_fixedstr.nim # Stack-allocated string (v0.5.0)
+│   ├── libdaisy_parameter.nim # Parameter mapping (v0.5.0)
+│   ├── libdaisy_mapped_value.nim # Value utilities (v0.5.0)
+│   ├── libdaisy_uniqueid.nim # Device unique ID (v0.5.0)
+│   ├── libdaisy_cpuload.nim  # CPU load monitoring (v0.5.0)
 │   └── panicoverride.nim     # Embedded panic handler
 │
-└── examples/              # Example programs (24+)
+└── examples/              # Example programs (30)
     ├── Makefile              # Build system
     ├── nim.cfg               # Nim compiler configuration
     ├── test_all.sh           # Test all examples
