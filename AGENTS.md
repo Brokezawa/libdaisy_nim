@@ -99,11 +99,13 @@ var adcValue: float32
 
 ```nim
 # 1. Standard library imports (if any)
-# 2. libdaisy imports
+# 2. libdaisy imports (NEW: use subdirectory paths)
 import libdaisy
 import libdaisy_macros
-import libdaisy_adc
-import libdaisy_i2c
+import per/adc
+import per/i2c
+import sys/sdmmc
+import ui/wavplayer
 
 # 3. Macro invocations (must come after imports)
 useDaisyNamespace()      # For main application files
@@ -167,18 +169,16 @@ proc importantFunction*(param: int): bool =
 
 ### Module Structure (Wrapper Files)
 
-**Standard pattern** for all `src/libdaisy_*.nim` files:
+**Standard pattern** for all `src/<category>/<module>.nim` files:
 
 ```nim
 ## ModuleName
 ## ==========
-## 
 ## Brief description of what this module wraps.
-## Include usage examples in module documentation.
 
 # 1. Imports
-import libdaisy
-import libdaisy_macros
+import ../libdaisy
+import ../libdaisy_macros
 
 # 2. Macro invocations
 useDaisyModules(feature_name)
@@ -187,17 +187,11 @@ useDaisyModules(feature_name)
 {.push header: "daisy_seed.h".}
 {.push importcpp.}
 
-# 4. Type definitions
-type
-  MyType* = object
-
-# 5. Constants
+# 4. Type definitions, constants, procedures
+type MyType* = object
 const MY_CONST* = 42
-
-# 6. Procedures
 proc myProc*() = discard
 
-# 7. Close pragma blocks
 {.pop.}
 {.pop.}
 ```
@@ -264,15 +258,15 @@ using namespace daisy;
 ### Step-by-Step Process
 
 1. **Study C++ interface** in `libDaisy/src/per/peripheral.h`
-2. **Create module** `src/libdaisy_peripheral.nim`
+2. **Create module** `src/per/peripheral.nim` (choose category: per/hid/dev/sys/util/ui)
 3. **Add types** using `importcpp` pragma
 4. **Add procedures** with correct `importcpp` patterns
 5. **Add macro** to `src/libdaisy_macros.nim` for includes
 6. **Create example** in `examples/peripheral_test.nim`
 7. **Test compilation** with `./test_all.sh`
-8. **Document** in module comments and `API_REFERENCE.md`
+8. **Document** in module comments and `docs/API_REFERENCE.md`
 
-See CONTRIBUTING.md lines 99-317 for detailed tutorial.
+See docs/CONTRIBUTING.md lines 99-317 for detailed tutorial.
 
 ### Common Pitfalls
 
@@ -302,15 +296,22 @@ proc getValue*(): cint
 libdaisy_nim/
 ├── src/                    # Wrapper modules (DO edit these)
 │   ├── libdaisy.nim        # Core module
-│   ├── libdaisy_*.nim      # Peripheral modules
-│   └── libdaisy_macros.nim # Compile-time macro system
+│   ├── libdaisy_macros.nim # Compile-time macro system
+│   ├── patch.nim           # Patch hardware abstraction
+│   ├── panicoverride.nim   # Panic handler
+│   ├── per/                # Peripherals: adc, dac, i2c, spi, uart, pwm, qspi, rng, timer
+│   ├── hid/                # Human Interface: switch, controls, led, midi, parameter, etc.
+│   ├── dev/                # Devices: oled, sdram
+│   ├── sys/                # System: sdmmc, usb
+│   ├── util/               # Utilities: fifo, stack, ringbuffer, color, cpuload, etc.
+│   └── ui/                 # File I/O: wavparser, wavplayer, wavwriter, wavetable_loader
 ├── examples/               # Example programs (DO edit/add these)
 │   ├── Makefile            # Build system (edit TARGET line 9)
 │   ├── nim.cfg             # Nim compiler config (rarely edit)
 │   ├── test_all.sh         # Test script (DO NOT edit)
-│   └── *.nim               # Example programs
+│   └── *.nim               # 40 example programs
 ├── libDaisy/               # C++ library (DO NOT edit - submodule)
-└── Documentation           # .md files (DO edit when adding features)
+└── docs/                   # Documentation (DO edit when adding features)
 ```
 
 ## Important Configuration Files
@@ -336,7 +337,8 @@ No `.cursorrules`, `.cursor/rules/`, or `.github/copilot-instructions.md` files 
 ```nim
 ## Example description
 import ../src/libdaisy
-import ../src/libdaisy_peripheral  # If using specific peripheral
+import ../src/per/adc        # NEW: subdirectory imports
+import ../src/ui/wavplayer   # NEW: subdirectory imports
 
 useDaisyNamespace()
 
@@ -354,7 +356,7 @@ when isMainModule:
 
 ## References for Agents
 
-- **CONTRIBUTING.md** (709 lines): Comprehensive wrapper development guide
-- **API_REFERENCE.md**: Complete API documentation for all modules
-- **TECHNICAL_REPORT.md**: Architecture and implementation details
-- **examples/**: 36 working examples showing all features
+- **docs/CONTRIBUTING.md** (709 lines): Comprehensive wrapper development guide
+- **docs/API_REFERENCE.md**: Complete API documentation for all 41 modules
+- **docs/TECHNICAL_REPORT.md**: Architecture and implementation details
+- **examples/**: 40 working examples showing all features
