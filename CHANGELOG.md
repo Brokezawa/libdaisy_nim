@@ -5,6 +5,41 @@ All notable changes to libdaisy_nim will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-01-21
+
+### Added
+
+#### New Modules
+- **DAC Module** (`libdaisy_dac.nim`) - Digital to Analog Converter wrapper
+  - Polling mode for single value writes
+  - DMA mode for buffered output
+  - Dual channel support (PA4, PA5)
+  - 8-bit and 12-bit resolution
+  - Configurable output buffer
+  
+- **WAV Format Module** (`libdaisy_wavformat.nim`) - WAV file format utilities
+  - WAV header structure definitions
+  - Format constants and codes
+  - Support for PCM, IEEE float, A-law, μ-law formats
+  - Ready for integration with SDMMC audio file I/O
+
+- **Daisy Patch Board Module** (`libdaisy_patch.nim`) - Complete Patch board support
+  - Full board initialization
+  - 4 CV/Knob controls with gate inputs
+  - OLED display (128x64 SPI)
+  - Rotary encoder
+  - MIDI I/O
+  - Audio I/O with AK4556 codec
+  - Helper functions for control processing
+
+#### New Examples
+- `dac_simple.nim` - DAC sine wave output in polling mode
+- `patch_simple.nim` - Daisy Patch audio passthrough with controls
+
+### Documentation
+- Updated TECHNICAL_REPORT.md with v0.3.0 completion status
+- Updated CONTRIBUTING.md with completed items
+
 ## [0.2.0] - 2025-10-29
 
 ### Added

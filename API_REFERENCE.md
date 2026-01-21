@@ -759,6 +759,194 @@ when isMainModule:
 
 ---
 
+## DAC Module (libdaisy_dac.nim) - NEW in v0.3.0
+
+**Import:**
+```nim
+import src/libdaisy_dac
+```
+
+### DacHandle Object
+
+Digital to Analog Converter for analog voltage output.
+
+**Pins:**
+- DAC Channel 1: PA4
+- DAC Channel 2: PA5
+
+**Configuration:**
+```nim
+type
+  DacChannel* = enum
+    DAC_CHN_ONE    # PA4
+    DAC_CHN_TWO    # PA5
+    DAC_CHN_BOTH   # Both channels
+
+  DacMode* = enum
+    DAC_MODE_POLLING  # Single value writes
+    DAC_MODE_DMA      # Buffered output
+
+  DacBitDepth* = enum
+    DAC_BITS_8   # 8-bit (0-255)
+    DAC_BITS_12  # 12-bit (0-4095)
+
+var dac: DacHandle
+var config = DacConfig(
+  target_samplerate: 48000,
+  chn: DAC_CHN_ONE,
+  mode: DAC_MODE_POLLING,
+  bitdepth: DAC_BITS_12,
+  buff_state: DAC_BUFFER_ENABLED
+)
+discard dac.init(config)
+```
+
+**Basic Operations:**
+```nim
+# Write single value (polling mode)
+discard dac.writeValue(DAC_CHN_ONE, 2048)  # Mid-range
+
+# Start DMA mode (single channel)
+proc dacCallback(output: ptr ptr uint16, size: csize_t) {.cdecl.} =
+  for i in 0..<size:
+    output[0][i] = uint16(i * 100)  # Generate pattern
+
+discard dac.start(buffer, bufferSize, dacCallback)
+
+# Stop DAC
+discard dac.stop()
+```
+
+---
+
+## WAV Format Module (libdaisy_wavformat.nim) - NEW in v0.3.0
+
+**Import:**
+```nim
+import src/libdaisy_wavformat
+```
+
+### WAV File Format
+
+Structures and constants for WAV audio files.
+
+**Constants:**
+```nim
+const
+  kWavFileChunkId* = 0x46464952'u32     # "RIFF"
+  kWavFileWaveId* = 0x45564157'u32      # "WAVE"
+  kWavFileSubChunk1Id* = 0x20746d66'u32 # "fmt "
+  kWavFileSubChunk2Id* = 0x61746164'u32 # "data"
+```
+
+**Format Codes:**
+```nim
+type WavFileFormatCode* = enum
+  WAVE_FORMAT_PCM = 0x0001
+  WAVE_FORMAT_IEEE_FLOAT = 0x0003
+  WAVE_FORMAT_ALAW = 0x0006
+  WAVE_FORMAT_ULAW = 0x0007
+  WAVE_FORMAT_EXTENSIBLE = 0xFFFE
+```
+
+**Header Structure:**
+```nim
+type WavFormatTypeDef* = object
+  ChunkId*: uint32       # "RIFF"
+  FileSize*: uint32      # File size - 8
+  FileFormat*: uint32    # "WAVE"
+  SubChunk1ID*: uint32   # "fmt "
+  SubChunk1Size*: uint32 # Format chunk size
+  AudioFormat*: uint16   # Format code
+  NbrChannels*: uint16   # Number of channels
+  SampleRate*: uint32    # Sample rate (Hz)
+  ByteRate*: uint32      # Bytes per second
+  BlockAlign*: uint16    # Frame size in bytes
+  BitPerSample*: uint16  # Bits per sample
+  SubChunk2ID*: uint32   # "data"
+  SubCHunk2Size*: uint32 # Data size
+
+# Usage example (with SDMMC)
+var header: WavFormatTypeDef
+# Read from file...
+if header.ChunkId == kWavFileChunkId:
+  echo "Valid WAV: ", header.SampleRate, "Hz, ", header.NbrChannels, " channels"
+```
+
+---
+
+## Daisy Patch Board Module (libdaisy_patch.nim) - NEW in v0.3.0
+
+**Import:**
+```nim
+import src/libdaisy_patch
+```
+
+### DaisyPatch Object
+
+Complete Daisy Patch Eurorack module support.
+
+**Hardware Features:**
+- 4 CV/Knob inputs with gate inputs
+- OLED display (128x64)
+- Rotary encoder
+- MIDI I/O
+- Gate inputs/outputs
+- Audio I/O with AK4556 codec
+
+**Initialization:**
+```nim
+var patch: DaisyPatch
+patch.init()  # Or patch.init(boost = true) for 480MHz
+```
+
+**Audio:**
+```nim
+proc audioCallback(input, output: ptr ptr cfloat, size: csize_t) {.cdecl.} =
+  # 4 input channels, 4 output channels
+  for i in 0..<size:
+    output[0][i] = input[0][i]  # Channel 1
+    output[1][i] = input[1][i]  # Channel 2
+    output[2][i] = input[2][i]  # Channel 3
+    output[3][i] = input[3][i]  # Channel 4
+
+patch.startAudio(audioCallback)
+patch.stopAudio()
+patch.setAudioSampleRate(SR_48KHZ)
+patch.setAudioBlockSize(48)
+```
+
+**Controls:**
+```nim
+type PatchCtrl* = enum
+  CTRL_1, CTRL_2, CTRL_3, CTRL_4
+
+# Process controls
+patch.processAllControls()  # Both analog and digital
+# Or separately:
+patch.processAnalogControls()
+patch.processDigitalControls()
+
+# Read control values
+let knob1 = patch.getKnobValue(CTRL_1)  # 0.0 to 1.0
+
+# Display control values on OLED
+patch.displayControls()
+```
+
+**Direct Hardware Access:**
+```nim
+# Access underlying components
+patch.seed.setLed(true)
+patch.encoder  # Rotary encoder
+patch.display  # OLED display
+patch.midi     # MIDI handler
+patch.gate_input[0]  # Gate input 1
+patch.gate_output    # Gate output
+```
+
+---
+
 For more examples, see [EXAMPLES.md](examples/EXAMPLES.md).
 
 For technical details, see [TECHNICAL_REPORT.md](TECHNICAL_REPORT.md).

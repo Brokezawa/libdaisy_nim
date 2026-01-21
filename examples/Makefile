@@ -6,14 +6,14 @@
 #   make program-dfu  # Flash to Daisy Seed via DFU
 #
 # Set your Nim source file here
-TARGET = blink
+TARGET = usb_serial
 NIM_SRC = $(TARGET).nim
 
 # Build directory
 BUILD_DIR = build
 
 # Paths (adjust these to your setup)
-LIBDAISY_DIR = ../../libDaisy
+LIBDAISY_DIR = ../libDaisy
 SYSTEM_FILES_DIR = $(LIBDAISY_DIR)/core
 
 # Toolchain
@@ -46,7 +46,6 @@ INCLUDES = \
 	-I$(LIBDAISY_DIR)/Middlewares/ST/STM32_USB_Host_Library/Core/Inc \
 	-I$(LIBDAISY_DIR)/Middlewares/ST/STM32_USB_Device_Library/Core/Inc \
 	-I$(LIBDAISY_DIR)/Middlewares/Third_Party/FatFs/src
-
 # C/C++ flags
 CFLAGS = $(ARCH_FLAGS) $(DEFINES) $(INCLUDES) -Os -Wall -fdata-sections -ffunction-sections
 CXXFLAGS = $(CFLAGS) -fno-exceptions -fno-rtti
@@ -62,6 +61,10 @@ LDFLAGS = $(ARCH_FLAGS) \
 
 # Nim compile flags
 NIMFLAGS = \
+	--clearNimblePath \
+	--nimblePath:off \
+	--skipUserCfg \
+	--skipParentCfg \
 	--cpu:arm \
 	--os:standalone \
 	--mm:arc \
@@ -71,6 +74,7 @@ NIMFLAGS = \
 	--panics:on \
 	--define:useMalloc \
 	--define:noSignalHandler \
+	--cc:gcc \
 	--gcc.exe:$(CC) \
 	--gcc.linkerexe:$(LD) \
 	--gcc.cpp.exe:$(CXX) \

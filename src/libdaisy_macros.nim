@@ -389,3 +389,37 @@ macro useDaisyModules*(modules: varargs[untyped]): untyped =
       )
     )
     result.add(helpersEmit)
+
+# ============================================================================
+# Module-Specific Include Macros
+# ============================================================================
+
+macro emitDacIncludes*(): untyped =
+  ## Emit DAC header includes when useDac is defined
+  when defined(useDac):
+    result = quote do:
+      {.emit: """/*INCLUDESECTION*/
+#include "per/dac.h"
+""".}
+  else:
+    result = newStmtList()
+
+macro emitWavFormatIncludes*(): untyped =
+  ## Emit WAV format header includes when useWavFormat is defined
+  when defined(useWavFormat):
+    result = quote do:
+      {.emit: """/*INCLUDESECTION*/
+#include "util/wav_format.h"
+""".}
+  else:
+    result = newStmtList()
+
+macro emitPatchIncludes*(): untyped =
+  ## Emit Daisy Patch header includes when usePatch is defined
+  when defined(usePatch):
+    result = quote do:
+      {.emit: """/*INCLUDESECTION*/
+#include "daisy_patch.h"
+""".}
+  else:
+    result = newStmtList()

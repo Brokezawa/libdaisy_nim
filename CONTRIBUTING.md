@@ -643,40 +643,36 @@ Any other information...
 
 ### High Priority
 
-**1. DAC Wrapper**
-- **Files:** `src/per/dac.h`
-- **Difficulty:** Low
-- **Impact:** Medium (CV outputs)
-- **Status:** Not started
-
-**2. WavPlayer Utility**
-- **Files:** `src/util/wavplayer.h`
+**1. WavPlayer/WavWriter Utilities** 
+- **Files:** `src/util/wavplayer.h`, `src/util/wavwriter.h` (if exists)
 - **Difficulty:** Medium
-- **Impact:** High (audio playback)
-- **Status:** Not started
+- **Impact:** High (audio playback/recording)
+- **Status:** WAV format structures done in v0.3.0, player/writer pending
 
-**3. More Board Support**
-- **Files:** `src/daisy_patch.h`, etc.
+**2. More Board Support**
+- **Files:** `src/daisy_pod.h`, `src/daisy_field.h`, `src/daisy_petal.h`
 - **Difficulty:** Low to Medium
 - **Impact:** Medium (community value)
-- **Status:** Daisy Patch partially documented
+- **Status:** Daisy Patch completed in v0.3.0
 
 ### Medium Priority
 
-**4. Additional Device Drivers**
+**3. Additional Device Drivers**
 - IMU, codecs, sensors, etc.
 - See TECHNICAL_REPORT.md for full list
 
-**5. UI Framework Wrapper**
+**4. UI Framework Wrapper**
 - Menu system
 - Button/Pot monitoring
 
-**6. More Examples**
+**5. More Examples**
 - Complex audio processing
 - Multi-peripheral integration
 - Real-world applications
+- DAC-based CV outputs
+- Patch-specific examples
 
-**7. Documentation**
+**6. Documentation**
 - Tutorials
 - API reference expansion
 - Example explanations

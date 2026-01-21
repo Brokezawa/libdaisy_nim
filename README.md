@@ -88,7 +88,7 @@ The Daisy Seed is a powerful embedded audio platform perfect for:
 - ✅ **UART** - 6 ports, configurable baud rates
 - ✅ **ADC** - Analog inputs, multi-channel, multiplexed
 - ✅ **PWM** - Hardware PWM output, 4 channels per timer
-- ⏳ **DAC** - Analog outputs (coming in v0.3.0)
+- ✅ **DAC** - Analog voltage outputs (NEW in v0.3.0)
 
 ### USB
 - ✅ **USB Device CDC** - Virtual serial port over USB
@@ -105,6 +105,10 @@ The Daisy Seed is a powerful embedded audio platform perfect for:
 - ✅ **Encoders** - Rotary encoder support with button
 - ✅ **Controls** - Analog knobs, CV inputs (uses ADC)
 - ✅ **OLED Displays** - SSD1306 driver with I2C/SPI support
+
+### Boards
+- ✅ **Daisy Seed** - Core development board
+- ✅ **Daisy Patch** - Eurorack module format (NEW in v0.3.0)
 
 ## Examples
 
@@ -283,7 +287,7 @@ Contributions are welcome! See **[CONTRIBUTING.md](CONTRIBUTING.md)** for:
 
 ## Status
 
-**Current Version:** 0.2.0 
+**Current Version:** 0.3.0 
 
 **Stability:**
 - ✅ Core API - Stable, tested
@@ -293,8 +297,9 @@ Contributions are welcome! See **[CONTRIBUTING.md](CONTRIBUTING.md)** for:
 - ✅ ADC - ADC multiplexing working  
 - ✅ PWM - working  
 - ✅ OLED screen (SSD1306) - working  
-- 🚧 DAC - Planned
-- 🚧 Other boards - Planned (Patch, Pod, Field, etc.)
+- ✅ DAC - working (NEW in v0.3.0)
+- ✅ Daisy Patch board - working (NEW in v0.3.0)
+- 🚧 Other boards - Planned (Pod, Field, Petal, etc.)
 
 **Production Readiness:** Experimental - use at your own risk. APIs may change.
 

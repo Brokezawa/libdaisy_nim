@@ -5,8 +5,8 @@
 This document explains the technical architecture of the libdaisy_nim wrapper, how it bridges Nim and C++ code, what features from libDaisy are currently implemented, what's missing, and how to contribute.
 
 **Author:** Maxime Sidibe
-**Version:** 0.2.0  
-**Date:** October 2025  
+**Version:** 0.3.0  
+**Date:** November 2025  
 **Target:** Developers, contributors, and technical users
 
 ## Table of Contents
@@ -63,6 +63,7 @@ src/
 ├── libdaisy.nim           # Core: DaisySeed, GPIO, Audio, System
 ├── libdaisy_macros.nim    # Compile-time include generation
 ├── libdaisy_adc.nim       # ADC (Analog to Digital Converter)
+├── libdaisy_dac.nim       # DAC (Digital to Analog Converter) - NEW in v0.3.0
 ├── libdaisy_pwm.nim       # PWM (Pulse Width Modulation)
 ├── libdaisy_i2c.nim       # I2C communication
 ├── libdaisy_spi.nim       # SPI communication
@@ -73,6 +74,8 @@ src/
 ├── libdaisy_sdram.nim     # External SDRAM memory
 ├── libdaisy_oled.nim      # OLED display driver (SSD1306)
 ├── libdaisy_controls.nim  # Switches, encoders, controls
+├── libdaisy_wavformat.nim # WAV file format utilities - NEW in v0.3.0
+├── libdaisy_patch.nim     # Daisy Patch board - NEW in v0.3.0
 └── panicoverride.nim      # Embedded panic handler
 ```
 
@@ -322,7 +325,7 @@ This happens entirely at compile time - zero runtime cost!
 - **Float conversion** - Direct 0.0-1.0 values for convenience
 - **Status:** Production ready, fully tested
 
-#### PWM (`libdaisy_pwm.nim`) - **NEW in v0.2.0**
+#### PWM (`libdaisy_pwm.nim`) - v0.2.0
 - **Multiple timers** - TIM1, TIM2, TIM3, TIM4, TIM5, TIM8
 - **4 channels per timer** - Independent duty cycle control
 - **Configurable frequency** - Via prescaler and period
@@ -331,7 +334,7 @@ This happens entirely at compile time - zero runtime cost!
 - **Servo control** - Precise angle control
 - **Status:** Production ready, tested
 
-#### OLED Display (`libdaisy_oled.nim`) - **NEW in v0.2.0**
+#### OLED Display (`libdaisy_oled.nim`) - v0.2.0
 - **SSD1306 driver** - Industry-standard OLED controller
 - **Multiple sizes** - 128x64, 128x32, 96x16 support
 - **I2C transport** - Standard I2C communication
@@ -339,6 +342,29 @@ This happens entirely at compile time - zero runtime cost!
 - **Generic templates** - Type-safe size selection
 - **Graphics** - Pixel drawing, lines, shapes, text
 - **Status:** Production ready, tested
+
+#### DAC (`libdaisy_dac.nim`) - **NEW in v0.3.0**
+- **Polling mode** - Single value writes
+- **DMA mode** - Buffered output
+- **Dual channel** - PA4, PA5
+- **Resolution** - 8-bit and 12-bit
+- **Buffered output** - Higher drive capability
+- **Status:** Production ready
+
+#### WAV Format (`libdaisy_wavformat.nim`) - **NEW in v0.3.0**
+- **Header structures** - WAV file format definitions
+- **Format constants** - PCM, float, A-law, μ-law
+- **Ready for SDMMC** - Audio file I/O preparation
+- **Status:** Ready for integration
+
+#### Daisy Patch Board (`libdaisy_patch.nim`) - **NEW in v0.3.0**
+- **Full board support** - Complete Patch hardware
+- **4 CV/Knob controls** - With gate inputs
+- **OLED display** - 128x64 SPI
+- **Rotary encoder** - Built-in encoder
+- **MIDI I/O** - UART MIDI
+- **Audio I/O** - AK4556 codec
+- **Status:** Production ready
 
 ### 🚧 Partially Implemented
 
@@ -352,21 +378,14 @@ libDaisy includes drivers for many external devices. Some are wrapped:
 
 ### ❌ Not Yet Implemented
 
-#### DAC (Digital to Analog Converter)
-- **Missing:** CV output generation
-- **Priority:** Medium
-- **Difficulty:** Low
-- **Uses:** Control voltage outputs, DC-coupled audio
-
 #### Other Daisy Boards
-Currently only **Daisy Seed** is supported. Other boards need wrappers:
-- **Daisy Patch** - Eurorack module format
+Currently **Daisy Seed** and **Daisy Patch** are supported. Other boards need wrappers:
 - **Daisy Pod** - Desktop synth format
 - **Daisy Field** - Field format with more I/O
 - **Daisy Petal** - Guitar pedal format
 
-**Priority:** Low (Seed is most common)  
-**Difficulty:** Low (similar to Seed, just different pin configs)
+**Priority:** Low (Seed and Patch are most common)  
+**Difficulty:** Low (similar pattern, just different pin configs)
 
 #### Device Drivers (`src/dev/`)
 libDaisy includes drivers for many external devices. Some are wrapped:
@@ -706,7 +725,7 @@ proc importantFunc*(param: int): bool =
 
 ## Future Roadmap
 
-### Version 0.2.0 (Current Release) ✅
+### Version 0.2.0 ✅
 - ✅ ADC wrapper with multi-channel and multiplexed support
 - ✅ PWM wrapper with 4-channel timer support
 - ✅ OLED display driver (SSD1306) with I2C and SPI
@@ -715,17 +734,17 @@ proc importantFunc*(param: int): bool =
 - ✅ Performance optimizations (inline pragmas for hot paths)
 - ✅ Improved documentation
 
-### Version 0.3.0 (Next Release)
-- ⏳ DAC wrapper for analog output
-- ⏳ WavPlayer/WavWriter utilities for audio files
-- ⏳ Daisy Patch board support
+### Version 0.3.0 (Current Release) ✅
+- ✅ DAC wrapper for analog output
+- ✅ WAV format utilities for audio file headers
+- ✅ Daisy Patch board support
 - ⏳ More OLED drivers (SH1106, SSD1327)
-- ⏳ Additional device drivers (codecs, sensors)
+- ⏳ WavPlayer/WavWriter full implementation
 
-### Version 0.4.0
-- ✅ More device drivers (IMU, codecs)
-- ✅ Additional board support
-- ✅ UI/Menu framework wrapper
+### Version 0.4.0 (Next Release)
+- ⏳ More device drivers (IMU, codecs)
+- ⏳ Additional board support (Pod, Field, Petal)
+- ⏳ UI/Menu framework wrapper
 
 ### Version 1.0.0 (Stable)
 - ✅ All core peripherals wrapped
