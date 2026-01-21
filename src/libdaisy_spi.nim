@@ -123,7 +123,7 @@ type
 proc Init(this: var SpiHandle, config: SpiConfig): SpiResult {.importcpp: "#.Init(@)".}
 proc GetConfig(this: SpiHandle): SpiConfig {.importcpp: "#.GetConfig()", inline.}
 
-proc BlockingTransmit(this: var SpiHandle, buff: ptr uint8, size: csize_t, 
+proc BlockingTransmit*(this: var SpiHandle, buff: ptr uint8, size: csize_t, 
                         timeout: uint32 = 100): SpiResult {.importcpp: "#.BlockingTransmit(@)", inline.}
 
 proc BlockingReceive(this: var SpiHandle, buffer: ptr uint8, size: uint16, 

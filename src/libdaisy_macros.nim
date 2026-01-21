@@ -135,6 +135,15 @@ const oled_fontsTypedefs* = [
   "FontDef FontDef"
 ]
 
+# LED/IO expansion module typedefs (v0.9.0)
+const leddriver* : seq[string] = @[]  # Uses templates, no typedefs needed
+const dotstar* : seq[string] = @[]
+const neopixel* : seq[string] = @[]
+const mcp23x17* : seq[string] = @[]
+const sr595* : seq[string] = @[]
+const sr4021* : seq[string] = @[]
+const max11300* : seq[string] = @[]
+
 # All typedefs combined (for full inclusion)
 const daisyTypedefsList* = @coreTypedefs & @controlsTypedefs & @adcTypedefs & @pwmTypedefs &
                            @oledTypedefs & @i2cTypedefs & @spiTypedefs & @sdramTypedefs & @usbTypedefs & @sdmmcTypedefs &
@@ -212,6 +221,27 @@ proc getModuleHeaders*(moduleName: string): string =
 """
   of "neotrellis":
     """#include "dev/neotrellis.h"
+"""
+  of "leddriver":
+    """#include "dev/leddriver.h"
+"""
+  of "dotstar":
+    """#include "dev/dotstar.h"
+"""
+  of "neopixel":
+    """#include "dev/neopixel.h"
+"""
+  of "mcp23x17":
+    """#include "dev/mcp23x17.h"
+"""
+  of "sr595":
+    """#include "dev/sr_595.h"
+"""
+  of "sr4021":
+    """#include "dev/sr_4021.h"
+"""
+  of "max11300":
+    """#include "dev/max11300.h"
 """
   else: ""
 
@@ -386,6 +416,13 @@ macro useDaisyModules*(modules: varargs[untyped]): untyped =
   var includeTlv493d = false
   var includeMpr121 = false
   var includeNeotrellis = false
+  var includeLeddriver = false
+  var includeDotstar = false
+  var includeNeopixel = false
+  var includeMcp23x17 = false
+  var includeSr595 = false
+  var includeSr4021 = false
+  var includeMax11300 = false
   
   # Parse module arguments
   for module in modules:
@@ -411,12 +448,20 @@ macro useDaisyModules*(modules: varargs[untyped]): untyped =
     of "tlv493d": includeTlv493d = true
     of "mpr121": includeMpr121 = true
     of "neotrellis": includeNeotrellis = true
+    of "leddriver": includeLeddriver = true
+    of "dotstar": includeDotstar = true
+    of "neopixel": includeNeopixel = true
+    of "mcp23x17": includeMcp23x17 = true
+    of "sr595": includeSr595 = true
+    of "sr4021": includeSr4021 = true
+    of "max11300": includeMax11300 = true
     of "core": discard  # Always included
     else:
       error("Unknown module: " & moduleName & 
             ". Available: core, controls, adc, pwm, oled, i2c, spi, serial, sdram, usb, " &
             "codec_ak4556, codec_wm8731, codec_pcm3060, lcd_hd44780, oled_fonts, " &
-            "icm20948, apds9960, dps310, tlv493d, mpr121, neotrellis")
+            "icm20948, apds9960, dps310, tlv493d, mpr121, neotrellis, " &
+            "leddriver, dotstar, neopixel, mcp23x17, sr595, sr4021, max11300")
   
   # Build headers string
   var headersStr = "/*INCLUDESECTION*/\n"
@@ -441,6 +486,13 @@ macro useDaisyModules*(modules: varargs[untyped]): untyped =
   if includeTlv493d: headersStr.add(getModuleHeaders("tlv493d"))
   if includeMpr121: headersStr.add(getModuleHeaders("mpr121"))
   if includeNeotrellis: headersStr.add(getModuleHeaders("neotrellis"))
+  if includeLeddriver: headersStr.add(getModuleHeaders("leddriver"))
+  if includeDotstar: headersStr.add(getModuleHeaders("dotstar"))
+  if includeNeopixel: headersStr.add(getModuleHeaders("neopixel"))
+  if includeMcp23x17: headersStr.add(getModuleHeaders("mcp23x17"))
+  if includeSr595: headersStr.add(getModuleHeaders("sr595"))
+  if includeSr4021: headersStr.add(getModuleHeaders("sr4021"))
+  if includeMax11300: headersStr.add(getModuleHeaders("max11300"))
   
   # 1. Emit header includes
   let includesEmit = newNimNode(nnkPragma)
