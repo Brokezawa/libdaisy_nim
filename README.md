@@ -184,6 +184,7 @@ libdaisy_nim/
 ├── README.md              # This file
 ├── LICENSE                # License file
 ├── libdaisy_nim.nimble    # Nimble package file
+├── AGENTS.md              # AI agent guide (at root for discoverability)
 │
 ├── docs/                  # Documentation
 │   ├── QUICKSTART.md         # Quick start guide
@@ -194,8 +195,7 @@ libdaisy_nim/
 │   ├── ROADMAP.md            # v1.0.0 development plan
 │   ├── CONTRIBUTING.md       # Contribution guide
 │   ├── HARDWARE_TESTING.md   # Community testing guide
-│   ├── CHANGELOG.md          # Version history
-│   └── AGENTS.md             # AI agent guide
+│   └── CHANGELOG.md          # Version history
 │
 ├── src/                   # Wrapper source code (41 modules)
 │   ├── libdaisy.nim          # Core API (GPIO, audio, system)

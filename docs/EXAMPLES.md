@@ -140,18 +140,30 @@ If you find a discrepancy:
 |---------|----------|-------------------|-------------------|---------------|--------|
 | **panicoverride.nim** | System | None | Demonstrates custom panic handler. Intentionally crashes to show LED blink pattern on panic. LED blinks rapidly (SOS pattern). | Normal - this example is supposed to crash! | ⬜ |
 
+### File I/O Examples (v0.6.0)
+
+| Example | Category | Hardware Required | Expected Behavior | Common Issues | Status |
+|---------|----------|-------------------|-------------------|---------------|--------|
+| **wav_player.nim** | File I/O | SD card breakout with WAV files, Audio output | Plays WAV files from SD card. Button navigation between tracks. LED indicates playback status. Supports various sample rates and bit depths (16/24-bit). Audio output on standard Daisy audio pins. | No sound = check SD wiring/FAT32 format; Distortion = sample rate mismatch; Won't mount = check SPI connections | ⬜ |
+| **wav_recorder.nim** | File I/O | SD card breakout, Audio input/output | Records audio input to SD card as WAV file. Button starts/stops recording. LED indicates recording status (on=recording). Creates timestamped/numbered files. Real-time writing with proper WAV headers. | No file created = SD full/write-protected/wiring; Clipping = input gain too high; Silent recording = check audio input connections | ⬜ |
+| **sampler.nim** | File I/O | SD card breakout with WAV samples, Buttons, Audio output | Triggers multiple WAV samples via buttons. Each button plays different sample. Polyphonic playback supported. Samples loaded at startup from SD card. One-shot or looped playback modes. | Samples cut off = buffer size too small; No sound = check file names in code match SD files; Clicks = sample not properly loaded | ⬜ |
+| **looper.nim** | File I/O | SD card breakout, Audio input/output, Buttons | Records audio loop and plays back continuously. Button controls: record, play, stop, overdub. LED shows current mode (off=idle, blink=recording, on=playing). Loop saved to SD card for persistence. | Sync issues = buffer timing; Pops/clicks = loop not sample-aligned; Drift = clock mismatch | ⬜ |
+| **wavetable_synth.nim** | File I/O | SD card breakout with wavetable files, ADC/CV input, Audio output | Wavetable synthesizer loads waveforms from SD. CV/ADC controls oscillator pitch and wavetable position. Multiple wavetable banks supported. Smooth interpolation between waveforms. Typical wavetable size: 256-2048 samples per wave. | No sound = wavetable files missing/wrong format; Aliasing = sample rate too low; Zipper noise = no interpolation | ⬜ |
+| **qspi_storage.nim** | Storage | None (internal QSPI flash) | Demonstrates QSPI flash read/write/erase operations. Writes test patterns to internal 8MB QSPI flash, reads back for verification. LED indicates success/failure. Serial output shows progress and timing. Tests sector erase and page programming. | All zeros = QSPI not detected; Verify fails = bad flash chip/interference; Slow = check clock speed config | ⬜ |
+
 ---
 
 ## Hardware Setup Requirements
 
 ### Minimal Setup (No External Hardware)
 
-These examples work with Daisy Seed alone:
+These examples work with Daisy Seed alone (no external components needed):
 - ✅ `blink.nim` - Onboard LED only
 - ✅ `panicoverride.nim` - Onboard LED only
 - ✅ `timer_advanced.nim` - Serial output only (v0.4.0)
 - ✅ `control_mapping.nim` - Serial output only (v0.5.0)
 - ✅ `system_info.nim` - Serial output only (v0.5.0)
+- ✅ `qspi_storage.nim` - Internal QSPI flash only (v0.6.0)
 
 ### Basic GPIO Setup
 
@@ -502,6 +514,80 @@ No additional wiring - Patch has built-in:
   - Audio I/O (1/8" jacks)
 ```
 
+### SD Card Setup (v0.6.0 File I/O)
+
+**Required:** SD card breakout module (SPI interface), SD card formatted FAT32
+
+**⚠️ Important:** Daisy Seed does NOT have a built-in SD card slot. You must connect an external SD card breakout board via SPI.
+
+```
+Examples: wav_player.nim, wav_recorder.nim, sampler.nim, looper.nim, wavetable_synth.nim
+
+SD Card Module Wiring (SPI interface):
+  Daisy Pin → SD Module
+  ---------------------
+  D7  (MOSI) ──── MOSI/DI
+  D8  (MISO) ──── MISO/DO
+  D9  (SCK)  ──── SCK/CLK
+  D10 (CS)   ──── CS/SS
+  3.3V ─────────  VCC (use 3.3V, NOT 5V!)
+  GND ──────────── GND
+
+SD Card Preparation:
+  1. Format SD card as FAT32 (exFAT not supported)
+  2. Card capacity: 32GB max recommended for FAT32
+  3. Use quality cards (Class 10 or UHS-I recommended for audio)
+  
+  For wav_player.nim:
+    - Copy WAV files to root directory of SD card
+    - Supported formats: 16-bit or 24-bit PCM
+    - Sample rates: 8kHz - 96kHz
+    - Mono or stereo
+  
+  For sampler.nim:
+    - Create files named: sample1.wav, sample2.wav, sample3.wav, etc.
+    - Place in root directory
+  
+  For wavetable_synth.nim:
+    - Create wavetable files (raw 16-bit PCM or WAV format)
+    - Typical wavetable: 256 samples per waveform, multiple waveforms per file
+    - Place in root directory or subdirectory as configured in code
+
+Audio Connections (for recorder/looper/player examples):
+  IN_L  ──── Audio source left channel
+  IN_R  ──── Audio source right channel
+  OUT_L ──── Headphones/amplifier left
+  OUT_R ──── Headphones/amplifier right
+  AGND  ──── Audio ground (common with source/output)
+
+Troubleshooting SD Card Issues:
+  - "Mount failed" = Check wiring, especially CS pin
+  - "No files found" = Verify FAT32 format and file names
+  - Audio corruption = Try slower SPI speed or better SD card
+  - Write errors = Check SD card not write-protected
+```
+
+### QSPI Flash Setup (v0.6.0)
+
+**Required:** None (uses internal QSPI flash chip)
+
+```
+Example: qspi_storage.nim
+
+No external hardware needed - Daisy Seed has 8MB QSPI flash chip onboard.
+Serial console output shows test progress and results.
+LED indicates pass/fail status.
+
+QSPI Flash Details:
+  - Type: W25Q64 or compatible
+  - Capacity: 8MB (64Mbit)
+  - Interface: Quad SPI (internal to STM32)
+  - Speed: Up to 133MHz
+  - Use cases: Wavetable storage, sample storage, data logging
+
+Note: QSPI is separate from SD card storage - always available.
+```
+
 ---
 
 ## Building and Running Examples
@@ -528,7 +614,7 @@ cd examples
 # Expected output:
 # ========================================
 # SUMMARY:
-#   Passed: 30
+#   Passed: 36
 #   Failed: 0
 # ========================================
 ```

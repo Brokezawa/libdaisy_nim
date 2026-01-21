@@ -357,4 +357,4 @@ when isMainModule:
 - **CONTRIBUTING.md** (709 lines): Comprehensive wrapper development guide
 - **API_REFERENCE.md**: Complete API documentation for all modules
 - **TECHNICAL_REPORT.md**: Architecture and implementation details
-- **examples/**: 27 working examples showing all features
+- **examples/**: 36 working examples showing all features
