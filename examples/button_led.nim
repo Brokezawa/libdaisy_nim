@@ -3,7 +3,7 @@
 ## This example shows how to use a button to control the LED
 
 import ../src/libdaisy
-import ../src/libdaisy_controls
+import ../src/hid/controls
 useDaisyNamespace()
 
 

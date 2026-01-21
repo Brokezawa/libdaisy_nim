@@ -9,9 +9,9 @@
 ## with appropriate scaling curves for natural feel.
 
 import ../src/libdaisy
-import ../src/libdaisy_parameter
-import ../src/libdaisy_mapped_value
-import ../src/libdaisy_fixedstr
+import ../src/hid/parameter
+import ../src/util/mapped_value
+import ../src/util/fixedstr
 import math
 
 useDaisyNamespace()

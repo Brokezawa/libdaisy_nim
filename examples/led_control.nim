@@ -8,9 +8,9 @@ import panicoverride
 ## - Rainbow/color cycling effects
 
 import ../src/libdaisy
-import ../src/libdaisy_serial
-import ../src/libdaisy_rgbled
-import ../src/libdaisy_color
+import ../src/per/uart
+import ../src/hid/rgbled
+import ../src/util/color
 useDaisyNamespace()
 
 proc main() =

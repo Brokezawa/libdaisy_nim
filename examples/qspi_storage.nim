@@ -22,7 +22,7 @@
 {.define: useQSPI.}
 
 import ../src/libdaisy
-import ../src/libdaisy_qspi as qspi_module  # Use qualified import to avoid ambiguity
+import ../src/per/qspi as qspi_module  # Use qualified import to avoid ambiguity
 useDaisyNamespace()
 
 const

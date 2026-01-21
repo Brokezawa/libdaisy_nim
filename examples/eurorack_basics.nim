@@ -8,9 +8,9 @@ import panicoverride
 ## - Typical eurorack input handling patterns
 
 import ../src/libdaisy
-import ../src/libdaisy_serial
-import ../src/libdaisy_gatein
-import ../src/libdaisy_switch3
+import ../src/per/uart
+import ../src/hid/gatein
+import ../src/hid/switch3
 useDaisyNamespace()
 
 proc main() =

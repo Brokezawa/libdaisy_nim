@@ -4,10 +4,10 @@ import panicoverride
 ## Basic LED blink and control reading
 
 import ../src/libdaisy
-import ../src/libdaisy_patch
+import ../src/patch as patch_module
 useDaisyNamespace()
 
-var patch: DaisyPatch
+var patch: patch_module.DaisyPatch
 
 proc main() =
   # Initialize Patch hardware

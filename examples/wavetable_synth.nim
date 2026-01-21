@@ -28,9 +28,9 @@
 {.define: useADC.}
 
 import ../src/libdaisy
-import ../src/libdaisy_sdmmc
-import ../src/libdaisy_wavetable_loader
-import ../src/libdaisy_adc as adc_module  # Import as qualified module
+import ../src/sys/sdmmc as sd
+import ../src/ui/wavetable_loader
+import ../src/per/adc as adc_module  # Import as qualified module
 import std/math
 useDaisyNamespace()
 
@@ -48,7 +48,7 @@ type
 
 var
   daisy: DaisySeed
-  sdmmc: SDMMCHandler
+  sd_card: sd.SDMMCHandler
   loader: WaveTableLoader
   
   # Wavetable storage buffer
@@ -135,7 +135,7 @@ proc main() =
   
   # Initialize SD card
   var sdConfig = newSdmmcConfig()
-  if sdmmc.init(sdConfig) != SD_OK:
+  if sd_card.init(sdConfig) != SD_OK:
     while true:
       daisy.setLed(true)
       daisy.delay(100)

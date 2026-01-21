@@ -5,8 +5,8 @@
 
 import panicoverride
 import ../src/libdaisy
-import ../src/libdaisy_adc
-import ../src/libdaisy_serial
+import ../src/per/adc
+import ../src/per/uart
 
 useDaisyNamespace()
 

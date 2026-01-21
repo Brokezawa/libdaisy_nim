@@ -11,13 +11,13 @@
 ## 4. Type messages - they will be echoed back
 
 import ../src/libdaisy except UsbHandle
-import ../src/libdaisy_usb
+import ../src/sys/usb as usb_module
 useDaisyNamespace()
 
 
 var 
   daisy: DaisySeed
-  usb: UsbHandle
+  usb: usb_module.UsbHandle
 
 proc usbReceiveCallback(buffer: ptr uint8, len: ptr uint32) {.cdecl.} =
   ## Called when data is received over USB

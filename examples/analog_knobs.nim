@@ -4,8 +4,8 @@ import panicoverride
 ## This example reads analog inputs from potentiometers
 
 import ../src/libdaisy
-import ../src/libdaisy_controls
-import ../src/libdaisy_serial
+import ../src/hid/controls
+import ../src/per/uart
 useDaisyNamespace()
 
 

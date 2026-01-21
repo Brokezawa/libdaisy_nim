@@ -8,8 +8,8 @@ import panicoverride
 ## - Timer synchronization
 
 import ../src/libdaisy
-import ../src/libdaisy_serial
-import ../src/libdaisy_timer
+import ../src/per/uart
+import ../src/per/timer
 useDaisyNamespace()
 
 # Global counters for callbacks

@@ -25,14 +25,14 @@
 {.define: useSwitch.}
 
 import ../src/libdaisy
-import ../src/libdaisy_sdmmc
-import ../src/libdaisy_wavwriter
-import ../src/libdaisy_switch
+import ../src/sys/sdmmc as sd
+import ../src/ui/wavwriter
+import ../src/hid/switch
 useDaisyNamespace()
 
 var
   daisy: DaisySeed
-  sdmmc: SDMMCHandler
+  sd_card: sd.SDMMCHandler
   writer: WavWriter32K  # 32KB transfer size
   stopButton: Switch
   recording = false
@@ -60,7 +60,7 @@ proc main() =
   
   # Initialize SD card
   var sdConfig = newSdmmcConfig()
-  if sdmmc.init(sdConfig) != SD_OK:
+  if sd_card.init(sdConfig) != SD_OK:
     # SD card init failed - blink rapidly
     while true:
       daisy.setLed(true)

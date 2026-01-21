@@ -12,7 +12,7 @@
 
 import panicoverride
 import ../src/libdaisy
-import ../src/libdaisy_oled
+import ../src/dev/oled
 
 useDaisyNamespace()
 

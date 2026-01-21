@@ -4,8 +4,8 @@ import panicoverride
 ## Scans the I2C bus for connected devices
 
 import ../src/libdaisy
-import ../src/libdaisy_i2c
-import ../src/libdaisy_serial
+import ../src/per/i2c
+import ../src/per/uart
 useDaisyNamespace()
 
 

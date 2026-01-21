@@ -4,8 +4,8 @@ import panicoverride
 ## Receiving MIDI messages and reacting to notes
 
 import ../src/libdaisy
-import ../src/libdaisy_midi
-import ../src/libdaisy_serial
+import ../src/hid/midi
+import ../src/per/uart
 useDaisyNamespace()
 
 

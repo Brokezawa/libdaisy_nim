@@ -26,9 +26,9 @@
 {.define: useSwitch.}
 
 import ../src/libdaisy
-import ../src/libdaisy_sdmmc
-import ../src/libdaisy_wavplayer
-import ../src/libdaisy_switch
+import ../src/sys/sdmmc as sd
+import ../src/ui/wavplayer
+import ../src/hid/switch
 useDaisyNamespace()
 
 const NUM_SAMPLES = 4
@@ -41,7 +41,7 @@ type
 
 var
   daisy: DaisySeed
-  sdmmc: SDMMCHandler
+  sd_card: sd.SDMMCHandler
   samples: array[NUM_SAMPLES, SampleSlot]
   triggers: array[NUM_SAMPLES, Switch]
   
@@ -93,7 +93,7 @@ proc main() =
   
   # Initialize SD card
   var sdConfig = newSdmmcConfig()
-  if sdmmc.init(sdConfig) != SD_OK:
+  if sd_card.init(sdConfig) != SD_OK:
     # SD init failed
     while true:
       daisy.setLed(true)

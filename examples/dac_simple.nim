@@ -3,7 +3,7 @@ import panicoverride
 ## 
 ## Output a sine wave using DAC in polling mode
 
-import ../src/libdaisy_dac
+import ../src/per/dac as dac_module
 import ../src/libdaisy
 useDaisyNamespace()
 
@@ -13,16 +13,16 @@ proc main() =
   var daisy = initDaisy()
   
   # Initialize DAC in polling mode
-  var dac: libdaisy_dac.DacHandle
-  var config = DacConfig(
+  var dac: dac_module.DacHandle
+  var config = dac_module.DacConfig(
     target_samplerate: 48000,
-    chn: DAC_CHN_ONE,
-    mode: DAC_MODE_POLLING,
-    bitdepth: DAC_BITS_12,
-    buff_state: DAC_BUFFER_ENABLED
+    chn: dac_module.DAC_CHN_ONE,
+    mode: dac_module.DAC_MODE_POLLING,
+    bitdepth: dac_module.DAC_BITS_12,
+    buff_state: dac_module.DAC_BUFFER_ENABLED
   )
   
-  if dac.init(config) == DAC_OK:
+  if dac.init(config) == dac_module.DAC_OK:
     daisy.setLed(true)
   
   var phase: float32 = 0.0
@@ -34,7 +34,7 @@ proc main() =
     let sineValue = sin(phase)
     let dacValue = uint16((sineValue + 1.0) * 2047.5)  # Convert -1..1 to 0..4095
     
-    discard dac.writeValue(DAC_CHN_ONE, dacValue)
+    discard dac.writeValue(dac_module.DAC_CHN_ONE, dacValue)
     
     phase += phaseIncrement
     if phase > 2.0 * PI:

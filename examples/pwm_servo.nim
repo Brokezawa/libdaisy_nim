@@ -13,8 +13,8 @@
 
 import panicoverride
 import ../src/libdaisy
-import ../src/libdaisy_pwm
-import ../src/libdaisy_serial
+import ../src/per/pwm
+import ../src/per/uart
 
 useDaisyNamespace()
 

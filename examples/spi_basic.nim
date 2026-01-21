@@ -4,8 +4,8 @@ import panicoverride
 ## Basic SPI communication example
 
 import ../src/libdaisy
-import ../src/libdaisy_spi
-import ../src/libdaisy_serial
+import ../src/per/spi
+import ../src/per/uart
 useDaisyNamespace()
 
 

@@ -8,7 +8,7 @@
 ## - 3 quick blinks then steady on: Test passed
 
 import ../src/libdaisy
-import ../src/libdaisy_sdram
+import ../src/dev/sdram
 useDaisyNamespace()
 
 

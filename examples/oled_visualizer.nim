@@ -5,8 +5,8 @@
 
 import panicoverride
 import ../src/libdaisy
-import ../src/libdaisy_oled
-import ../src/libdaisy_adc
+import ../src/dev/oled
+import ../src/per/adc
 
 useDaisyNamespace()
 

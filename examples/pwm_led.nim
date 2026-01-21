@@ -5,7 +5,7 @@
 
 import panicoverride
 import ../src/libdaisy
-import ../src/libdaisy_pwm
+import ../src/per/pwm
 
 useDaisyNamespace()
 

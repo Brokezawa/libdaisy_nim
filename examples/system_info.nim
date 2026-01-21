@@ -8,9 +8,9 @@
 ## audio processing workloads.
 
 import ../src/libdaisy
-import ../src/libdaisy_uniqueid
-import ../src/libdaisy_cpuload
-import ../src/libdaisy_fixedstr
+import ../src/util/uniqueid
+import ../src/util/cpuload
+import ../src/util/fixedstr
 
 useDaisyNamespace()
 

@@ -4,8 +4,8 @@ import panicoverride
 ## This example shows using a rotary encoder to control a parameter
 
 import ../src/libdaisy
-import ../src/libdaisy_controls
-import ../src/libdaisy_serial
+import ../src/hid/controls
+import ../src/per/uart
 useDaisyNamespace()
 
 

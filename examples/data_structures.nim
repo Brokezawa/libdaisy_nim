@@ -10,10 +10,10 @@
 ## and audio-rate safety (no heap allocation).
 
 import ../src/libdaisy
-import ../src/libdaisy_fifo
-import ../src/libdaisy_stack
-import ../src/libdaisy_ringbuffer
-import ../src/libdaisy_fixedstr
+import ../src/util/fifo
+import ../src/util/stack
+import ../src/util/ringbuffer
+import ../src/util/fixedstr
 
 useDaisyNamespace()
 

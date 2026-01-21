@@ -20,13 +20,13 @@
 {.define: useSDMMC.}
 
 import ../src/libdaisy
-import ../src/libdaisy_sdmmc
-import ../src/libdaisy_wavplayer
+import ../src/sys/sdmmc as sd
+import ../src/ui/wavplayer
 useDaisyNamespace()
 
 var
   daisy: DaisySeed
-  sdmmc: SDMMCHandler
+  sd_card: sd.SDMMCHandler
   player: WavPlayer4K  # 4KB workspace
   isPlaying = false
 
@@ -53,7 +53,7 @@ proc main() =
   sdConfig.width = SD_BITS_4
   sdConfig.clock_powersave = false
   
-  if sdmmc.init(sdConfig) != SD_OK:
+  if sd_card.init(sdConfig) != SD_OK:
     # SD card init failed - blink rapidly
     while true:
       daisy.setLed(true)

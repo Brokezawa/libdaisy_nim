@@ -7,10 +7,10 @@ import panicoverride
 ## - LED brightness control with PWM
 
 import ../src/libdaisy
-import ../src/libdaisy_serial
-import ../src/libdaisy_rng
-import ../src/libdaisy_timer
-import ../src/libdaisy_led
+import ../src/per/uart
+import ../src/per/rng
+import ../src/per/timer
+import ../src/hid/led
 useDaisyNamespace()
 
 proc main() =
