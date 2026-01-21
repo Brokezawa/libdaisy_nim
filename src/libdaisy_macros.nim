@@ -423,3 +423,73 @@ macro emitPatchIncludes*(): untyped =
 """.}
   else:
     result = newStmtList()
+
+macro emitRNGIncludes*(): untyped =
+  ## Emit RNG header includes when useRNG is defined
+  when defined(useRNG):
+    result = quote do:
+      {.emit: """/*INCLUDESECTION*/
+#include "per/rng.h"
+""".}
+  else:
+    result = newStmtList()
+
+macro emitTimerIncludes*(): untyped =
+  ## Emit Timer header includes when useTimer is defined
+  when defined(useTimer):
+    result = quote do:
+      {.emit: """/*INCLUDESECTION*/
+#include "per/tim.h"
+""".}
+  else:
+    result = newStmtList()
+
+macro emitColorIncludes*(): untyped =
+  ## Emit Color header includes when useColor is defined
+  when defined(useColor):
+    result = quote do:
+      {.emit: """/*INCLUDESECTION*/
+#include "util/color.h"
+""".}
+  else:
+    result = newStmtList()
+
+macro emitGateInIncludes*(): untyped =
+  ## Emit GateIn header includes when useGateIn is defined
+  when defined(useGateIn):
+    result = quote do:
+      {.emit: """/*INCLUDESECTION*/
+#include "hid/gatein.h"
+""".}
+  else:
+    result = newStmtList()
+
+macro emitLedIncludes*(): untyped =
+  ## Emit Led header includes when useLed is defined
+  when defined(useLed):
+    result = quote do:
+      {.emit: """/*INCLUDESECTION*/
+#include "hid/led.h"
+""".}
+  else:
+    result = newStmtList()
+
+macro emitRgbLedIncludes*(): untyped =
+  ## Emit RgbLed header includes when useRgbLed is defined
+  when defined(useRgbLed):
+    result = quote do:
+      {.emit: """/*INCLUDESECTION*/
+#include "hid/rgb_led.h"
+""".}
+  else:
+    result = newStmtList()
+
+macro emitSwitch3Includes*(): untyped =
+  ## Emit Switch3 header includes when useSwitch3 is defined
+  when defined(useSwitch3):
+    result = quote do:
+      {.emit: """/*INCLUDESECTION*/
+#include "hid/switch3.h"
+""".}
+  else:
+    result = newStmtList()
