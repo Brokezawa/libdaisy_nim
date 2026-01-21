@@ -25,7 +25,6 @@
 
 import ../libdaisy
 import ../libdaisy_macros
-import ../per/gpio
 
 useDaisyModules(codec_ak4556)
 

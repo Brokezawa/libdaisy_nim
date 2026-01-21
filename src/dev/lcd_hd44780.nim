@@ -44,7 +44,6 @@
 
 import ../libdaisy
 import ../libdaisy_macros
-import ../per/gpio
 
 useDaisyModules(lcd_hd44780)
 

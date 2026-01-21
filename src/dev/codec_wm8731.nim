@@ -32,9 +32,9 @@
 
 import ../libdaisy
 import ../libdaisy_macros
-import ../per/i2c
+import ../libdaisy_i2c
 
-useDaisyModules(codec_wm8731, i2c)
+useDaisyModules(codec_wm8731)
 
 {.push header: "dev/codec_wm8731.h".}
 

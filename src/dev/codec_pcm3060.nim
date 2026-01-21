@@ -33,9 +33,9 @@
 
 import ../libdaisy
 import ../libdaisy_macros
-import ../per/i2c
+import ../libdaisy_i2c
 
-useDaisyModules(codec_pcm3060, i2c)
+useDaisyModules(codec_pcm3060)
 
 {.push header: "dev/codec_pcm3060.h".}
 
