@@ -5,6 +5,237 @@ All notable changes to libdaisy_nim will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-01-22
+
+### Added
+
+#### File I/O & Storage Modules (6 new modules)
+
+- **WAV Parser Module** (`ui/wavparser.nim`) - WAV file format parsing and validation
+  - Parse WAV file headers from SD card
+  - Extract format information (sample rate, bit depth, channels)
+  - Validate file format and detect corrupt headers
+  - Error handling for unsupported formats
+  - Integration with SDMMC file system
+
+- **WAV Player Module** (`ui/wavplayer.nim`) - Streaming WAV playback with looping support
+  - Stream WAV files from SD card to audio output
+  - Buffered playback with DMA-safe operations
+  - Playback control: play, pause, stop
+  - Looping support (single file or playlist)
+  - Seek functionality
+  - Multi-file playlist support
+  - Integration with audio callback system
+
+- **WAV Writer Module** (`ui/wavwriter.nim`) - Real-time WAV recording to SD card
+  - Record audio input to WAV files on SD card
+  - Real-time buffering for continuous recording
+  - Start/stop recording control
+  - File management (naming, overwrite protection)
+  - Configurable sample rate and bit depth
+  - Integration with audio callback system
+
+- **Wavetable Loader Module** (`ui/wavetable_loader.nim`) - Multi-bank wavetable loading from SD
+  - Load wavetable banks from SD card
+  - Multiple format support (raw binary, WAV)
+  - Single-cycle waveform extraction
+  - Wavetable bank management
+  - Memory-efficient loading strategies
+  - Synthesis integration helpers
+
+- **QSPI Flash Module** (`per/qspi.nim`) - QSPI flash memory operations
+  - Access external QSPI flash (8MB on Daisy Seed)
+  - Memory-mapped read mode
+  - Sector erase operations (4KB, 32KB, 64KB)
+  - Page write operations (256 bytes)
+  - Read operations (arbitrary size)
+  - Flash information queries
+  - Wavetable/sample storage alternative to SD card
+
+- **Switch Module** (`hid/switch.nim`) - Debounced button/switch with edge detection
+  - Debounced button/switch input handling
+  - Rising edge detection (`risingEdge()`)
+  - Falling edge detection (`fallingEdge()`)
+  - State tracking (`pressed()`, `released()`)
+  - Time-held measurement (`timeHeldMs()`)
+  - Configurable debounce timing
+  - Integration with controls system
+
+#### New Examples (6 examples)
+
+- **wav_player.nim** - WAV file playback demonstration
+  - Load and play WAV files from SD card
+  - Track navigation (next/previous)
+  - Simple transport controls
+  - OLED display showing file information
+  - Button-based control interface
+
+- **wav_recorder.nim** - Real-time audio recording
+  - Record audio input to WAV file on SD card
+  - Start/stop recording with button
+  - LED recording indicator
+  - File naming with timestamps
+  - OLED display showing recording status
+
+- **sampler.nim** - Multi-sample triggering and playback
+  - Load multiple samples from SD card
+  - Trigger samples with gates/buttons
+  - Pitch shifting support
+  - Volume control per sample
+  - Sample browser with encoder
+  - Complete sampler implementation
+
+- **looper.nim** - Audio loop recording with overdub
+  - Record loops in real-time
+  - Overdub functionality
+  - Loop playback with sync
+  - Save/load loops to SD card
+  - Multi-layer loop recording
+  - Live looper pedal implementation
+
+- **wavetable_synth.nim** - Wavetable synthesis
+  - Load wavetable banks from SD card
+  - Wavetable position CV control
+  - Multiple oscillators
+  - Classic wavetable synthesis
+  - Bank switching support
+
+- **qspi_storage.nim** - QSPI flash memory demonstration
+  - Store and retrieve samples in QSPI flash
+  - Faster access than SD card
+  - Persistent sample library
+  - Erase/write/read operations
+  - Performance comparison with SD card
+
+### Changed
+
+#### Major Source Code Reorganization
+
+Reorganized all 41 source modules into subdirectories matching libDaisy's C++ structure for better organization and clarity:
+
+**New Directory Structure:**
+```
+src/
+├── per/          # Peripherals (9 modules)
+├── hid/          # Human Interface Devices (8 modules)
+├── dev/          # Device Drivers (2 modules)
+├── sys/          # System Modules (2 modules)
+├── util/         # Utility Data Structures (8 modules)
+└── ui/           # UI and File I/O (5 modules)
+```
+
+**Module Mapping:**
+- `libdaisy_adc.nim` → `per/adc.nim`
+- `libdaisy_dac.nim` → `per/dac.nim`
+- `libdaisy_i2c.nim` → `per/i2c.nim`
+- `libdaisy_spi.nim` → `per/spi.nim`
+- `libdaisy_serial.nim` → `per/uart.nim` *(renamed)*
+- `libdaisy_pwm.nim` → `per/pwm.nim`
+- `libdaisy_qspi.nim` → `per/qspi.nim`
+- `libdaisy_rng.nim` → `per/rng.nim`
+- `libdaisy_timer.nim` → `per/timer.nim`
+- `libdaisy_controls.nim` → `hid/controls.nim`
+- `libdaisy_gatein.nim` → `hid/gatein.nim`
+- `libdaisy_led.nim` → `hid/led.nim`
+- `libdaisy_midi.nim` → `hid/midi.nim`
+- `libdaisy_parameter.nim` → `hid/parameter.nim`
+- `libdaisy_rgbled.nim` → `hid/rgbled.nim`
+- `libdaisy_switch.nim` → `hid/switch.nim`
+- `libdaisy_switch3.nim` → `hid/switch3.nim`
+- `libdaisy_oled.nim` → `dev/oled.nim`
+- `libdaisy_sdram.nim` → `dev/sdram.nim`
+- `libdaisy_sdmmc.nim` → `sys/sdmmc.nim`
+- `libdaisy_usb.nim` → `sys/usb.nim`
+- `libdaisy_color.nim` → `util/color.nim`
+- `libdaisy_cpuload.nim` → `util/cpuload.nim`
+- `libdaisy_fifo.nim` → `util/fifo.nim`
+- `libdaisy_fixedstr.nim` → `util/fixedstr.nim`
+- `libdaisy_mapped_value.nim` → `util/mapped_value.nim`
+- `libdaisy_ringbuffer.nim` → `util/ringbuffer.nim`
+- `libdaisy_stack.nim` → `util/stack.nim`
+- `libdaisy_uniqueid.nim` → `util/uniqueid.nim`
+- `libdaisy_wavformat.nim` → `ui/wavformat.nim`
+- `libdaisy_wavparser.nim` → `ui/wavparser.nim`
+- `libdaisy_wavplayer.nim` → `ui/wavplayer.nim`
+- `libdaisy_wavwriter.nim` → `ui/wavwriter.nim`
+- `libdaisy_wavetable_loader.nim` → `ui/wavetable_loader.nim`
+
+**BREAKING CHANGE - Import Path Updates:**
+
+All import paths have been updated throughout the project:
+
+```nim
+# Old import style (v0.5.0 and earlier):
+import ../src/libdaisy_adc
+import ../src/libdaisy_i2c
+
+# New import style (v0.6.0+):
+import ../src/per/adc
+import ../src/per/i2c
+```
+
+**Name Conflict Resolution:**
+
+Some modules now use qualified imports to avoid variable name conflicts:
+
+```nim
+# SDMMC module imported with alias to avoid 'sdmmc' variable conflict
+import ../src/sys/sdmmc as sd
+var sd_card: sd.SDMMCHandler
+
+# USB module uses qualified import
+import ../src/sys/usb as usb_module
+var usb: usb_module.UsbHandle
+
+# DAC module uses qualified import
+import ../src/per/dac as dac_module
+var dac: dac_module.DacHandle
+
+# Patch module uses qualified import
+import ../src/patch as patch_module
+var patch: patch_module.DaisyPatch
+```
+
+**File History Preservation:**
+
+All file moves were performed using `git mv` to preserve complete file history and attribution.
+
+#### Module Improvements
+
+- **libdaisy_macros.nim**:
+  - Added `emitSwitchIncludes()` macro for Switch module
+  - Added `emitSdmmcTypedefs()` macro for SDMMC type definitions
+
+- **All examples (40 files)**:
+  - Updated import paths to new directory structure
+  - Applied qualified import patterns where needed
+  - All examples compile successfully after reorganization
+
+### Fixed
+
+#### Compilation Issues
+
+- **SDMMC Init Method**: Fixed importcpp pattern from `"#.Init(@)"` to `"#.Init(#)"` for proper argument passing
+- **FatFS Unicode Support**: Added ccsbcs.c to Makefile compilation for proper Unicode filename handling
+- **WavPlayer Template Result Types**: Resolved C++ template Result type ambiguity using emit block with static_cast workaround
+- **Import Keyword Conflict**: Used backticks for `\`import\`` to avoid Nim keyword conflict in SDMMC wrapper
+- **ADC Type Ambiguity**: Resolved type conflicts using qualified imports in examples
+
+### Technical
+
+- All 40 examples compile successfully (36 main examples + 4 test variants)
+- Compilation test pass rate: 100% (`./test_all.sh`)
+- Source reorganization completed with git history preserved
+- Module count increased from 35 to 41 modules
+- Example count increased from 30 to 36 main examples
+
+### Performance
+
+- File I/O operations use buffered DMA transfers for efficiency
+- QSPI flash access provides faster sample loading than SD card
+- Zero heap allocation in all audio-rate code paths
+- Optimized wavetable loading for minimal startup time
+
 ## [0.5.0] - 2026-01-22
 
 ### Added

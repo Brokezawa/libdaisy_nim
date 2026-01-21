@@ -86,11 +86,11 @@ DPin0..DPin31  # 32 GPIO pins
 
 ---
 
-## ADC Module (libdaisy_adc.nim)
+## ADC Module (per/adc.nim)
 
 **Import:**
 ```nim
-import src/libdaisy_adc
+import src/per/adc
 ```
 
 ### AdcHandle Object
@@ -177,11 +177,11 @@ while true:
 
 ---
 
-## PWM Module (libdaisy_pwm.nim)
+## PWM Module (per/pwm.nim)
 
 **Import:**
 ```nim
-import src/libdaisy_pwm
+import src/per/pwm
 ```
 
 ### PwmHandle Object
@@ -247,7 +247,7 @@ pwm.setDutyCycle(1, 0.75)  # 75% duty
 **Example - LED Dimming:**
 ```nim
 import src/libdaisy
-import src/libdaisy_pwm
+import src/per/pwm
 
 var hw = newDaisySeed()
 hw.init()
@@ -280,11 +280,11 @@ pwm.setServoAngle(90.0)  # Center position
 
 ---
 
-## OLED Display Module (libdaisy_oled.nim)
+## OLED Display Module (dev/oled.nim)
 
 **Import:**
 ```nim
-import src/libdaisy_oled
+import src/dev/oled
 ```
 
 ### SSD1306 OLED Driver
@@ -354,7 +354,7 @@ proc drawString*(str: string, x, y: uint32, on: bool)
 **Example - Basic Text:**
 ```nim
 import src/libdaisy
-import src/libdaisy_oled
+import src/dev/oled
 
 var hw = newDaisySeed()
 hw.init()
@@ -400,11 +400,11 @@ while true:
 
 ---
 
-## I2C Module (libdaisy_i2c.nim)
+## I2C Module (per/i2c.nim)
 
 **Import:**
 ```nim
-import src/libdaisy_i2c
+import src/per/i2c
 ```
 
 ### I2CHandle Object
@@ -452,11 +452,11 @@ type
 
 ---
 
-## SPI Module (libdaisy_spi.nim)
+## SPI Module (per/spi.nim)
 
 **Import:**
 ```nim
-import src/libdaisy_spi
+import src/per/spi
 ```
 
 ### SPIHandle Object
@@ -490,11 +490,11 @@ proc transmitAndReceiveBlocking*(this: var SPIHandle,
 
 ---
 
-## Serial/UART Module (libdaisy_serial.nim)
+## Serial/UART Module (per/uart.nim)
 
 **Import:**
 ```nim
-import src/libdaisy_serial
+import src/per/uart
 ```
 
 ### UartHandler Object
@@ -524,11 +524,11 @@ proc popRx*(this: var UartHandler): uint8
 
 ---
 
-## MIDI Module (libdaisy_midi.nim)
+## MIDI Module (hid/midi.nim)
 
 **Import:**
 ```nim
-import src/libdaisy_midi
+import src/hid/midi
 ```
 
 ### MidiHandler Object
@@ -554,11 +554,11 @@ while midi.hasEvents():
 
 ---
 
-## USB Module (libdaisy_usb.nim)
+## USB Module (sys/usb.nim)
 
 **Import:**
 ```nim
-import src/libdaisy_usb
+import src/sys/usb
 ```
 
 ### USB CDC (Serial)
@@ -577,11 +577,11 @@ usb.transmit(data, size)
 
 ---
 
-## SD Card Module (libdaisy_sdmmc.nim)
+## SD Card Module (sys/sdmmc.nim)
 
 **Import:**
 ```nim
-import src/libdaisy_sdmmc
+import src/sys/sdmmc
 ```
 
 ### SdmmcHandler Object
@@ -612,11 +612,11 @@ fatfs.close(file)
 
 ---
 
-## SDRAM Module (libdaisy_sdram.nim)
+## SDRAM Module (dev/sdram.nim)
 
 **Import:**
 ```nim
-import src/libdaisy_sdram
+import src/dev/sdram
 ```
 
 ### SdramHandler Object
@@ -640,11 +640,11 @@ buffer[1] = 0.5'f32
 
 ---
 
-## Controls Module (libdaisy_controls.nim)
+## Controls Module (hid/controls.nim)
 
 **Import:**
 ```nim
-import src/libdaisy_controls
+import src/hid/controls
 ```
 
 ### Switch Object
@@ -712,8 +712,8 @@ Here's a complete example using multiple modules:
 
 ```nim
 import src/libdaisy
-import src/libdaisy_i2c
-import src/libdaisy_controls
+import src/per/i2c
+import src/hid/controls
 
 var hw = newDaisySeed()
 var i2c: I2CHandle
@@ -759,11 +759,11 @@ when isMainModule:
 
 ---
 
-## DAC Module (libdaisy_dac.nim) - NEW in v0.3.0
+## DAC Module (per/dac.nim) - NEW in v0.3.0
 
 **Import:**
 ```nim
-import src/libdaisy_dac
+import src/per/dac
 ```
 
 ### DacHandle Object
@@ -819,11 +819,11 @@ discard dac.stop()
 
 ---
 
-## WAV Format Module (libdaisy_wavformat.nim) - NEW in v0.3.0
+## WAV Format Module (ui/wavformat.nim) - NEW in v0.3.0
 
 **Import:**
 ```nim
-import src/libdaisy_wavformat
+import src/ui/wavformat
 ```
 
 ### WAV File Format
@@ -947,11 +947,11 @@ patch.gate_output    # Gate output
 
 ---
 
-## Random Number Generator Module (libdaisy_rng.nim) - NEW in v0.4.0
+## Random Number Generator Module (per/rng.nim) - NEW in v0.4.0
 
 **Import:**
 ```nim
-import src/libdaisy_rng
+import src/per/rng
 ```
 
 Hardware True Random Number Generator (TRNG) peripheral wrapper.
@@ -976,7 +976,7 @@ Returns a random float between 0.0 and 1.0.
 
 **Example:**
 ```nim
-import src/libdaisy_rng
+import src/per/rng
 
 if randomIsReady():
   let randInt = randomGetValue()
@@ -985,11 +985,11 @@ if randomIsReady():
 
 ---
 
-## Hardware Timer Module (libdaisy_timer.nim) - NEW in v0.4.0
+## Hardware Timer Module (per/timer.nim) - NEW in v0.4.0
 
 **Import:**
 ```nim
-import src/libdaisy_timer
+import src/per/timer
 ```
 
 Hardware timer peripherals (TIM2-TIM5) for precise timing and callbacks.
@@ -1054,11 +1054,11 @@ timer.setCallback(onTimer, nil)
 
 ---
 
-## Color Utilities Module (libdaisy_color.nim) - NEW in v0.4.0
+## Color Utilities Module (util/color.nim) - NEW in v0.4.0
 
 **Import:**
 ```nim
-import src/libdaisy_color
+import src/util/color
 ```
 
 RGB color representation and manipulation utilities.
@@ -1118,11 +1118,11 @@ var blended = colorBlend(red, blue, 0.5)  # 50/50 mix
 
 ---
 
-## Gate Input Module (libdaisy_gatein.nim) - NEW in v0.4.0
+## Gate Input Module (hid/gatein.nim) - NEW in v0.4.0
 
 **Import:**
 ```nim
-import src/libdaisy_gatein
+import src/hid/gatein
 ```
 
 Gate/trigger input handler for eurorack-style gate signals.
@@ -1157,11 +1157,11 @@ while true:
 
 ---
 
-## LED Control Module (libdaisy_led.nim) - NEW in v0.4.0
+## LED Control Module (hid/led.nim) - NEW in v0.4.0
 
 **Import:**
 ```nim
-import src/libdaisy_led
+import src/hid/led
 ```
 
 Single LED control with software PWM and gamma correction.
@@ -1195,12 +1195,12 @@ while true:
 
 ---
 
-## RGB LED Module (libdaisy_rgbled.nim) - NEW in v0.4.0
+## RGB LED Module (hid/rgbled.nim) - NEW in v0.4.0
 
 **Import:**
 ```nim
-import src/libdaisy_rgbled
-import src/libdaisy_color
+import src/hid/rgbled
+import src/util/color
 ```
 
 3-channel RGB LED control with software PWM.
@@ -1241,11 +1241,11 @@ Must be called regularly (e.g., 1kHz) for PWM.
 
 ---
 
-## 3-Position Switch Module (libdaisy_switch3.nim) - NEW in v0.4.0
+## 3-Position Switch Module (hid/switch3.nim) - NEW in v0.4.0
 
 **Import:**
 ```nim
-import src/libdaisy_switch3
+import src/hid/switch3
 ```
 
 3-position switch/toggle handler.
@@ -1282,11 +1282,11 @@ of SWITCH3_POS_DOWN:
 
 ## Data Structures & Utilities (v0.5.0)
 
-### FIFO Module (libdaisy_fifo.nim)
+### FIFO Module (util/fifo.nim)
 
 **Import:**
 ```nim
-import src/libdaisy_fifo
+import src/util/fifo
 ```
 
 Lock-free FIFO (First-In-First-Out) queue with fixed capacity. Thread-safe for single-producer/single-consumer scenarios.
@@ -1349,11 +1349,11 @@ while eventQueue.pop(event):
 
 ---
 
-### Stack Module (libdaisy_stack.nim)
+### Stack Module (util/stack.nim)
 
 **Import:**
 ```nim
-import src/libdaisy_stack
+import src/util/stack
 ```
 
 Fixed-capacity stack (Last-In-First-Out) with compile-time size.
@@ -1401,11 +1401,11 @@ while undoStack.pop(value):
 
 ---
 
-### RingBuffer Module (libdaisy_ringbuffer.nim)
+### RingBuffer Module (util/ringbuffer.nim)
 
 **Import:**
 ```nim
-import src/libdaisy_ringbuffer
+import src/util/ringbuffer
 ```
 
 Lock-free circular buffer optimized for audio streaming. Supports block read/write and configurable overflow behavior.
@@ -1474,11 +1474,11 @@ proc audioCallback(input, output: AudioBuffer, size: int) {.cdecl.} =
 
 ---
 
-### FixedStr Module (libdaisy_fixedstr.nim)
+### FixedStr Module (util/fixedstr.nim)
 
 **Import:**
 ```nim
-import src/libdaisy_fixedstr
+import src/util/fixedstr
 ```
 
 Stack-allocated fixed-capacity string for embedded displays and UI. No heap allocation.
@@ -1535,11 +1535,11 @@ discard display.add("Volume: 75%")
 
 ---
 
-### UniqueId Module (libdaisy_uniqueid.nim)
+### UniqueId Module (util/uniqueid.nim)
 
 **Import:**
 ```nim
-import src/libdaisy_uniqueid
+import src/util/uniqueid
 ```
 
 Read STM32 microcontroller's factory-programmed 96-bit unique identifier.
@@ -1595,7 +1595,7 @@ discard deviceName.add(serial)
 
 **Import:**
 ```nim
-import src/libdaisy_cpuload
+import src/util/cpuload
 ```
 
 Real-time CPU load measurement for audio processing optimization.
@@ -1664,11 +1664,11 @@ while true:
 
 ---
 
-### Parameter Module (libdaisy_parameter.nim)
+### Parameter Module (hid/parameter.nim)
 
 **Import:**
 ```nim
-import src/libdaisy_parameter
+import src/hid/parameter
 ```
 
 Parameter mapping with various scaling curves for natural control feel.
@@ -1720,11 +1720,11 @@ let mix = mapParameterLin(knobValue, 0.0, 1.0)
 
 ---
 
-### MappedValue Module (libdaisy_mapped_value.nim)
+### MappedValue Module (util/mapped_value.nim)
 
 **Import:**
 ```nim
-import src/libdaisy_mapped_value
+import src/util/mapped_value
 ```
 
 Value mapping, quantization, and normalization utilities. Pure Nim implementation.
@@ -1796,6 +1796,552 @@ let freq = quantizeFloat(mapValueFloat(knobValue, 20.0, 2000.0), 10.0)
 
 # Map CV input ±5V (0.5 = 0V)
 let cvVolts = mapValueBipolar(adcValue, -5.0, 5.0)
+```
+
+---
+
+## File I/O & Storage Modules (v0.6.0)
+
+### WAV Parser Module (ui/wavparser.nim)
+
+**Import:**
+```nim
+import src/ui/wavparser
+import src/sys/sdmmc
+```
+
+Minimal, allocation-free WAV (RIFF) parser for embedded systems. Parses WAV file headers and validates format without loading sample data.
+
+**Key Features:**
+- Zero heap allocation
+- Supports PCM and IEEE float formats
+- Handles JUNK and unknown chunks
+- Records data offset for streaming playback
+- Metadata extraction support
+
+**Types:**
+```nim
+type
+  WavFormatInfo* = object
+    audioFormat*: uint16       # 1 = PCM, 3 = IEEE float, 0xFFFE = extensible
+    numChannels*: uint16       # Number of channels (1=mono, 2=stereo)
+    sampleRate*: uint32        # Sample rate in Hz
+    byteRate*: uint32          # Byte rate
+    blockAlign*: uint16        # Block alignment
+    bitsPerSample*: uint16     # Bits per sample (8, 16, 24, 32)
+    validBitsPerSample*: uint16  # For extensible format
+    channelMask*: uint32       # Channel mask
+    subFormat*: uint16         # Sub-format
+  
+  MetadataEntry* = object
+    fourcc*: uint32   # Chunk ID (FourCC code)
+    size*: uint32     # Payload size in bytes
+    offset*: uint32   # File offset of chunk data
+  
+  WavParser* = object
+    # Internal parser state
+```
+
+**Methods:**
+```nim
+proc parse*(parser: var WavParser, reader: IReader): bool
+  # Parse WAV file header. Returns true on success.
+
+proc info*(parser: WavParser): WavFormatInfo
+  # Get format information after successful parse
+
+proc dataOffset*(parser: WavParser): uint32
+  # Get file offset of PCM data
+
+proc dataSize*(parser: WavParser): uint32
+  # Get size of PCM data in bytes
+
+proc numMetadataChunks*(parser: WavParser): csize_t
+  # Get number of metadata chunks found
+
+proc metadataChunk*(parser: WavParser, idx: csize_t): MetadataEntry
+  # Get metadata chunk by index
+```
+
+**Example:**
+```nim
+import ui/wavparser
+import sys/sdmmc
+
+var parser: WavParser
+var fil: FIL
+
+# Open WAV file
+discard f_open(addr fil, "sample.wav", FA_READ)
+
+# Create file reader and parse
+var reader = createFileReader(addr fil)
+if parser.parse(reader):
+  let info = parser.info()
+  echo "Sample Rate: ", info.sampleRate
+  echo "Channels: ", info.numChannels
+  echo "Bits/Sample: ", info.bitsPerSample
+  echo "Data Offset: ", parser.dataOffset()
+
+f_close(addr fil)
+```
+
+---
+
+### WAV Player Module (ui/wavplayer.nim)
+
+**Import:**
+```nim
+import src/ui/wavplayer
+```
+
+Streaming WAV file playback from SD card with buffering, looping, and variable speed control.
+
+**Key Features:**
+- Streaming playback (no full file loading)
+- Variable playback speed with interpolation
+- Looping support
+- Low-latency buffered streaming using FIFO
+- Pitch shifting via semitone offset
+
+**Types:**
+```nim
+type
+  WavPlayerResult* = enum
+    Ok                    # Operation successful
+    FileNotFoundError     # File not found
+    PlaybackUnderrun      # Buffer underrun
+    PrepareOverrun        # Prepare buffer overflow
+    NewSamplesRequested   # More samples needed
+    DiskError            # SD card read error
+  
+  WavPlayerFileInfo* = object
+    channels*: csize_t         # Number of channels
+    length*: csize_t           # Total samples
+    samplerate*: csize_t       # Sample rate
+    data_start*: csize_t       # Data offset
+    data_size_bytes*: csize_t  # Data size
+  
+  WavPlayer4K* = object   # 4KB workspace (standard)
+  WavPlayer8K* = object   # 8KB workspace (high performance)
+  WavPlayer16K* = object  # 16KB workspace (maximum performance)
+```
+
+**Methods:**
+```nim
+proc init*(player: var WavPlayer4K, filename: cstring): WavPlayerResult
+  # Initialize player with WAV file
+
+proc play*(player: var WavPlayer4K)
+  # Start playback
+
+proc pause*(player: var WavPlayer4K)
+  # Pause playback
+
+proc stop*(player: var WavPlayer4K)
+  # Stop playback and rewind
+
+proc setLooping*(player: var WavPlayer4K, loop: bool)
+  # Enable/disable looping
+
+proc stream*(player: var WavPlayer4K, out_buff: ptr cfloat, 
+             channels: csize_t): WavPlayerResult
+  # Get next audio samples (call in audio callback)
+
+proc prepare*(player: var WavPlayer4K): WavPlayerResult
+  # Refill internal buffer (call in main loop)
+
+proc setPlaybackSpeed*(player: var WavPlayer4K, speed: cfloat)
+  # Set playback speed (1.0 = normal)
+
+proc setSemitoneOffset*(player: var WavPlayer4K, semitones: cfloat)
+  # Pitch shift by semitones
+
+proc getFileInfo*(player: WavPlayer4K): WavPlayerFileInfo
+  # Get file information
+```
+
+**Example:**
+```nim
+import ui/wavplayer
+
+var player: WavPlayer4K
+
+# Initialize with file
+if player.init("sample.wav") == WavPlayerResult.Ok:
+  player.setLooping(true)
+  player.play()
+
+# In audio callback
+proc audioCallback(input, output: AudioBuffer, size: int) =
+  for i in 0..<size:
+    discard player.stream(output[0][i].addr, 2)  # Stereo
+
+# In main loop
+while true:
+  discard player.prepare()  # Refill buffer
+  delay(1)
+```
+
+---
+
+### WAV Writer Module (ui/wavwriter.nim)
+
+**Import:**
+```nim
+import src/ui/wavwriter
+```
+
+Real-time audio recording to WAV files on SD card with double-buffered streaming.
+
+**Key Features:**
+- Real-time recording to SD card
+- 16-bit and 32-bit signed integer formats
+- Float input with automatic conversion
+- Double-buffered streaming
+- Automatic WAV header generation
+
+**Types:**
+```nim
+type
+  WavWriterResult* = enum
+    OK     # Operation successful
+    ERROR  # Operation failed
+  
+  WavWriterConfig* = object
+    samplerate*: cfloat    # Sample rate in Hz
+    channels*: int32       # Number of channels
+    bitspersample*: int32  # Bits per sample (16 or 32)
+  
+  WavWriterBufferState* = enum
+    IDLE    # Not recording
+    FLUSH0  # Flushing buffer 0
+    FLUSH1  # Flushing buffer 1
+  
+  WavWriter32K* = object  # 32KB transfer size (standard)
+  WavWriter16K* = object  # 16KB transfer size (lower latency)
+```
+
+**Methods:**
+```nim
+proc init*(writer: var WavWriter32K, config: WavWriterConfig)
+  # Initialize writer with configuration
+
+proc openFile*(writer: var WavWriter32K, filename: cstring): WavWriterResult
+  # Open WAV file for recording
+
+proc closeFile*(writer: var WavWriter32K): WavWriterResult
+  # Close file without finalizing header
+
+proc sample*(writer: var WavWriter32K, data: ptr cfloat)
+  # Add audio sample (call in audio callback)
+
+proc write*(writer: var WavWriter32K): WavWriterResult
+  # Write buffered data to SD card (call in main loop)
+
+proc saveFile*(writer: var WavWriter32K): WavWriterResult
+  # Finalize WAV header and close file
+
+proc getBufferState*(writer: WavWriter32K): WavWriterBufferState
+  # Get current buffer state
+```
+
+**Example:**
+```nim
+import ui/wavwriter
+
+var writer: WavWriter32K
+var config = WavWriterConfig(
+  samplerate: 48000.0,
+  channels: 2,
+  bitspersample: 16
+)
+
+writer.init(config)
+writer.openFile("recording.wav")
+
+# In audio callback
+proc audioCallback(input, output: AudioBuffer, size: int) =
+  for i in 0..<size:
+    writer.sample(input[0][i].unsafeAddr)  # Record left channel
+
+# In main loop
+while recording:
+  discard writer.write()  # Write to SD card
+  delay(1)
+
+# When done
+discard writer.saveFile()  # Finalize and close
+```
+
+---
+
+### Wavetable Loader Module (ui/wavetable_loader.nim)
+
+**Import:**
+```nim
+import src/ui/wavetable_loader
+```
+
+Load banks of wavetables from WAV files for wavetable synthesis.
+
+**Key Features:**
+- Load multiple wavetables from single WAV file
+- Automatic conversion from 16-bit/32-bit to float
+- Access individual wavetables by index
+- Memory-efficient loading
+
+**Types:**
+```nim
+type
+  WaveTableResult* = enum
+    OK                        # Operation successful
+    ERR_TABLE_INFO_OVERFLOW  # Too many tables requested
+    ERR_FILE_READ            # File read error
+    ERR_GENERIC              # Generic error
+  
+  WaveTableLoader* = object
+    # Internal loader state
+```
+
+**Methods:**
+```nim
+proc init*(loader: var WaveTableLoader, mem: ptr cfloat, memSize: csize_t)
+  # Initialize with memory buffer for wavetable storage
+
+proc setWaveTableInfo*(loader: var WaveTableLoader, 
+                       samplesPerTable: csize_t,
+                       numTables: csize_t): WaveTableResult
+  # Set wavetable layout (must call before import)
+
+proc import*(loader: var WaveTableLoader, filename: cstring): WaveTableResult
+  # Import wavetables from WAV file
+
+proc getTable*(loader: WaveTableLoader, index: csize_t): ptr cfloat
+  # Get pointer to specific wavetable
+
+proc getNumTables*(loader: WaveTableLoader): csize_t
+  # Get number of loaded tables
+
+proc getSamplesPerTable*(loader: WaveTableLoader): csize_t
+  # Get samples per table
+```
+
+**Example:**
+```nim
+import ui/wavetable_loader
+
+# Allocate buffer (64 tables × 256 samples × 4 bytes)
+var tableBuffer: array[64 * 256, float]
+var loader: WaveTableLoader
+
+# Initialize
+loader.init(tableBuffer[0].addr, tableBuffer.len * sizeof(float))
+
+# Set layout: 256 samples/table, 64 tables
+if loader.setWaveTableInfo(256, 64) == WaveTableResult.OK:
+  # Import from file
+  if loader.import("wavetables.wav") == WaveTableResult.OK:
+    # Access individual tables
+    let table0 = loader.getTable(0)   # First wavetable
+    let table32 = loader.getTable(32) # 33rd wavetable
+```
+
+---
+
+### QSPI Flash Module (per/qspi.nim)
+
+**Import:**
+```nim
+import src/per/qspi
+```
+
+Access to QSPI flash memory for storing wavetables, samples, and presets with faster access than SD card.
+
+**Key Features:**
+- Two operation modes: Memory-Mapped and Indirect Polling
+- Read, Write, and Erase operations
+- Support for IS25LP080D (1MB) and IS25LP064A (8MB)
+- Sector/block erase (4KB, 32KB, 64KB)
+- Page write (256 bytes)
+
+**Memory Modes:**
+- **Memory-Mapped**: Direct access at 0x90000000 (read-only, fast)
+- **Indirect Polling**: Full driver with read/write/erase (slower)
+
+**Types:**
+```nim
+type
+  QSPIResult* = enum
+    OK   # Operation successful
+    ERR  # Operation failed
+  
+  QSPIDevice* = enum
+    IS25LP080D  # 8 Mbit (1 MB)
+    IS25LP064A  # 64 Mbit (8 MB)
+  
+  QSPIMode* = enum
+    MEMORY_MAPPED     # Memory-mapped mode (read-only, fast)
+    INDIRECT_POLLING  # Indirect polling mode (read/write/erase)
+  
+  QSPIConfig* = object
+    device*: QSPIDevice
+    mode*: QSPIMode
+    # Pin configuration fields...
+  
+  QSPIHandle* = object
+    # Internal QSPI state
+```
+
+**Methods:**
+```nim
+proc init*(qspi: var QSPIHandle, config: QSPIConfig): QSPIResult
+  # Initialize QSPI flash
+
+proc deinit*(qspi: var QSPIHandle): QSPIResult
+  # Deinitialize QSPI
+
+proc eraseSector*(qspi: var QSPIHandle, address: uint32): QSPIResult
+  # Erase 4KB sector (must erase before writing)
+
+proc eraseBlock32*(qspi: var QSPIHandle, address: uint32): QSPIResult
+  # Erase 32KB block
+
+proc eraseBlock64*(qspi: var QSPIHandle, address: uint32): QSPIResult
+  # Erase 64KB block
+
+proc writePage*(qspi: var QSPIHandle, address: uint32, 
+                size: csize_t, data: ptr uint8): QSPIResult
+  # Write up to 256 bytes (page program)
+
+proc read*(qspi: var QSPIHandle, address: uint32,
+           size: csize_t, data: ptr uint8): QSPIResult
+  # Read arbitrary amount of data
+
+proc getData*(qspi: QSPIHandle): ptr uint8
+  # Get memory-mapped base address (0x90000000)
+```
+
+**Example (Indirect Polling):**
+```nim
+import per/qspi
+
+var qspi: QSPIHandle
+var config = QSPIConfig()
+
+config.device = QSPIDevice.IS25LP064A
+config.mode = QSPIMode.INDIRECT_POLLING
+
+if qspi.init(config) == QSPIResult.OK:
+  # Erase sector
+  if qspi.eraseSector(0) == QSPIResult.OK:
+    # Write data
+    var data: array[256, uint8] = [1'u8, 2, 3, ...]
+    if qspi.writePage(0, 256, data[0].addr) == QSPIResult.OK:
+      echo "Written successfully"
+```
+
+**Example (Memory-Mapped):**
+```nim
+import per/qspi
+
+var qspi: QSPIHandle
+var config = QSPIConfig()
+
+config.device = QSPIDevice.IS25LP064A
+config.mode = QSPIMode.MEMORY_MAPPED
+
+if qspi.init(config) == QSPIResult.OK:
+  # Access memory directly (read-only)
+  let dataPtr = cast[ptr UncheckedArray[uint8]](qspi.getData())
+  echo "First byte: ", dataPtr[0]
+```
+
+---
+
+### Switch Module (hid/switch.nim)
+
+**Import:**
+```nim
+import src/hid/switch
+import src/libdaisy  # For Pin type
+```
+
+Generic debounced switch/button handler with edge detection and timing features.
+
+**Key Features:**
+- Debounced button input
+- Rising/falling edge detection
+- Press duration tracking
+- Toggle or momentary modes
+- Normal or inverted polarity
+
+**Types:**
+```nim
+type
+  SwitchType* = enum
+    TYPE_TOGGLE    # Toggle/latching switch
+    TYPE_MOMENTARY # Momentary pushbutton (default)
+  
+  SwitchPolarity* = enum
+    POLARITY_NORMAL   # HIGH = pressed
+    POLARITY_INVERTED # LOW = pressed (default, for pull-ups)
+  
+  GpioPull* = enum
+    PULL_NOPULL  # No pull resistor
+    PULL_UP      # Pull-up resistor (default)
+    PULL_DOWN    # Pull-down resistor
+  
+  Switch* = object
+    # Internal switch state
+```
+
+**Methods:**
+```nim
+proc Init*(switch: var Switch, pin: Pin, update_rate: cfloat = 0.0)
+  # Initialize with simple defaults (momentary, inverted, pull-up)
+
+proc Init*(switch: var Switch, pin: Pin, update_rate: cfloat,
+           t: SwitchType, pol: SwitchPolarity, pu: GpioPull)
+  # Initialize with full configuration
+
+proc Debounce*(switch: var Switch)
+  # Update switch state (call periodically)
+
+proc RisingEdge*(switch: Switch): bool
+  # Returns true once when switch is pressed
+
+proc FallingEdge*(switch: Switch): bool
+  # Returns true once when switch is released
+
+proc Pressed*(switch: Switch): bool
+  # Returns true while switch is held down
+
+proc TimeHeldMs*(switch: Switch): cfloat
+  # Returns time switch has been held (in milliseconds)
+```
+
+**Example:**
+```nim
+import hid/switch
+import libdaisy
+
+var button: Switch
+button.Init(D0())  # Momentary button on pin D0
+
+while true:
+  button.Debounce()
+  
+  if button.RisingEdge():
+    echo "Button pressed!"
+  
+  if button.Pressed():
+    echo "Held for ", button.TimeHeldMs(), " ms"
+  
+  if button.FallingEdge():
+    echo "Button released!"
+  
+  delayMs(1)
 ```
 
 ---
