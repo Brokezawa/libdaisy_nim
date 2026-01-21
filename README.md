@@ -15,10 +15,10 @@ This wrapper allows you to write firmware for the Daisy Seed embedded audio boar
 - ✅ **Type safety** - Nim's strong type system catches errors at compile time
 - ✅ **Clean API** - Idiomatic Nim interfaces to libDaisy functionality
 - ✅ **Comprehensive** - Covers core audio, peripherals, USB, storage, and more
-- ✅ **Production ready** - 30 tested examples demonstrating real-world usage
+- ✅ **Production ready** - 36 tested examples demonstrating real-world usage
 - ✅ **Well documented** - Complete API reference and technical documentation
-- ✅ **Many examples** - 30 working examples covering all features
-- ✅ **35 modules** - Comprehensive hardware and utility coverage
+- ✅ **Many examples** - 36 working examples covering all features
+- ✅ **41 modules** - Comprehensive hardware and utility coverage
 
 ## Quick Start
 
@@ -98,11 +98,14 @@ The Daisy Seed is a powerful embedded audio platform perfect for:
 
 ### Storage & Memory
 - ✅ **SD Card** - SDMMC interface, FatFS filesystem, FAT32 support
+- ✅ **WAV Files** - WAV parser, streaming player, real-time recorder (NEW in v0.6.0)
+- ✅ **Wavetable Loading** - Multi-bank wavetable loader from SD (NEW in v0.6.0)
+- ✅ **QSPI Flash** - 8MB QSPI flash read/write/erase operations (NEW in v0.6.0)
 - ✅ **External SDRAM** - 64MB for large audio buffers
 
 ### User Interface
 - ✅ **MIDI** - Hardware UART and USB MIDI I/O
-- ✅ **Switches** - Debounced switch handling, multiple types
+- ✅ **Switches** - Debounced switch handling, multiple types (enhanced in v0.6.0)
 - ✅ **Encoders** - Rotary encoder support with button
 - ✅ **Controls** - Analog knobs, CV inputs (uses ADC)
 - ✅ **OLED Displays** - SSD1306 driver with I2C/SPI support
@@ -123,7 +126,7 @@ The Daisy Seed is a powerful embedded audio platform perfect for:
 
 ## Examples
 
-The `examples/` directory contains 30 production-ready examples:
+The `examples/` directory contains 36 production-ready examples:
 
 | Category | Example | Description |
 |----------|---------|-------------|
@@ -133,6 +136,12 @@ The `examples/` directory contains 30 production-ready examples:
 | **Audio** | `audio_passthrough.nim` | Pass audio input to output |
 | | `distortion_effect.nim` | Simple overdrive effect |
 | | `sine_wave.nim` | Generate sine waves |
+| **File I/O** | `wav_player.nim` | WAV file playback with track navigation (v0.6.0) |
+| | `wav_recorder.nim` | Record audio to SD in WAV format (v0.6.0) |
+| | `sampler.nim` | Trigger and play multiple WAV samples (v0.6.0) |
+| | `looper.nim` | Record and loop audio with overdub (v0.6.0) |
+| | `wavetable_synth.nim` | Wavetable synthesis from SD (v0.6.0) |
+| | `qspi_storage.nim` | QSPI flash memory operations (v0.6.0) |
 | **ADC** | `adc_simple.nim` | Single analog input |
 | | `adc_multichannel.nim` | Multiple ADC channels |
 | | `adc_multiplexed.nim` | Multiplexed inputs |
@@ -188,7 +197,7 @@ libdaisy_nim/
 │   ├── CHANGELOG.md          # Version history
 │   └── AGENTS.md             # AI agent guide
 │
-├── src/                   # Wrapper source code (35 modules)
+├── src/                   # Wrapper source code (41 modules)
 │   ├── libdaisy.nim          # Core API (GPIO, audio, system)
 │   ├── libdaisy_macros.nim   # Compile-time macro system
 │   ├── libdaisy_adc.nim      # ADC (analog input)
@@ -202,6 +211,12 @@ libdaisy_nim/
 │   ├── libdaisy_sdmmc.nim    # SD card & FatFS
 │   ├── libdaisy_sdram.nim    # External SDRAM
 │   ├── libdaisy_controls.nim # Switches & encoders
+│   ├── libdaisy_switch.nim   # Debounced button/switch (v0.6.0)
+│   ├── libdaisy_wavparser.nim # WAV file parser (v0.6.0)
+│   ├── libdaisy_wavplayer.nim # WAV streaming player (v0.6.0)
+│   ├── libdaisy_wavwriter.nim # WAV recorder (v0.6.0)
+│   ├── libdaisy_wavetable_loader.nim # Wavetable loader (v0.6.0)
+│   ├── libdaisy_qspi.nim     # QSPI flash memory (v0.6.0)
 │   ├── libdaisy_fifo.nim     # Lock-free FIFO queue (v0.5.0)
 │   ├── libdaisy_stack.nim    # Fixed-capacity stack (v0.5.0)
 │   ├── libdaisy_ringbuffer.nim # Circular buffer (v0.5.0)
@@ -212,7 +227,7 @@ libdaisy_nim/
 │   ├── libdaisy_cpuload.nim  # CPU load monitoring (v0.5.0)
 │   └── panicoverride.nim     # Embedded panic handler
 │
-└── examples/              # Example programs (30)
+└── examples/              # Example programs (36)
     ├── Makefile              # Build system
     ├── nim.cfg               # Nim compiler configuration
     ├── test_all.sh           # Test all examples
@@ -319,7 +334,7 @@ Contributions are welcome! See **[CONTRIBUTING.md](docs/CONTRIBUTING.md)** for:
 
 ## Status
 
-**Current Version:** 0.3.0 
+**Current Version:** 0.6.0 
 
 **Stability:**
 - ✅ Core API - Stable, tested
@@ -329,8 +344,9 @@ Contributions are welcome! See **[CONTRIBUTING.md](docs/CONTRIBUTING.md)** for:
 - ✅ ADC - ADC multiplexing working  
 - ✅ PWM - working  
 - ✅ OLED screen (SSD1306) - working  
-- ✅ DAC - working (NEW in v0.3.0)
-- ✅ Daisy Patch board - working (NEW in v0.3.0)
+- ✅ DAC - working (v0.3.0)
+- ✅ Daisy Patch board - working (v0.3.0)
+- ✅ File I/O - WAV playback/recording, QSPI flash working (v0.6.0)
 - 🚧 Other boards - Planned (Pod, Field, Petal, etc.)
 
 **Production Readiness:** Experimental - use at your own risk. APIs may change.
