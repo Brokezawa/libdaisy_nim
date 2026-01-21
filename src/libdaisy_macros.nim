@@ -493,3 +493,43 @@ macro emitSwitch3Includes*(): untyped =
 """.}
   else:
     result = newStmtList()
+
+macro emitUniqueIdIncludes*(): untyped =
+  ## Emit UniqueId header includes when useUniqueId is defined
+  when defined(useUniqueId):
+    result = quote do:
+      {.emit: """/*INCLUDESECTION*/
+#include "util/unique_id.h"
+""".}
+  else:
+    result = newStmtList()
+
+macro emitCpuLoadIncludes*(): untyped =
+  ## Emit CpuLoadMeter header includes when useCpuLoad is defined
+  when defined(useCpuLoad):
+    result = quote do:
+      {.emit: """/*INCLUDESECTION*/
+#include "util/CpuLoadMeter.h"
+""".}
+  else:
+    result = newStmtList()
+
+macro emitParameterIncludes*(): untyped =
+  ## Emit Parameter header includes when useParameter is defined
+  when defined(useParameter):
+    result = quote do:
+      {.emit: """/*INCLUDESECTION*/
+#include "hid/parameter.h"
+""".}
+  else:
+    result = newStmtList()
+
+macro emitMappedValueIncludes*(): untyped =
+  ## Emit MappedValue header includes when useMappedValue is defined
+  when defined(useMappedValue):
+    result = quote do:
+      {.emit: """/*INCLUDESECTION*/
+#include "util/MappedValue.h"
+""".}
+  else:
+    result = newStmtList()

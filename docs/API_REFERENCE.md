@@ -1280,6 +1280,526 @@ of SWITCH3_POS_DOWN:
 
 ---
 
+## Data Structures & Utilities (v0.5.0)
+
+### FIFO Module (libdaisy_fifo.nim)
+
+**Import:**
+```nim
+import src/libdaisy_fifo
+```
+
+Lock-free FIFO (First-In-First-Out) queue with fixed capacity. Thread-safe for single-producer/single-consumer scenarios.
+
+**Type:**
+```nim
+type
+  Fifo*[N: static int, T] = object
+    # N = capacity (compile-time constant)
+    # T = element type
+```
+
+**Methods:**
+```nim
+proc init*[N: static int, T](this: var Fifo[N, T])
+  # Initialize empty FIFO
+
+proc clear*[N: static int, T](this: var Fifo[N, T])
+  # Clear all elements
+
+proc push*[N: static int, T](this: var Fifo[N, T], value: T): bool
+  # Push value to queue. Returns false if full.
+
+proc pop*[N: static int, T](this: var Fifo[N, T], value: var T): bool
+  # Pop value from queue. Returns false if empty.
+
+proc peek*[N: static int, T](this: Fifo[N, T], value: var T): bool
+  # Peek at front without removing
+
+proc len*[N: static int, T](this: Fifo[N, T]): int
+  # Get current number of elements
+
+proc capacity*[N: static int, T](this: Fifo[N, T]): int
+  # Get maximum capacity (always N)
+
+proc isEmpty*[N: static int, T](this: Fifo[N, T]): bool
+proc isFull*[N: static int, T](this: Fifo[N, T]): bool
+```
+
+**Example:**
+```nim
+var eventQueue: Fifo[16, int]
+eventQueue.init()
+
+# Push events
+assert eventQueue.push(1)
+assert eventQueue.push(2)
+
+# Pop events (FIFO order)
+var event: int
+while eventQueue.pop(event):
+  echo "Processing event: ", event
+```
+
+**Performance Notes:**
+- Zero heap allocation (all stack-based)
+- O(1) push/pop operations
+- Audio-rate safe
+- Lock-free for SPSC (single producer, single consumer)
+
+---
+
+### Stack Module (libdaisy_stack.nim)
+
+**Import:**
+```nim
+import src/libdaisy_stack
+```
+
+Fixed-capacity stack (Last-In-First-Out) with compile-time size.
+
+**Type:**
+```nim
+type
+  Stack*[N: static int, T] = object
+```
+
+**Methods:**
+```nim
+proc init*[N: static int, T](this: var Stack[N, T])
+proc clear*[N: static int, T](this: var Stack[N, T])
+
+proc push*[N: static int, T](this: var Stack[N, T], value: T): bool
+  # Push to top. Returns false if full.
+
+proc pop*[N: static int, T](this: var Stack[N, T], value: var T): bool
+  # Pop from top. Returns false if empty.
+
+proc peek*[N: static int, T](this: Stack[N, T], value: var T): bool
+  # Peek at top without removing
+
+proc len*[N: static int, T](this: Stack[N, T]): int
+proc capacity*[N: static int, T](this: Stack[N, T]): int
+proc isEmpty*[N: static int, T](this: Stack[N, T]): bool
+proc isFull*[N: static int, T](this: Stack[N, T]): bool
+```
+
+**Example:**
+```nim
+var undoStack: Stack[8, float32]
+undoStack.init()
+
+# Record parameter changes
+assert undoStack.push(0.5)
+assert undoStack.push(0.7)
+
+# Undo (LIFO order)
+var value: float32
+while undoStack.pop(value):
+  echo "Restored: ", value  # 0.7, then 0.5
+```
+
+---
+
+### RingBuffer Module (libdaisy_ringbuffer.nim)
+
+**Import:**
+```nim
+import src/libdaisy_ringbuffer
+```
+
+Lock-free circular buffer optimized for audio streaming. Supports block read/write and configurable overflow behavior.
+
+**Type:**
+```nim
+type
+  RingBufferMode* = enum
+    OVERWRITE_OLDEST  # Overwrite old data when full
+    REJECT_NEW        # Reject new writes when full
+  
+  RingBuffer*[N: static int, T] = object
+```
+
+**Methods:**
+```nim
+proc init*[N: static int, T](this: var RingBuffer[N, T], 
+                             mode: RingBufferMode = OVERWRITE_OLDEST)
+
+proc clear*[N: static int, T](this: var RingBuffer[N, T])
+
+proc write*[N: static int, T](this: var RingBuffer[N, T], value: T): bool
+  # Write single value
+
+proc read*[N: static int, T](this: var RingBuffer[N, T], value: var T): bool
+  # Read single value
+
+proc writeBlock*[N: static int, T](this: var RingBuffer[N, T], 
+                                   data: openArray[T]): int
+  # Write multiple values, returns count written
+
+proc readBlock*[N: static int, T](this: var RingBuffer[N, T], 
+                                  data: var openArray[T]): int
+  # Read multiple values, returns count read
+
+proc peek*[N: static int, T](this: RingBuffer[N, T], value: var T, 
+                             offset: int = 0): bool
+  # Peek at value without removing
+
+proc available*[N: static int, T](this: RingBuffer[N, T]): int
+  # Get number of readable elements
+
+proc remaining*[N: static int, T](this: RingBuffer[N, T]): int
+  # Get space remaining for writes
+
+proc capacity*[N: static int, T](this: RingBuffer[N, T]): int
+proc isEmpty*[N: static int, T](this: RingBuffer[N, T]): bool
+proc isFull*[N: static int, T](this: RingBuffer[N, T]): bool
+```
+
+**Example:**
+```nim
+# 100ms delay buffer at 48kHz
+const DELAY_SAMPLES = 4800
+var delayLine: RingBuffer[DELAY_SAMPLES, float32]
+delayLine.init()
+
+# In audio callback
+proc audioCallback(input, output: AudioBuffer, size: int) {.cdecl.} =
+  for i in 0 ..< size:
+    var delayed: float32
+    discard delayLine.read(delayed)
+    discard delayLine.write(input[0][i])
+    output[0][i] = input[0][i] * 0.5 + delayed * 0.5
+```
+
+---
+
+### FixedStr Module (libdaisy_fixedstr.nim)
+
+**Import:**
+```nim
+import src/libdaisy_fixedstr
+```
+
+Stack-allocated fixed-capacity string for embedded displays and UI. No heap allocation.
+
+**Type:**
+```nim
+type
+  FixedStr*[N: static int] = object
+    # N = maximum capacity in characters
+```
+
+**Methods:**
+```nim
+proc init*[N: static int](this: var FixedStr[N])
+proc clear*[N: static int](this: var FixedStr[N])
+
+proc add*[N: static int](this: var FixedStr[N], c: char): bool
+proc add*[N: static int](this: var FixedStr[N], str: string): int
+proc add*[N: static int](this: var FixedStr[N], value: int): int
+proc add*[N: static int](this: var FixedStr[N], value: float): int
+  # Add content. Returns chars added or false if full.
+
+proc set*[N: static int](this: var FixedStr[N], str: string): int
+  # Replace entire contents
+
+proc `[]`*[N: static int](this: FixedStr[N], index: int): char
+proc `[]=`*[N: static int](this: var FixedStr[N], index: int, c: char)
+  # Character access
+
+proc `$`*[N: static int](this: FixedStr[N]): string
+  # Convert to string (allocates)
+
+proc len*[N: static int](this: FixedStr[N]): int
+proc capacity*[N: static int](this: FixedStr[N]): int
+proc isEmpty*[N: static int](this: FixedStr[N]): bool
+proc isFull*[N: static int](this: FixedStr[N]): bool
+```
+
+**Example:**
+```nim
+var display: FixedStr[32]
+display.init()
+
+discard display.add("Cutoff: ")
+discard display.add(1200)
+discard display.add(" Hz")
+
+echo $display  # "Cutoff: 1200 Hz"
+
+# Update
+display.clear()
+discard display.add("Volume: 75%")
+```
+
+---
+
+### UniqueId Module (libdaisy_uniqueid.nim)
+
+**Import:**
+```nim
+import src/libdaisy_uniqueid
+```
+
+Read STM32 microcontroller's factory-programmed 96-bit unique identifier.
+
+**Type:**
+```nim
+type
+  UniqueId* = object
+    w0*: uint32  # Bits 0-31
+    w1*: uint32  # Bits 32-63
+    w2*: uint32  # Bits 64-95
+```
+
+**Functions:**
+```nim
+proc getUniqueId*(): UniqueId
+  # Read 96-bit unique ID
+
+proc getUniqueIdString*(): string
+  # Get as "XXXXXXXX-XXXXXXXX-XXXXXXXX" format
+
+proc `$`*(uid: UniqueId): string
+  # String representation
+
+proc `==`*(a, b: UniqueId): bool
+  # Equality comparison
+```
+
+**Example:**
+```nim
+let uid = getUniqueId()
+echo uid  # UniqueId(0x12345678-0x9ABCDEF0-0x13579BDF)
+
+let serial = getUniqueIdString()
+echo "Device: ", serial  # Device: 12345678-9ABCDEF0-13579BDF
+
+# Use for device identification
+var deviceName: FixedStr[64]
+deviceName.init()
+discard deviceName.add("DaisySeed-")
+discard deviceName.add(serial)
+```
+
+**Use Cases:**
+- Device identification and registration
+- License/authentication systems
+- Hardware-based encryption keys
+- Generating unique serial numbers
+
+---
+
+### CpuLoadMeter Module (libdaisy_cpuload.nim)
+
+**Import:**
+```nim
+import src/libdaisy_cpuload
+```
+
+Real-time CPU load measurement for audio processing optimization.
+
+**Type:**
+```nim
+type
+  CpuLoadMeter* {.importcpp: "daisy::CpuLoadMeter".} = object
+```
+
+**Methods:**
+```nim
+proc init*(this: var CpuLoadMeter, sampleRateInHz: float32, 
+           blockSizeInSamples: int, 
+           smoothingFilterCutoffHz: float32 = 1.0)
+  # Initialize with audio configuration
+
+proc onBlockStart*(this: var CpuLoadMeter)
+  # Call at beginning of audio callback
+
+proc onBlockEnd*(this: var CpuLoadMeter)
+  # Call at end of audio callback
+
+proc getAvgCpuLoad*(this: CpuLoadMeter): float32
+  # Get smoothed average load (0.0 to 1.0)
+
+proc getMinCpuLoad*(this: CpuLoadMeter): float32
+  # Get minimum observed load
+
+proc getMaxCpuLoad*(this: CpuLoadMeter): float32
+  # Get maximum observed load
+
+proc reset*(this: var CpuLoadMeter)
+  # Reset statistics
+```
+
+**Example:**
+```nim
+var cpuMeter: CpuLoadMeter
+cpuMeter.init(48000.0, 48)  # 48kHz, 48 samples/block
+
+proc audioCallback(input, output: AudioBuffer, size: int) {.cdecl.} =
+  cpuMeter.onBlockStart()
+  
+  # Your DSP processing here
+  for i in 0 ..< size:
+    output[0][i] = input[0][i]
+  
+  cpuMeter.onBlockEnd()
+
+# In main loop
+while true:
+  let load = cpuMeter.getAvgCpuLoad()
+  echo "CPU: ", int(load * 100), "%"
+  if load > 0.9:
+    echo "WARNING: High CPU usage!"
+  daisy.delay(1000)
+```
+
+**Interpretation:**
+- **0-50%**: Plenty of headroom
+- **50-70%**: Moderate usage
+- **70-90%**: High usage - consider optimization
+- **90-100%**: Critical - risk of audio dropouts
+- **>100%**: Audio dropouts occurring
+
+---
+
+### Parameter Module (libdaisy_parameter.nim)
+
+**Import:**
+```nim
+import src/libdaisy_parameter
+```
+
+Parameter mapping with various scaling curves for natural control feel.
+
+**Types:**
+```nim
+type
+  Curve* = enum
+    LINEAR       # Direct proportional (y = x)
+    EXPONENTIAL  # Fast rise at high end (y = x²)
+    LOGARITHMIC  # Fast rise at low end
+    CUBE         # Smooth S-curve (y = x³)
+```
+
+**Functions:**
+```nim
+proc mapParameter*(input: float32, min: float32, max: float32, 
+                   curve: Curve): float32
+  # Map 0-1 input to min-max with curve
+
+proc mapParameterExp*(input: float32, min: float32, max: float32): float32
+proc mapParameterLog*(input: float32, min: float32, max: float32): float32
+proc mapParameterLin*(input: float32, min: float32, max: float32): float32
+proc mapParameterCube*(input: float32, min: float32, max: float32): float32
+  # Convenience functions for specific curves
+```
+
+**Example:**
+```nim
+let knobValue = 0.6  # ADC reading (0.0 to 1.0)
+
+# Filter cutoff: exponential feels natural for frequency
+let cutoff = mapParameterExp(knobValue, 100.0, 10000.0)
+echo "Cutoff: ", int(cutoff), " Hz"  # ~3700 Hz
+
+# Volume: logarithmic feels natural for amplitude
+let volume = mapParameterLog(knobValue, 0.0, 1.0)
+
+# Mix: linear is fine
+let mix = mapParameterLin(knobValue, 0.0, 1.0)
+```
+
+**Curve Recommendations:**
+- **Frequency parameters**: Use EXPONENTIAL (cutoff, pitch, delay time)
+- **Amplitude/Volume**: Use LOGARITHMIC (gain, mix level)
+- **Time parameters**: Use EXPONENTIAL (attack, decay, release)
+- **Position/Mix**: Use LINEAR (pan, dry/wet)
+- **Smooth non-linear**: Use CUBE
+
+---
+
+### MappedValue Module (libdaisy_mapped_value.nim)
+
+**Import:**
+```nim
+import src/libdaisy_mapped_value
+```
+
+Value mapping, quantization, and normalization utilities. Pure Nim implementation.
+
+**Functions:**
+```nim
+# Basic mapping
+proc mapValueFloat*(input: float32, min: float32, max: float32): float32
+  # Map 0-1 to float range
+
+proc mapValueInt*(input: float32, min: int, max: int): int
+  # Map 0-1 to integer range (rounded)
+
+# Quantization
+proc mapValueFloatQuantized*(input: float32, min: float32, max: float32, 
+                             numSteps: int): float32
+  # Map to quantized steps
+
+proc quantizeFloat*(value: float32, stepSize: float32): float32
+  # Quantize to nearest multiple
+
+# Bipolar/Unipolar
+proc mapValueBipolar*(input: float32, min: float32, max: float32): float32
+  # Map with center at 0.5
+
+proc mapValueUnipolar*(input: float32, max: float32): float32
+  # Map 0-1 to 0-max
+
+# Normalization (inverse operations)
+proc normalizeValue*(value: float32, min: float32, max: float32): float32
+proc normalizeValueInt*(value: int, min: int, max: int): float32
+
+# Interpolation
+proc lerp*(a: float32, b: float32, t: float32): float32
+  # Linear interpolation
+
+proc inverseLerp*(a: float32, b: float32, value: float32): float32
+  # Find t for given value
+```
+
+**Examples:**
+```nim
+# Discrete parameter selection
+let waveform = mapValueInt(0.7, 0, 3)  # Returns 2
+# Maps to: 0=Sine, 1=Saw, 2=Square, 3=Triangle
+
+# Quantize to semitones
+let semitone = mapValueFloatQuantized(0.45, 0.0, 12.0, 12)
+let freq = 220.0 * pow(2.0, semitone / 12.0)
+
+# Bipolar CV input (0.5 = center/zero)
+let panPosition = mapValueBipolar(0.75, -1.0, 1.0)  # Returns 0.5
+
+# Normalize for display
+let normalized = normalizeValue(440.0, 20.0, 20000.0)
+echo "Frequency slider: ", int(normalized * 100), "%"
+
+# Quantize mix to 5% increments
+let mix = quantizeFloat(0.47, 0.05)  # Returns 0.45
+```
+
+**Common Patterns:**
+```nim
+# Octave selection (-2 to +2)
+let octave = mapValueInt(knobValue, -2, 2)
+
+# Quantize frequency to 10 Hz steps
+let freq = quantizeFloat(mapValueFloat(knobValue, 20.0, 2000.0), 10.0)
+
+# Map CV input ±5V (0.5 = 0V)
+let cvVolts = mapValueBipolar(adcValue, -5.0, 5.0)
+```
+
+---
+
 For more examples, see [EXAMPLES.md](EXAMPLES.md).
 
 For technical details, see [TECHNICAL_REPORT.md](TECHNICAL_REPORT.md).

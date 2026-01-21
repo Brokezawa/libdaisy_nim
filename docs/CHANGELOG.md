@@ -5,6 +5,98 @@ All notable changes to libdaisy_nim will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-01-22
+
+### Added
+
+#### New Pure Nim Data Structures (Zero Heap Allocation)
+
+- **FIFO Module** (`libdaisy_fifo.nim`) - Lock-free FIFO queue (SPSC)
+  - Fixed capacity with compile-time sizing
+  - Lock-free single producer/single consumer
+  - Audio-rate safe operations
+  - `push()`, `pop()`, `available()`, `writable()`, `reset()`
+  
+- **Stack Module** (`libdaisy_stack.nim`) - Fixed-capacity stack (LIFO)
+  - Zero heap allocation
+  - Compile-time capacity specification
+  - `push()`, `pop()`, `peek()`, `isFull()`, `isEmpty()`
+  
+- **RingBuffer Module** (`libdaisy_ringbuffer.nim`) - Circular buffer for audio streaming
+  - Lock-free SPSC implementation
+  - Optimized for audio sample buffering
+  - `write()`, `read()`, `available()`, `writable()`, `reset()`
+  
+- **FixedStr Module** (`libdaisy_fixedstr.nim`) - Stack-allocated string for displays
+  - No heap allocation for embedded displays
+  - String manipulation and concatenation
+  - Printf-style formatting
+  - Automatic null termination
+
+#### New Wrapped Utilities
+
+- **UniqueId Module** (`libdaisy_uniqueid.nim`) - STM32 96-bit unique device identifier
+  - Read STM32 factory-programmed unique ID
+  - Access as 3x 32-bit words or 12-byte array
+  - Custom hex formatting (no heap allocation)
+  - Device serialization support
+  
+- **CpuLoad Module** (`libdaisy_cpuload.nim`) - Real-time CPU load monitoring
+  - Track audio callback CPU usage percentage
+  - Average and peak load measurement
+  - Configurable smoothing filter
+  - Performance optimization detection
+  
+- **Parameter Module** (`libdaisy_parameter.nim`) - Parameter mapping with curves
+  - Linear, exponential, logarithmic, and cubic curves
+  - Input value mapping (knobs/CV to parameters)
+  - Min/max range specification
+  - Curve bias control
+
+#### New Pure Nim Utilities
+
+- **MappedValue Module** (`libdaisy_mapped_value.nim`) - Value mapping, quantization, normalization
+  - Bidirectional range mapping
+  - Quantization to discrete steps
+  - Unit normalization (0.0-1.0)
+  - Integer and float support
+
+#### New Examples
+
+- `data_structures.nim` - FIFO/Stack/RingBuffer/FixedStr demonstration
+  - Audio delay effect using RingBuffer
+  - FIFO/Stack basic operations
+  - FixedStr display formatting
+  
+- `control_mapping.nim` - Parameter curves and value mapping
+  - Exponential frequency control
+  - Linear/log/cubic parameter curves
+  - Value quantization for scales
+  
+- `system_info.nim` - UniqueId and CpuLoad monitoring
+  - Device ID reading and display
+  - Real-time CPU usage monitoring
+  - Performance optimization tips
+
+### Technical
+
+- All data structures use compile-time fixed capacity (no heap allocation)
+- Added 4 new emit macros to `libdaisy_macros.nim`:
+  - `emitUniqueIdIncludes()`
+  - `emitCpuLoadIncludes()`
+  - `emitParameterIncludes()`
+  - `emitMappedValueIncludes()`
+- All modules are audio-rate safe
+- Comprehensive API documentation in docs/API_REFERENCE.md
+
+### Performance
+
+- Zero heap allocation in all new data structures
+- Lock-free implementations for FIFO and RingBuffer
+- Optimized for embedded/real-time audio use
+- Fixed-capacity types prevent runtime allocation
+- Custom hex formatting avoids standard library overhead
+
 ## [0.4.0] - 2026-01-22
 
 ### Added

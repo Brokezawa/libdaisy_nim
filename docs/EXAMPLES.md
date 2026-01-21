@@ -126,6 +126,14 @@ If you find a discrepancy:
 | **led_control.nim** | RgbLed/Color | RGB LED on D10,D11,D12 | RGB LED cycles through: Primary colors (R,G,B) → Mixed colors (Purple,Cyan,Orange,White) → Red-to-Blue blend → Rainbow cycle (3 loops). ~20 seconds total sequence. | Wrong colors = check RGB pin order; Dim = check current limiting | ⬜ |
 | **timer_advanced.nim** | Timer | None (uses serial) | Coordinates 3 timers: TIM2 (free-running counter), TIM3 (periodic callback), TIM5 (faster callback). Runs for 20 seconds showing callback counts and tick measurements. | Callbacks = 0 = IRQ not enabled; Tick overflow = period too short | ⬜ |
 
+### Data Structures & Utilities Examples (v0.5.0)
+
+| Example | Category | Hardware Required | Expected Behavior | Common Issues | Status |
+|---------|----------|-------------------|-------------------|---------------|--------|
+| **data_structures.nim** | Data Structures | Audio input/output | Demonstrates FIFO queue, Stack, RingBuffer, and FixedStr. Audio delay effect using RingBuffer (300ms delay). Serial output shows FIFO/Stack operations. OLED-style string formatting examples. | No delay = RingBuffer size too small; Distorted = buffer overflow | ⬜ |
+| **control_mapping.nim** | Parameter Mapping | Serial output | Shows Parameter curves (linear/exp/log/cubic) and MappedValue quantization. Simulates synth controls: frequency (exp curve), filter (linear), resonance (log), steps (quantized). Prints mapped values. | Values out of range = curve misconfiguration | ⬜ |
+| **system_info.nim** | System Monitoring | Serial output | Displays STM32 unique device ID (96-bit hex). Real-time CPU load monitoring showing average and peak usage. Performance tips based on CPU load thresholds. Runs indefinitely. | CPU = 0% = CpuLoad not measuring; ID all zeros = chip issue | ⬜ |
+
 ### Special Examples
 
 | Example | Category | Hardware Required | Expected Behavior | Common Issues | Status |
@@ -142,6 +150,8 @@ These examples work with Daisy Seed alone:
 - ✅ `blink.nim` - Onboard LED only
 - ✅ `panicoverride.nim` - Onboard LED only
 - ✅ `timer_advanced.nim` - Serial output only (v0.4.0)
+- ✅ `control_mapping.nim` - Serial output only (v0.5.0)
+- ✅ `system_info.nim` - Serial output only (v0.5.0)
 
 ### Basic GPIO Setup
 
@@ -426,7 +436,54 @@ Features tested:
   - Multiple hardware timers (TIM2, TIM3, TIM5)
   - Free-running counters
   - Periodic callbacks
-  - Tick measurement and conversion
+   - Tick measurement and conversion
+```
+
+### Data Structures & Utilities Setup (v0.5.0)
+
+**Required for data_structures.nim:** Audio input/output
+
+```
+Example: data_structures.nim
+
+Audio setup (same as audio examples):
+  IN_L  ──── Audio source left
+  IN_R  ──── Audio source right
+  OUT_L ──── Headphones/amp left
+  OUT_R ──── Headphones/amp right
+  AGND  ──── Audio ground
+
+Features tested:
+  - FIFO queue (audio sample buffering)
+  - Stack (LIFO operations)
+  - RingBuffer (delay line, 300ms)
+  - FixedStr (display formatting)
+```
+
+**Required for control_mapping.nim:** None (serial output only)
+
+```
+Example: control_mapping.nim
+
+No additional hardware needed - uses serial console output
+
+Features tested:
+  - Parameter (exponential/linear/log/cubic curves)
+  - MappedValue (range mapping, quantization)
+  - Simulated synth controls
+```
+
+**Required for system_info.nim:** None (serial output only)
+
+```
+Example: system_info.nim
+
+No additional hardware needed - uses serial console output
+
+Features tested:
+  - UniqueId (STM32 96-bit device ID)
+  - CpuLoad (real-time CPU usage monitoring)
+  - Performance monitoring and optimization tips
 ```
 
 ### Daisy Patch Setup
@@ -471,7 +528,7 @@ cd examples
 # Expected output:
 # ========================================
 # SUMMARY:
-#   Passed: 27
+#   Passed: 30
 #   Failed: 0
 # ========================================
 ```
