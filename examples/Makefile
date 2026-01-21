@@ -30,7 +30,7 @@ DFU_UTIL = dfu-util
 ARCH_FLAGS = -mcpu=cortex-m7 -mthumb -mfpu=fpv5-d16 -mfloat-abi=hard
 
 # Defines
-DEFINES = -DSTM32H750xx -DCORE_CM7 -DARM_MATH_CM7
+DEFINES = -DSTM32H750xx -DCORE_CM7 -DARM_MATH_CM7 -DFILEIO_ENABLE_FATFS_READER
 
 # Include paths
 INCLUDES = \
@@ -81,6 +81,9 @@ NIMFLAGS = \
 	--gcc.cpp.linkerexe:$(LD) \
 	--nimcache:$(BUILD_DIR)/.nimcache
 
+# Additional C sources (for FatFS unicode support)
+C_SOURCES = $(LIBDAISY_DIR)/Middlewares/Third_Party/FatFs/src/option/ccsbcs.c
+
 # Additional Nim pass flags
 NIMFLAGS += $(foreach flag,$(CFLAGS),--passC:"$(flag)")
 NIMFLAGS += $(foreach flag,$(LDFLAGS),--passL:"$(flag)")
@@ -92,10 +95,17 @@ all: $(BUILD_DIR)/$(TARGET).bin
 $(BUILD_DIR):
 	@mkdir -p $(BUILD_DIR)
 
-# Compile Nim to C/C++
-$(BUILD_DIR)/$(TARGET).elf: $(NIM_SRC) | $(BUILD_DIR)
+# Compile C sources
+C_OBJECTS = $(patsubst %.c,$(BUILD_DIR)/%.o,$(notdir $(C_SOURCES)))
+
+$(BUILD_DIR)/%.o: $(LIBDAISY_DIR)/Middlewares/Third_Party/FatFs/src/option/%.c | $(BUILD_DIR)
+	@echo "CC: $<"
+	@$(CC) -c $(CFLAGS) $< -o $@
+
+# Compile Nim to C/C++, then link with C objects
+$(BUILD_DIR)/$(TARGET).elf: $(NIM_SRC) $(C_OBJECTS) | $(BUILD_DIR)
 	@echo "Building Nim project: $(NIM_SRC)"
-	$(NIM) cpp $(NIMFLAGS) --nimMainPrefix:nim_ -o:$@ $<
+	$(NIM) cpp $(NIMFLAGS) --nimMainPrefix:nim_ --passL:"$(C_OBJECTS)" -o:$@ $<
 	@echo "Binary size:"
 	@$(SIZE) $@
 
