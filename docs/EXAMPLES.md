@@ -117,6 +117,15 @@ If you find a discrepancy:
 |---------|----------|-------------------|-------------------|---------------|--------|
 | **patch_simple.nim** | Patch Board | Daisy Patch | Initializes Patch hardware. May test controls (encoder, gate inputs) and OLED display. Audio passthrough with patch-specific routing. | Controls not working = check Patch Init board variant | ⬜ |
 
+### Peripherals Examples (v0.4.0)
+
+| Example | Category | Hardware Required | Expected Behavior | Common Issues | Status |
+|---------|----------|-------------------|-------------------|---------------|--------|
+| **peripherals_basic.nim** | RNG/Timer/LED | LED on D7 | Random LED blink patterns using hardware TRNG. Brightness varies randomly (0.0-1.0). Timer measures actual delay duration. Console prints timing stats every 5th loop. | LED stays on/off = update() not called; No randomness = RNG not ready | ⬜ |
+| **eurorack_basics.nim** | GateIn/Switch3 | Gates on D0,D1; Switch on D2,D3 | Gate inputs detect rising edges (triggers). Switch reads 3 positions: UP/CENTER/DOWN. Console shows trigger counts and current states. Status printed every 500ms. | No triggers = check gate voltage (>2V); Switch stuck = check wiring | ⬜ |
+| **led_control.nim** | RgbLed/Color | RGB LED on D10,D11,D12 | RGB LED cycles through: Primary colors (R,G,B) → Mixed colors (Purple,Cyan,Orange,White) → Red-to-Blue blend → Rainbow cycle (3 loops). ~20 seconds total sequence. | Wrong colors = check RGB pin order; Dim = check current limiting | ⬜ |
+| **timer_advanced.nim** | Timer | None (uses serial) | Coordinates 3 timers: TIM2 (free-running counter), TIM3 (periodic callback), TIM5 (faster callback). Runs for 20 seconds showing callback counts and tick measurements. | Callbacks = 0 = IRQ not enabled; Tick overflow = period too short | ⬜ |
+
 ### Special Examples
 
 | Example | Category | Hardware Required | Expected Behavior | Common Issues | Status |
@@ -132,6 +141,7 @@ If you find a discrepancy:
 These examples work with Daisy Seed alone:
 - ✅ `blink.nim` - Onboard LED only
 - ✅ `panicoverride.nim` - Onboard LED only
+- ✅ `timer_advanced.nim` - Serial output only (v0.4.0)
 
 ### Basic GPIO Setup
 
@@ -343,6 +353,80 @@ Connections:
   GND ───────────────  Voltmeter/scope ground
 
 Expected: 0-3.3V ramping output
+```
+
+### Peripherals Setup (v0.4.0)
+
+**Required for peripherals_basic.nim:** LED on D7
+
+```
+Example: peripherals_basic.nim
+
+Wiring:
+  D7 ────────┬──── LED Anode (+)
+             │
+          220Ω
+             │
+            GND
+
+Features tested:
+  - Hardware RNG (random numbers)
+  - Timer TIM2 (tick counting)
+  - LED software PWM (brightness control)
+```
+
+**Required for eurorack_basics.nim:** Gate inputs on D0, D1; 3-position switch on D2, D3
+
+```
+Example: eurorack_basics.nim
+
+Wiring (Gate inputs):
+  D0 ────────── Gate Input 1 (0-5V eurorack signal)
+  D1 ────────── Gate Input 2 (0-5V eurorack signal)
+
+Wiring (3-position switch):
+  D2 ────────── Switch position A
+  D3 ────────── Switch position B
+  
+Switch positions:
+  - CENTER: Both pins HIGH
+  - UP:     D2 LOW, D3 HIGH  
+  - DOWN:   D2 HIGH, D3 LOW
+
+Features tested:
+  - GateIn (trigger detection, state reading)
+  - Switch3 (3-position reading)
+```
+
+**Required for led_control.nim:** RGB LED on D10, D11, D12
+
+```
+Example: led_control.nim
+
+Wiring:
+  D10 ───── 220Ω ───── LED Red anode
+  D11 ───── 220Ω ───── LED Green anode
+  D12 ───── 220Ω ───── LED Blue anode
+  GND ───────────────── LED cathode (common cathode RGB LED)
+
+Features tested:
+  - RgbLed (3-channel control)
+  - Color utilities (blending, presets, operators)
+  - Rainbow effects
+```
+
+**Required for timer_advanced.nim:** None (serial output only)
+
+```
+Example: timer_advanced.nim
+
+No additional hardware needed - uses serial console output
+
+Features tested:
+  - Multiple hardware timers (TIM2, TIM3, TIM5)
+  - Free-running counters
+  - Periodic callbacks
+  - Tick measurement and conversion
 ```
 
 ### Daisy Patch Setup

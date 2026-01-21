@@ -5,6 +5,95 @@ All notable changes to libdaisy_nim will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-01-22
+
+### Added
+
+#### New Modules
+- **RNG Module** (`libdaisy_rng.nim`) - Hardware True Random Number Generator
+  - `randomGetValue()` - Get random 32-bit unsigned integer
+  - `randomGetFloat()` - Get random float (0.0 to 1.0)
+  - `randomIsReady()` - Check if hardware RNG is ready
+  
+- **Timer Module** (`libdaisy_timer.nim`) - Hardware timer peripherals (TIM2-TIM5)
+  - Free-running counter support (32-bit and 16-bit)
+  - Precise tick measurement
+  - Time conversion (ms/us)
+  - Period-based callbacks (interrupt support)
+  - Multiple timer coordination
+  
+- **Color Module** (`libdaisy_color.nim`) - RGB color utilities
+  - Preset colors (RED, GREEN, BLUE, WHITE, PURPLE, CYAN, GOLD, OFF)
+  - RGB creation and manipulation
+  - Color blending with `colorBlend()`
+  - Arithmetic operators (`*` for scaling, `+` for addition)
+  - 8-bit and float getters/setters
+  
+- **GateIn Module** (`libdaisy_gatein.nim`) - Gate/trigger input handler
+  - Rising edge detection with `trig()`
+  - Current state reading with `state()`
+  - Inversion support for BJT input circuits
+  - Eurorack-compatible gate input handling
+  
+- **LED Module** (`libdaisy_led.nim`) - Single LED control
+  - Software PWM brightness control
+  - Automatic gamma correction (cubic curve)
+  - Configurable update rate
+  - Inversion support for active-low LEDs
+  
+- **RgbLed Module** (`libdaisy_rgbled.nim`) - RGB LED control
+  - 3-channel LED control (R, G, B pins)
+  - Integration with Color module
+  - Per-channel and combined color setting
+  - Software PWM with gamma correction
+  
+- **Switch3 Module** (`libdaisy_switch3.nim`) - 3-position switch handler
+  - Three positions: CENTER, UP/LEFT, DOWN/RIGHT
+  - Simple 2-pin configuration
+  - Direct position reading
+
+#### New Examples
+- `peripherals_basic.nim` - RNG + Timer + LED demonstration
+  - Random LED blink patterns using hardware TRNG
+  - Timer-based delay measurements
+  - LED PWM brightness control
+  
+- `eurorack_basics.nim` - GateIn + Switch3 for eurorack-style I/O
+  - Gate trigger detection
+  - Gate state monitoring
+  - 3-position switch reading
+  - Typical eurorack input handling patterns
+  
+- `led_control.nim` - RGB LED + Color utilities
+  - Primary and mixed color display
+  - Color blending demonstration
+  - Rainbow cycling effect using HSV-like conversion
+  
+- `timer_advanced.nim` - Multiple timers with callbacks
+  - Free-running counter for measurements
+  - Periodic interrupt callbacks
+  - Multiple timer coordination
+  - Callback statistics tracking
+
+### Changed
+
+#### Module Improvements
+- **libdaisy_led.nim**, **libdaisy_rgbled.nim**, **libdaisy_gatein.nim**, **libdaisy_switch3.nim**:
+  - Added `import libdaisy` for Pin type support
+- **libdaisy_rgbled.nim**:
+  - Added `import libdaisy_color` for Color type integration
+- **libdaisy_macros.nim**:
+  - Added 7 new emit macros: `emitRNGIncludes`, `emitTimerIncludes`, `emitColorIncludes`, `emitGateInIncludes`, `emitLedIncludes`, `emitRgbLedIncludes`, `emitSwitch3Includes`
+
+### Documentation
+- Updated docs/API_REFERENCE.md with 7 new module sections
+- Updated docs/CHANGELOG.md with v0.4.0 entry
+- Organized all documentation into docs/ directory
+- Added docs/ROADMAP.md with complete v1.0.0 roadmap (13 milestones)
+- Added docs/HARDWARE_TESTING.md - Community hardware testing guide
+- Added docs/TESTING_CHECKLIST.md - Fillable hardware testing checklist
+- Redesigned docs/EXAMPLES.md as comprehensive hardware testing reference
+
 ## [0.3.0] - 2026-01-21
 
 ### Added

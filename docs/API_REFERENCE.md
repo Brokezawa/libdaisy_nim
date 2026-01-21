@@ -947,6 +947,339 @@ patch.gate_output    # Gate output
 
 ---
 
+## Random Number Generator Module (libdaisy_rng.nim) - NEW in v0.4.0
+
+**Import:**
+```nim
+import src/libdaisy_rng
+```
+
+Hardware True Random Number Generator (TRNG) peripheral wrapper.
+
+**Check Availability:**
+```nim
+proc randomIsReady*(): bool
+```
+Returns `true` if the hardware RNG is ready for use.
+
+**Get Random Value:**
+```nim
+proc randomGetValue*(): uint32
+```
+Returns a random 32-bit unsigned integer.
+
+**Get Random Float:**
+```nim
+proc randomGetFloat*(): cfloat
+```
+Returns a random float between 0.0 and 1.0.
+
+**Example:**
+```nim
+import src/libdaisy_rng
+
+if randomIsReady():
+  let randInt = randomGetValue()
+  let randFloat = randomGetFloat()
+```
+
+---
+
+## Hardware Timer Module (libdaisy_timer.nim) - NEW in v0.4.0
+
+**Import:**
+```nim
+import src/libdaisy_timer
+```
+
+Hardware timer peripherals (TIM2-TIM5) for precise timing and callbacks.
+
+**Configuration Types:**
+```nim
+type
+  TimerPeripheral = enum
+    TIM_PERIPH_TIM2  # 32-bit counter
+    TIM_PERIPH_TIM3  # 16-bit counter
+    TIM_PERIPH_TIM4  # 16-bit counter
+    TIM_PERIPH_TIM5  # 32-bit counter
+  
+  TimerCounterDir = enum
+    TIMER_DIR_UP     # Count up from 0 to period
+    TIMER_DIR_DOWN   # Count down from period to 0
+  
+  TimerResult = enum
+    TIMER_OK   # Operation successful
+    TIMER_ERR  # Operation failed
+  
+  TimerConfig = object
+    periph: TimerPeripheral
+    dir: TimerCounterDir
+    period: uint32
+    enable_irq: bool
+  
+  TimerCallback = proc(data: pointer) {.cdecl.}
+```
+
+**Initialization:**
+```nim
+var timer: TimerHandle
+var config: TimerConfig
+config.periph = TIM_PERIPH_TIM2
+config.dir = TIMER_DIR_UP
+config.period = 0xffffffff  # Max for 32-bit
+config.enable_irq = false
+
+discard timer.init(config)
+discard timer.start()
+```
+
+**Timing Methods:**
+```nim
+proc getTick*(this: var TimerHandle): uint32
+proc getMs*(this: var TimerHandle): uint32
+proc getUs*(this: var TimerHandle): uint32
+```
+
+**Callback Support:**
+```nim
+proc setCallback*(this: var TimerHandle, callback: TimerCallback, data: pointer)
+
+proc onTimer(data: pointer) {.cdecl.} =
+  echo "Timer elapsed!"
+
+config.enable_irq = true
+discard timer.init(config)
+timer.setCallback(onTimer, nil)
+```
+
+---
+
+## Color Utilities Module (libdaisy_color.nim) - NEW in v0.4.0
+
+**Import:**
+```nim
+import src/libdaisy_color
+```
+
+RGB color representation and manipulation utilities.
+
+**Preset Colors:**
+```nim
+type
+  PresetColor = enum
+    COLOR_RED, COLOR_GREEN, COLOR_BLUE,
+    COLOR_WHITE, COLOR_PURPLE, COLOR_CYAN,
+    COLOR_GOLD, COLOR_OFF
+```
+
+**Create Color:**
+```nim
+proc createColor*(): Color
+proc createColor*(r, g, b: cfloat): Color
+
+var red = createColor()
+red.init(COLOR_RED)
+
+var orange = createColor(1.0, 0.5, 0.0)
+```
+
+**Getters:**
+```nim
+proc red*(this: Color): cfloat      # 0.0 to 1.0
+proc green*(this: Color): cfloat
+proc blue*(this: Color): cfloat
+proc red8*(this: Color): uint8      # 0 to 255
+proc green8*(this: Color): uint8
+proc blue8*(this: Color): uint8
+```
+
+**Setters:**
+```nim
+proc setRed*(this: var Color, val: cfloat)
+proc setGreen*(this: var Color, val: cfloat)
+proc setBlue*(this: var Color, val: cfloat)
+```
+
+**Operators:**
+```nim
+proc `*`*(this: Color, scale: cfloat): Color  # Scale brightness
+proc `+`*(lhs, rhs: Color): Color             # Add/saturate
+
+var dimmed = myColor * 0.5
+var combined = red + blue
+```
+
+**Blending:**
+```nim
+proc colorBlend*(a, b: Color, amt: cfloat): Color
+
+var blended = colorBlend(red, blue, 0.5)  # 50/50 mix
+```
+
+---
+
+## Gate Input Module (libdaisy_gatein.nim) - NEW in v0.4.0
+
+**Import:**
+```nim
+import src/libdaisy_gatein
+```
+
+Gate/trigger input handler for eurorack-style gate signals.
+
+**Initialization:**
+```nim
+var gate: GateIn
+gate.init(D0(), true)  # Pin D0, inverted (typical for eurorack BJT circuits)
+```
+
+**Trigger Detection:**
+```nim
+proc trig*(this: var GateIn): bool
+```
+Returns `true` on rising edge detection. Call regularly to detect edges.
+
+**State Reading:**
+```nim
+proc state*(this: var GateIn): bool
+```
+Returns current gate state (high/low).
+
+**Example:**
+```nim
+while true:
+  if gate.trig():
+    echo "Gate triggered!"
+  
+  let isHigh = gate.state()
+  delay(1)
+```
+
+---
+
+## LED Control Module (libdaisy_led.nim) - NEW in v0.4.0
+
+**Import:**
+```nim
+import src/libdaisy_led
+```
+
+Single LED control with software PWM and gamma correction.
+
+**Initialization:**
+```nim
+var led: Led
+led.init(D10(), false, 1000.0)  # Pin D10, not inverted, 1kHz update rate
+```
+
+**Set Brightness:**
+```nim
+proc set*(this: var Led, brightness: cfloat)
+```
+Set brightness 0.0 to 1.0 (automatically gamma corrected).
+
+**Update:**
+```nim
+proc update*(this: var Led)
+```
+Must be called at the sample rate specified during init (e.g., 1kHz).
+
+**Example:**
+```nim
+led.set(0.5)  # 50% brightness
+
+while true:
+  led.update()  # Call at 1kHz
+  delay(1)
+```
+
+---
+
+## RGB LED Module (libdaisy_rgbled.nim) - NEW in v0.4.0
+
+**Import:**
+```nim
+import src/libdaisy_rgbled
+import src/libdaisy_color
+```
+
+3-channel RGB LED control with software PWM.
+
+**Initialization:**
+```nim
+var rgb: RgbLed
+rgb.init(D10(), D11(), D12(), false)  # R, G, B pins, not inverted
+```
+
+**Set by Channels:**
+```nim
+proc set*(this: var RgbLed, r, g, b: cfloat)
+
+rgb.set(1.0, 0.0, 0.0)  # Red
+```
+
+**Set by Color:**
+```nim
+proc setColor*(this: var RgbLed, c: Color)
+
+var purple = createColor(0.5, 0.0, 0.5)
+rgb.setColor(purple)
+```
+
+**Individual Channels:**
+```nim
+proc setRed*(this: var RgbLed, val: cfloat)
+proc setGreen*(this: var RgbLed, val: cfloat)
+proc setBlue*(this: var RgbLed, val: cfloat)
+```
+
+**Update:**
+```nim
+proc update*(this: var RgbLed)
+```
+Must be called regularly (e.g., 1kHz) for PWM.
+
+---
+
+## 3-Position Switch Module (libdaisy_switch3.nim) - NEW in v0.4.0
+
+**Import:**
+```nim
+import src/libdaisy_switch3
+```
+
+3-position switch/toggle handler.
+
+**Position Constants:**
+```nim
+const
+  SWITCH3_POS_CENTER = 0
+  SWITCH3_POS_UP = 1     # or POS_LEFT
+  SWITCH3_POS_DOWN = 2   # or POS_RIGHT
+```
+
+**Initialization:**
+```nim
+var sw: Switch3
+sw.init(D2(), D3())  # Two pins for 3 positions
+```
+
+**Read Position:**
+```nim
+proc read*(this: var Switch3): uint8
+
+let pos = sw.read()
+case pos
+of SWITCH3_POS_CENTER:
+  echo "Center"
+of SWITCH3_POS_UP:
+  echo "Up"
+of SWITCH3_POS_DOWN:
+  echo "Down"
+```
+
+---
+
 For more examples, see [EXAMPLES.md](EXAMPLES.md).
 
 For technical details, see [TECHNICAL_REPORT.md](TECHNICAL_REPORT.md).
