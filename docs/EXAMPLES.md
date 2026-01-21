@@ -57,6 +57,12 @@ If you find a discrepancy:
 | **sine_wave.nim** | Audio | Audio output | Generates clean 440Hz sine wave (A4 note) on both channels. Should be pure tone with no harmonics or clicks. | Clicking = buffer issue; Wrong pitch = sample rate mismatch | ⬜ |
 | **distortion_effect.nim** | Audio | Audio input/output | Clean passthrough by default. Warm overdrive distortion when activated. LED indicates effect on/off. | Harsh distortion = gain too high; No effect = bypass stuck | ⬜ |
 
+### Audio Codec Examples (v0.7.0)
+
+| Example | Category | Hardware Required | Expected Behavior | Common Issues | Status |
+|---------|----------|-------------------|-------------------|---------------|--------|
+| **codec_comparison.nim** | Audio Codec | None (onboard codec) | Detects Daisy Seed hardware version and initializes appropriate codec (AK4556/WM8731/PCM3060). LED blinks to indicate successful codec initialization. Console output shows detected version. | No LED blink = codec init failed; Check board version detection | ⬜ |
+
 ### ADC (Analog Input) Examples
 
 | Example | Category | Hardware Required | Expected Behavior | Common Issues | Status |
@@ -84,6 +90,12 @@ If you find a discrepancy:
 | **oled_spi.nim** | OLED/SPI | SSD1306 SPI OLED | Same as oled_basic but using SPI interface. Faster updates than I2C version. Text or graphics displayed clearly. | Blank = check CS/DC pins; Shifted = clock issue | ⬜ |
 | **oled_visualizer.nim** | OLED/Audio | SSD1306 + Audio input | Real-time audio level meter or waveform display. Bars or scope trace react to audio input. 10-30 FPS typical. | No movement = audio not connected; Slow = optimize drawing | ⬜ |
 
+### Display Examples (LCD) (v0.7.0)
+
+| Example | Category | Hardware Required | Expected Behavior | Common Issues | Status |
+|---------|----------|-------------------|-------------------|---------------|--------|
+| **lcd_menu.nim** | LCD/Encoder | HD44780 16x2 LCD + Encoder | Character LCD displays 3-parameter menu (Volume %, Frequency Hz, Waveform name). Encoder rotation changes values, button press cycles menu items. Display updates in real-time. | Garbled text = timing/wiring issue; No encoder response = check encoder pins | ⬜ |
+
 ### Communication Examples
 
 | Example | Category | Hardware Required | Expected Behavior | Common Issues | Status |
@@ -98,6 +110,7 @@ If you find a discrepancy:
 | Example | Category | Hardware Required | Expected Behavior | Common Issues | Status |
 |---------|----------|-------------------|-------------------|---------------|--------|
 | **encoder.nim** | Encoder | Rotary encoder on D0,D1,D2 | Turning encoder changes value (displayed on LED/console). Button press may reset. Detents should feel accurate (no skips). | Skips = debounce issue; Reversed = swap A/B pins | ⬜ |
+| **lcd_menu.nim** | LCD/Encoder | HD44780 LCD + Encoder | See "Display Examples (LCD)" section above for details | See LCD section | ⬜ |
 
 ### Storage Examples
 
@@ -159,6 +172,7 @@ If you find a discrepancy:
 
 These examples work with Daisy Seed alone (no external components needed):
 - ✅ `blink.nim` - Onboard LED only
+- ✅ `codec_comparison.nim` - Onboard codec detection (v0.7.0)
 - ✅ `panicoverride.nim` - Onboard LED only
 - ✅ `timer_advanced.nim` - Serial output only (v0.4.0)
 - ✅ `control_mapping.nim` - Serial output only (v0.5.0)
@@ -342,15 +356,47 @@ MIDI Input (5-pin DIN):
 **Required:** Rotary encoder with button
 
 ```
-Example: encoder.nim
+Example: encoder.nim, lcd_menu.nim
 
 Wiring:
-  Encoder A ──── D0
-  Encoder B ──── D1
-  Encoder SW ─── D2
+  Encoder A ──── D0 (or D7 for lcd_menu)
+  Encoder B ──── D1 (or D8 for lcd_menu)
+  Encoder SW ─── D2 (or D9 for lcd_menu)
   Encoder GND ── GND
   Common ──────── GND (if separate from switch ground)
 ```
+
+### LCD HD44780 Setup (v0.7.0)
+
+**Required:** HD44780 16x2 or 20x4 character LCD, 6 GPIO connections
+
+```
+Example: lcd_menu.nim
+
+Wiring (4-bit mode):
+  D1 (RS) ────── LCD RS (Register Select)
+  D2 (EN) ────── LCD E (Enable)
+  D3 (D4) ────── LCD D4 (Data bit 4)
+  D4 (D5) ────── LCD D5 (Data bit 5)
+  D5 (D6) ────── LCD D6 (Data bit 6)
+  D6 (D7) ────── LCD D7 (Data bit 7)
+  5V ───────────  LCD VCC
+  GND ──────────── LCD GND (also connect VSS)
+  Pot wiper ───── LCD V0 (contrast adjust)
+  5V ───────────  LCD LED+ (backlight, via resistor)
+  GND ──────────── LCD LED- (backlight)
+
+Contrast pot wiring:
+  Pin 1 ──── GND
+  Pin 2 ──── LCD V0 (pin 3)
+  Pin 3 ──── 5V
+
+Note: Most HD44780 displays require 5V logic. Use level shifters
+if connecting directly to 3.3V Daisy Seed pins, or use 5V-tolerant
+pins and configure LCD for 3.3V operation if supported.
+```
+
+For lcd_menu.nim with encoder, combine with encoder wiring above (using D7,D8,D9).
 
 ### SDRAM Setup
 

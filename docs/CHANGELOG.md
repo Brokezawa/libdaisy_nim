@@ -5,236 +5,110 @@ All notable changes to libdaisy_nim will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.6.0] - 2026-01-22
+## [0.7.0] - 2026-01-21
 
 ### Added
 
-#### File I/O & Storage Modules (6 new modules)
+#### Audio Codec Support
 
-- **WAV Parser Module** (`ui/wavparser.nim`) - WAV file format parsing and validation
-  - Parse WAV file headers from SD card
-  - Extract format information (sample rate, bit depth, channels)
-  - Validate file format and detect corrupt headers
-  - Error handling for unsupported formats
-  - Integration with SDMMC file system
+- **AK4556 Codec Module** (`src/dev/codec_ak4556.nim`) - Simple codec for Daisy Seed 1.0
+  - Reset pin initialization only
+  - No I2C configuration required
+  - 24-bit stereo ADC/DAC
+  - `init()`, `deInit()` methods
 
-- **WAV Player Module** (`ui/wavplayer.nim`) - Streaming WAV playback with looping support
-  - Stream WAV files from SD card to audio output
-  - Buffered playback with DMA-safe operations
-  - Playback control: play, pause, stop
-  - Looping support (single file or playlist)
-  - Seek functionality
-  - Multi-file playlist support
-  - Integration with audio callback system
+- **WM8731 Codec Module** (`src/dev/codec_wm8731.nim`) - I2C codec for Daisy Seed 1.1
+  - I2C control interface
+  - Configurable audio format (I2S, LJ, RJ, DSP)
+  - Configurable word length (16/20/24/32-bit)
+  - Volume control and mute support
+  - Default: MCU master, 24-bit, MSB LJ format
+  
+- **PCM3060 Codec Module** (`src/dev/codec_pcm3060.nim`) - High-performance codec for Daisy Seed 2.0
+  - I2C control interface
+  - Auto-configures to 24-bit LJ format
+  - Simplified initialization
 
-- **WAV Writer Module** (`ui/wavwriter.nim`) - Real-time WAV recording to SD card
-  - Record audio input to WAV files on SD card
-  - Real-time buffering for continuous recording
-  - Start/stop recording control
-  - File management (naming, overwrite protection)
-  - Configurable sample rate and bit depth
-  - Integration with audio callback system
+#### Display Support
 
-- **Wavetable Loader Module** (`ui/wavetable_loader.nim`) - Multi-bank wavetable loading from SD
-  - Load wavetable banks from SD card
-  - Multiple format support (raw binary, WAV)
-  - Single-cycle waveform extraction
-  - Wavetable bank management
-  - Memory-efficient loading strategies
-  - Synthesis integration helpers
+- **LCD HD44780 Module** (`src/dev/lcd_hd44780.nim`) - Character LCD driver
+  - 16x2 and 20x4 display support
+  - 4-bit data mode (6 GPIO pins)
+  - Configurable cursor visibility and blink
+  - Methods: `init()`, `print()`, `printInt()`, `setCursor()`, `clear()`
+  
+- **OLED Fonts Module** (`src/util/oled_fonts.nim`) - Bitmap fonts for OLED displays
+  - 8 font sizes: 4x6, 5x8, 6x8, 7x10, 11x18, 12x16, 16x26
+  - Monospaced fonts
+  - ASCII printable characters (32-126)
+  - Stored in flash (no RAM overhead)
+  - Compatible with SSD1306 OLED displays
 
-- **QSPI Flash Module** (`per/qspi.nim`) - QSPI flash memory operations
-  - Access external QSPI flash (8MB on Daisy Seed)
-  - Memory-mapped read mode
-  - Sector erase operations (4KB, 32KB, 64KB)
-  - Page write operations (256 bytes)
-  - Read operations (arbitrary size)
-  - Flash information queries
-  - Wavetable/sample storage alternative to SD card
+#### New Examples
 
-- **Switch Module** (`hid/switch.nim`) - Debounced button/switch with edge detection
-  - Debounced button/switch input handling
-  - Rising edge detection (`risingEdge()`)
-  - Falling edge detection (`fallingEdge()`)
-  - State tracking (`pressed()`, `released()`)
-  - Time-held measurement (`timeHeldMs()`)
-  - Configurable debounce timing
-  - Integration with controls system
-
-#### New Examples (6 examples)
-
-- **wav_player.nim** - WAV file playback demonstration
-  - Load and play WAV files from SD card
-  - Track navigation (next/previous)
-  - Simple transport controls
-  - OLED display showing file information
-  - Button-based control interface
-
-- **wav_recorder.nim** - Real-time audio recording
-  - Record audio input to WAV file on SD card
-  - Start/stop recording with button
-  - LED recording indicator
-  - File naming with timestamps
-  - OLED display showing recording status
-
-- **sampler.nim** - Multi-sample triggering and playback
-  - Load multiple samples from SD card
-  - Trigger samples with gates/buttons
-  - Pitch shifting support
-  - Volume control per sample
-  - Sample browser with encoder
-  - Complete sampler implementation
-
-- **looper.nim** - Audio loop recording with overdub
-  - Record loops in real-time
-  - Overdub functionality
-  - Loop playback with sync
-  - Save/load loops to SD card
-  - Multi-layer loop recording
-  - Live looper pedal implementation
-
-- **wavetable_synth.nim** - Wavetable synthesis
-  - Load wavetable banks from SD card
-  - Wavetable position CV control
-  - Multiple oscillators
-  - Classic wavetable synthesis
-  - Bank switching support
-
-- **qspi_storage.nim** - QSPI flash memory demonstration
-  - Store and retrieve samples in QSPI flash
-  - Faster access than SD card
-  - Persistent sample library
-  - Erase/write/read operations
-  - Performance comparison with SD card
+- `codec_comparison.nim` - Multi-codec initialization demo
+  - Auto-detects Daisy Seed hardware version (1.0/1.1/2.0)
+  - Initializes appropriate codec (AK4556/WM8731/PCM3060)
+  - LED blink indicates successful initialization
+  - Console output shows detected version
+  
+- `lcd_menu.nim` - Character LCD menu system
+  - 3-parameter menu (Volume %, Frequency Hz, Waveform)
+  - Rotary encoder navigation
+  - Real-time display updates
+  - Demonstrates LCD text formatting
 
 ### Changed
 
-#### Major Source Code Reorganization
-
-Reorganized all 41 source modules into subdirectories matching libDaisy's C++ structure for better organization and clarity:
-
-**New Directory Structure:**
-```
-src/
-├── per/          # Peripherals (9 modules)
-├── hid/          # Human Interface Devices (8 modules)
-├── dev/          # Device Drivers (2 modules)
-├── sys/          # System Modules (2 modules)
-├── util/         # Utility Data Structures (8 modules)
-└── ui/           # UI and File I/O (5 modules)
-```
-
-**Module Mapping:**
-- `libdaisy_adc.nim` → `per/adc.nim`
-- `libdaisy_dac.nim` → `per/dac.nim`
-- `libdaisy_i2c.nim` → `per/i2c.nim`
-- `libdaisy_spi.nim` → `per/spi.nim`
-- `libdaisy_serial.nim` → `per/uart.nim` *(renamed)*
-- `libdaisy_pwm.nim` → `per/pwm.nim`
-- `libdaisy_qspi.nim` → `per/qspi.nim`
-- `libdaisy_rng.nim` → `per/rng.nim`
-- `libdaisy_timer.nim` → `per/timer.nim`
-- `libdaisy_controls.nim` → `hid/controls.nim`
-- `libdaisy_gatein.nim` → `hid/gatein.nim`
-- `libdaisy_led.nim` → `hid/led.nim`
-- `libdaisy_midi.nim` → `hid/midi.nim`
-- `libdaisy_parameter.nim` → `hid/parameter.nim`
-- `libdaisy_rgbled.nim` → `hid/rgbled.nim`
-- `libdaisy_switch.nim` → `hid/switch.nim`
-- `libdaisy_switch3.nim` → `hid/switch3.nim`
-- `libdaisy_oled.nim` → `dev/oled.nim`
-- `libdaisy_sdram.nim` → `dev/sdram.nim`
-- `libdaisy_sdmmc.nim` → `sys/sdmmc.nim`
-- `libdaisy_usb.nim` → `sys/usb.nim`
-- `libdaisy_color.nim` → `util/color.nim`
-- `libdaisy_cpuload.nim` → `util/cpuload.nim`
-- `libdaisy_fifo.nim` → `util/fifo.nim`
-- `libdaisy_fixedstr.nim` → `util/fixedstr.nim`
-- `libdaisy_mapped_value.nim` → `util/mapped_value.nim`
-- `libdaisy_ringbuffer.nim` → `util/ringbuffer.nim`
-- `libdaisy_stack.nim` → `util/stack.nim`
-- `libdaisy_uniqueid.nim` → `util/uniqueid.nim`
-- `libdaisy_wavformat.nim` → `ui/wavformat.nim`
-- `libdaisy_wavparser.nim` → `ui/wavparser.nim`
-- `libdaisy_wavplayer.nim` → `ui/wavplayer.nim`
-- `libdaisy_wavwriter.nim` → `ui/wavwriter.nim`
-- `libdaisy_wavetable_loader.nim` → `ui/wavetable_loader.nim`
-
-**BREAKING CHANGE - Import Path Updates:**
-
-All import paths have been updated throughout the project:
-
-```nim
-# Old import style (v0.5.0 and earlier):
-import ../src/libdaisy_adc
-import ../src/libdaisy_i2c
-
-# New import style (v0.6.0+):
-import ../src/per/adc
-import ../src/per/i2c
-```
-
-**Name Conflict Resolution:**
-
-Some modules now use qualified imports to avoid variable name conflicts:
-
-```nim
-# SDMMC module imported with alias to avoid 'sdmmc' variable conflict
-import ../src/sys/sdmmc as sd
-var sd_card: sd.SDMMCHandler
-
-# USB module uses qualified import
-import ../src/sys/usb as usb_module
-var usb: usb_module.UsbHandle
-
-# DAC module uses qualified import
-import ../src/per/dac as dac_module
-var dac: dac_module.DacHandle
-
-# Patch module uses qualified import
-import ../src/patch as patch_module
-var patch: patch_module.DaisyPatch
-```
-
-**File History Preservation:**
-
-All file moves were performed using `git mv` to preserve complete file history and attribution.
-
-#### Module Improvements
-
-- **libdaisy_macros.nim**:
-  - Added `emitSwitchIncludes()` macro for Switch module
-  - Added `emitSdmmcTypedefs()` macro for SDMMC type definitions
-
-- **All examples (40 files)**:
-  - Updated import paths to new directory structure
-  - Applied qualified import patterns where needed
-  - All examples compile successfully after reorganization
+- **Module organization**: Audio codecs now in `src/dev/` subdirectory
+- **I2C dependency**: Codec modules now import `libdaisy_i2c` directly for type safety
+- **Macro system**: Added codec and LCD module support to `useDaisyModules()` macro
 
 ### Fixed
 
-#### Compilation Issues
-
-- **SDMMC Init Method**: Fixed importcpp pattern from `"#.Init(@)"` to `"#.Init(#)"` for proper argument passing
-- **FatFS Unicode Support**: Added ccsbcs.c to Makefile compilation for proper Unicode filename handling
-- **WavPlayer Template Result Types**: Resolved C++ template Result type ambiguity using emit block with static_cast workaround
-- **Import Keyword Conflict**: Used backticks for `\`import\`` to avoid Nim keyword conflict in SDMMC wrapper
-- **ADC Type Ambiguity**: Resolved type conflicts using qualified imports in examples
+- **I2CHandle type visibility**: Codec modules now properly import `libdaisy_i2c` for `I2CHandle` type
+- **Type imports**: Removed reliance on `useDaisyModules()` for cross-module types
 
 ### Technical
 
-- All 40 examples compile successfully (36 main examples + 4 test variants)
-- Compilation test pass rate: 100% (`./test_all.sh`)
-- Source reorganization completed with git history preserved
-- Module count increased from 35 to 41 modules
-- Example count increased from 30 to 36 main examples
+- Added to `libdaisy_macros.nim`:
+  - `codec_ak4556Typedefs` (empty - no types exported)
+  - `codec_wm8731Typedefs` (4 type aliases)
+  - `codec_pcm3060Typedefs` (1 type alias)
+  - `lcd_hd44780Typedefs` (1 type alias)
+  - `oled_fontsTypedefs` (1 type alias)
+- Module header support for all new modules in `getModuleHeaders()`
+- Comprehensive API documentation in docs/API_REFERENCE.md
+- Hardware setup guides in docs/EXAMPLES.md
 
-### Performance
+### Documentation
 
-- File I/O operations use buffered DMA transfers for efficiency
-- QSPI flash access provides faster sample loading than SD card
-- Zero heap allocation in all audio-rate code paths
-- Optimized wavetable loading for minimal startup time
+- Added agent rule for documenting examples in `docs/AGENTS.md`
+- Added codec and LCD examples to `docs/EXAMPLES.md` testing matrix
+- Added hardware setup sections for LCD and codec examples
+- Updated `docs/API_REFERENCE.md` with v0.7.0 modules
+- Updated example count: 42 examples (40 → 42)
+
+### Statistics
+
+- **Total modules**: 46 (41 → 46)
+  - Core: 1
+  - Peripherals: 11
+  - Controls: 1
+  - Audio: 4
+  - Data structures: 4
+  - Utilities: 9
+  - System: 4
+  - Board-specific: 1
+  - **Audio codecs: 3 (NEW)**
+  - **Displays: 2 (NEW)**
+  - Macros: 1
+  - USB/MIDI/Serial: 3
+  - SD card: 1
+  - Timer: 1
+  
+- **Examples**: 42
+- **Test suite**: All 42 examples pass compilation
 
 ## [0.5.0] - 2026-01-22
 

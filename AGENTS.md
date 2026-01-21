@@ -99,13 +99,11 @@ var adcValue: float32
 
 ```nim
 # 1. Standard library imports (if any)
-# 2. libdaisy imports (NEW: use subdirectory paths)
+# 2. libdaisy imports
 import libdaisy
 import libdaisy_macros
-import per/adc
-import per/i2c
-import sys/sdmmc
-import ui/wavplayer
+import libdaisy_adc
+import libdaisy_i2c
 
 # 3. Macro invocations (must come after imports)
 useDaisyNamespace()      # For main application files
@@ -169,16 +167,18 @@ proc importantFunction*(param: int): bool =
 
 ### Module Structure (Wrapper Files)
 
-**Standard pattern** for all `src/<category>/<module>.nim` files:
+**Standard pattern** for all `src/libdaisy_*.nim` files:
 
 ```nim
 ## ModuleName
 ## ==========
+## 
 ## Brief description of what this module wraps.
+## Include usage examples in module documentation.
 
 # 1. Imports
-import ../libdaisy
-import ../libdaisy_macros
+import libdaisy
+import libdaisy_macros
 
 # 2. Macro invocations
 useDaisyModules(feature_name)
@@ -187,11 +187,17 @@ useDaisyModules(feature_name)
 {.push header: "daisy_seed.h".}
 {.push importcpp.}
 
-# 4. Type definitions, constants, procedures
-type MyType* = object
+# 4. Type definitions
+type
+  MyType* = object
+
+# 5. Constants
 const MY_CONST* = 42
+
+# 6. Procedures
 proc myProc*() = discard
 
+# 7. Close pragma blocks
 {.pop.}
 {.pop.}
 ```
@@ -257,16 +263,17 @@ using namespace daisy;
 
 ### Step-by-Step Process
 
-1. **Study C++ interface** in `libDaisy/src/per/peripheral.h`
-2. **Create module** `src/per/peripheral.nim` (choose category: per/hid/dev/sys/util/ui)
+1. **Study C++ interface** in `libDaisy/src/per/peripheral.h` or `libDaisy/src/dev/device.h`
+2. **Create module** `src/libdaisy_peripheral.nim` or `src/dev/device_name.nim`
 3. **Add types** using `importcpp` pragma
 4. **Add procedures** with correct `importcpp` patterns
-5. **Add macro** to `src/libdaisy_macros.nim` for includes
+5. **Add macro support** to `src/libdaisy_macros.nim` for includes and typedefs
 6. **Create example** in `examples/peripheral_test.nim`
-7. **Test compilation** with `./test_all.sh`
-8. **Document** in module comments and `docs/API_REFERENCE.md`
+7. **Document example in EXAMPLES.md** (see "Contributing New Examples" below)
+8. **Test compilation** with `./test_all.sh`
+9. **Document API** in module comments and `API_REFERENCE.md`
 
-See docs/CONTRIBUTING.md lines 99-317 for detailed tutorial.
+See CONTRIBUTING.md lines 99-317 for detailed tutorial.
 
 ### Common Pitfalls
 
@@ -296,22 +303,15 @@ proc getValue*(): cint
 libdaisy_nim/
 ├── src/                    # Wrapper modules (DO edit these)
 │   ├── libdaisy.nim        # Core module
-│   ├── libdaisy_macros.nim # Compile-time macro system
-│   ├── patch.nim           # Patch hardware abstraction
-│   ├── panicoverride.nim   # Panic handler
-│   ├── per/                # Peripherals: adc, dac, i2c, spi, uart, pwm, qspi, rng, timer
-│   ├── hid/                # Human Interface: switch, controls, led, midi, parameter, etc.
-│   ├── dev/                # Devices: oled, sdram
-│   ├── sys/                # System: sdmmc, usb
-│   ├── util/               # Utilities: fifo, stack, ringbuffer, color, cpuload, etc.
-│   └── ui/                 # File I/O: wavparser, wavplayer, wavwriter, wavetable_loader
+│   ├── libdaisy_*.nim      # Peripheral modules
+│   └── libdaisy_macros.nim # Compile-time macro system
 ├── examples/               # Example programs (DO edit/add these)
 │   ├── Makefile            # Build system (edit TARGET line 9)
 │   ├── nim.cfg             # Nim compiler config (rarely edit)
 │   ├── test_all.sh         # Test script (DO NOT edit)
-│   └── *.nim               # 40 example programs
+│   └── *.nim               # Example programs
 ├── libDaisy/               # C++ library (DO NOT edit - submodule)
-└── docs/                   # Documentation (DO edit when adding features)
+└── Documentation           # .md files (DO edit when adding features)
 ```
 
 ## Important Configuration Files
@@ -337,8 +337,7 @@ No `.cursorrules`, `.cursor/rules/`, or `.github/copilot-instructions.md` files 
 ```nim
 ## Example description
 import ../src/libdaisy
-import ../src/per/adc        # NEW: subdirectory imports
-import ../src/ui/wavplayer   # NEW: subdirectory imports
+import ../src/libdaisy_peripheral  # If using specific peripheral
 
 useDaisyNamespace()
 
@@ -356,7 +355,7 @@ when isMainModule:
 
 ## References for Agents
 
-- **docs/CONTRIBUTING.md** (709 lines): Comprehensive wrapper development guide
-- **docs/API_REFERENCE.md**: Complete API documentation for all 41 modules
-- **docs/TECHNICAL_REPORT.md**: Architecture and implementation details
-- **examples/**: 40 working examples showing all features
+- **CONTRIBUTING.md** (709 lines): Comprehensive wrapper development guide
+- **API_REFERENCE.md**: Complete API documentation for all modules
+- **TECHNICAL_REPORT.md**: Architecture and implementation details
+- **examples/**: 27 working examples showing all features

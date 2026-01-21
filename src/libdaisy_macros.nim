@@ -68,6 +68,7 @@ const oledTypedefs* = [
 
 # I2C module typedefs
 const i2cTypedefs* = [
+  "I2CHandle I2CHandle",
   "I2CHandle::Config I2CConfig",
   "I2CHandle::Config::Speed I2CSpeed",
   "I2CHandle::Config::Peripheral I2CPeripheral",
@@ -112,9 +113,32 @@ const sdmmcTypedefs* = [
   "FatFSInterface FatFSInterface"
 ]
 
+# Codec module typedefs
+const codec_ak4556Typedefs* : seq[string] = @[]
+const codec_wm8731Typedefs* = [
+  "Wm8731::Result Wm8731Result",
+  "Wm8731::Config Wm8731Config",
+  "Wm8731::Config::Format Wm8731Format",
+  "Wm8731::Config::WordLength Wm8731WordLength"
+]
+const codec_pcm3060Typedefs* = [
+  "Pcm3060::Result Pcm3060Result"
+]
+
+# LCD module typedefs
+const lcd_hd44780Typedefs* = [
+  "LcdHD44780::Config LcdHD44780Config"
+]
+
+# OLED fonts module typedefs
+const oled_fontsTypedefs* = [
+  "FontDef FontDef"
+]
+
 # All typedefs combined (for full inclusion)
 const daisyTypedefsList* = @coreTypedefs & @controlsTypedefs & @adcTypedefs & @pwmTypedefs &
-                           @oledTypedefs & @i2cTypedefs & @spiTypedefs & @sdramTypedefs & @usbTypedefs & @sdmmcTypedefs
+                           @oledTypedefs & @i2cTypedefs & @spiTypedefs & @sdramTypedefs & @usbTypedefs & @sdmmcTypedefs &
+                           @codec_wm8731Typedefs & @codec_pcm3060Typedefs & @lcd_hd44780Typedefs & @oled_fontsTypedefs
 
 # ============================================================================
 # C++ Header Includes
@@ -155,6 +179,21 @@ proc getModuleHeaders*(moduleName: string): string =
 """
   of "usb":
     """#include "hid/usb.h"
+"""
+  of "codec_ak4556":
+    """#include "dev/codec_ak4556.h"
+"""
+  of "codec_wm8731":
+    """#include "dev/codec_wm8731.h"
+"""
+  of "codec_pcm3060":
+    """#include "dev/codec_pcm3060.h"
+"""
+  of "lcd_hd44780":
+    """#include "dev/lcd_hd44780.h"
+"""
+  of "oled_fonts":
+    """#include "util/oled_fonts.h"
 """
   else: ""
 
@@ -318,6 +357,11 @@ macro useDaisyModules*(modules: varargs[untyped]): untyped =
   var includeSerial = false
   var includeSdram = false
   var includeUsb = false
+  var includeCodecAk4556 = false
+  var includeCodecWm8731 = false
+  var includeCodecPcm3060 = false
+  var includeLcdHd44780 = false
+  var includeOledFonts = false
   
   # Parse module arguments
   for module in modules:
@@ -332,10 +376,16 @@ macro useDaisyModules*(modules: varargs[untyped]): untyped =
     of "serial": includeSerial = true
     of "sdram": includeSdram = true
     of "usb": includeUsb = true
+    of "codec_ak4556": includeCodecAk4556 = true
+    of "codec_wm8731": includeCodecWm8731 = true
+    of "codec_pcm3060": includeCodecPcm3060 = true
+    of "lcd_hd44780": includeLcdHd44780 = true
+    of "oled_fonts": includeOledFonts = true
     of "core": discard  # Always included
     else:
       error("Unknown module: " & moduleName & 
-            ". Available: core, controls, adc, pwm, oled, i2c, spi, serial, sdram, usb")
+            ". Available: core, controls, adc, pwm, oled, i2c, spi, serial, sdram, usb, " &
+            "codec_ak4556, codec_wm8731, codec_pcm3060, lcd_hd44780, oled_fonts")
   
   # Build headers string
   var headersStr = "/*INCLUDESECTION*/\n"
@@ -349,6 +399,11 @@ macro useDaisyModules*(modules: varargs[untyped]): untyped =
   if includeSerial: headersStr.add(getModuleHeaders("serial"))
   if includeSdram: headersStr.add(getModuleHeaders("sdram"))
   if includeUsb: headersStr.add(getModuleHeaders("usb"))
+  if includeCodecAk4556: headersStr.add(getModuleHeaders("codec_ak4556"))
+  if includeCodecWm8731: headersStr.add(getModuleHeaders("codec_wm8731"))
+  if includeCodecPcm3060: headersStr.add(getModuleHeaders("codec_pcm3060"))
+  if includeLcdHd44780: headersStr.add(getModuleHeaders("lcd_hd44780"))
+  if includeOledFonts: headersStr.add(getModuleHeaders("oled_fonts"))
   
   # 1. Emit header includes
   let includesEmit = newNimNode(nnkPragma)
@@ -382,6 +437,10 @@ macro useDaisyModules*(modules: varargs[untyped]): untyped =
   if includeSpi: typedefsStr.add(buildTypedefsString(spiTypedefs))
   if includeSdram: typedefsStr.add(buildTypedefsString(sdramTypedefs))
   if includeUsb: typedefsStr.add(buildTypedefsString(usbTypedefs))
+  if includeCodecWm8731: typedefsStr.add(buildTypedefsString(codec_wm8731Typedefs))
+  if includeCodecPcm3060: typedefsStr.add(buildTypedefsString(codec_pcm3060Typedefs))
+  if includeLcdHd44780: typedefsStr.add(buildTypedefsString(lcd_hd44780Typedefs))
+  if includeOledFonts: typedefsStr.add(buildTypedefsString(oled_fontsTypedefs))
   
   let typedefsEmit = newNimNode(nnkPragma)
   typedefsEmit.add(

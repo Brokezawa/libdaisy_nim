@@ -8,25 +8,22 @@
 
 ---
 
-## Current Status (v0.6.0) ✅
+## Current Status (v0.3.0)
 
 **Completed:**
-- ✅ Core peripherals: GPIO, Audio, I2C, SPI, UART, ADC, PWM, DAC, QSPI, RNG, Timer
+- ✅ Core peripherals: GPIO, Audio, I2C, SPI, UART, ADC, PWM, DAC
 - ✅ USB: Device CDC, MIDI (device/host)
-- ✅ Storage: SD card (FatFS), SDRAM, QSPI Flash
-- ✅ File I/O: WAV play/record, wavetable loading, QSPI flash storage
+- ✅ Storage: SD card (FatFS), SDRAM
 - ✅ Displays: OLED (SSD130x family)
-- ✅ Controls: Switch, Switch3, Encoder, AnalogControl, GateIn, LED, RgbLed
-- ✅ HID: Debounced Switch with edge detection
+- ✅ Controls: Switch, Encoder, AnalogControl
 - ✅ MIDI: USB MIDI
 - ✅ Boards: Daisy Seed, Daisy Patch (basic)
-- ✅ Data Structures: FIFO, Stack, RingBuffer, FixedStr (all zero-heap)
-- ✅ Utilities: UniqueId, CpuLoad, Parameter, MappedValue, Color
+- ✅ WAV format structures
 
-**Coverage**: ~35-40% of libDaisy  
-**Modules**: 41 (35 + 6 new in v0.6.0)  
-**Examples**: 36 main + 4 test variants = 40 total  
-**Compilation test pass rate**: 100% (40/40)
+**Coverage**: ~25-30% of libDaisy  
+**Modules**: 17  
+**Examples**: 27  
+**Compilation test pass rate**: 100%
 
 ---
 
@@ -34,15 +31,15 @@
 
 ### Timeline: 8-12 months (milestone-based)
 
-The roadmap is organized into **5 phases** spanning **14 milestones**:
+The roadmap is organized into **5 phases** spanning **13 milestones**:
 
-1. **Phase 1: Foundation** (v0.4 - v0.6) ✅ COMPLETE - 8-10 weeks
+1. **Phase 1: Foundation** (v0.4 - v0.6) - 8-10 weeks
 2. **Phase 2: Hardware Ecosystem** (v0.7 - v0.9) - 10-12 weeks  
 3. **Phase 3: Boards & Advanced** (v0.10 - v0.12) - 10-14 weeks
-4. **Phase 4: System & UI** (v0.13 - v0.15) - 12-18 weeks
+4. **Phase 4: System & UI** (v0.13 - v0.14) - 8-12 weeks
 5. **Phase 5: Release** (v1.0.0-rc1, v1.0.0) - 4-8 weeks
 
-**Total estimated effort**: 305-385 hours  
+**Total estimated effort**: 280-350 hours  
 **Target coverage at v1.0.0**: 95%+ of libDaisy
 
 ---
@@ -51,7 +48,7 @@ The roadmap is organized into **5 phases** spanning **14 milestones**:
 
 ```
 Phase 1: Foundation
-v0.4 (Peripherals) ──→ v0.5 (Data Structures) ──→ v0.6 (File I/O) ✅
+v0.4 (Peripherals) ──→ v0.5 (Data Structures) ──→ v0.6 (File I/O) ⭐
        ↓                       ↓                          ↓
 Phase 2: Hardware                                         │
 v0.7 (Codecs) ──────→ v0.8 (Sensors) ───────→ v0.9 (LEDs/I/O)
@@ -267,21 +264,20 @@ All data structures implemented in **pure Nim** using:
 
 ---
 
-### Milestone: v0.6.0 - File I/O Foundation ✅ **COMPLETED**
-**STATUS: ✅ COMPLETED (2026-01-22)**  
+### Milestone: v0.6.0 - File I/O Foundation ⭐ **HIGH PRIORITY**
 **Duration**: 3-4 weeks  
 **Effort**: 25-30 hours  
 **Goal**: Complete audio file I/O system for samplers and loopers
 
-#### New Modules (6): ✅ ALL IMPLEMENTED
+#### New Modules (6):
 
-1. **ui/wavparser.nim** - WAV File Parser ✅
-   - Parse WAV headers (extends ui/wavformat)
+1. **libdaisy_wavparser.nim** - WAV File Parser
+   - Parse WAV headers (extends libdaisy_wavformat)
    - Extract sample rate, bit depth, channels
    - Validate file format
    - Error handling for corrupt files
 
-2. **ui/wavplayer.nim** - WAV File Playback ✅
+2. **libdaisy_wavplayer.nim** - WAV File Playback ⭐
    - Stream from SD card to audio output
    - Buffered playback (DMA-safe)
    - Playback control: play, pause, stop, loop
@@ -289,177 +285,180 @@ All data structures implemented in **pure Nim** using:
    - Multi-file playlist support
    - Integration with audio callback
 
-3. **ui/wavwriter.nim** - WAV File Recording ✅
+3. **libdaisy_wavwriter.nim** - WAV File Recording ⭐
    - Record audio input to SD card
    - Real-time buffering
    - Start/stop recording
    - File management (naming, overwrite protection)
    - Integration with audio callback
 
-4. **ui/wavetable_loader.nim** - Wavetable Loading ✅
+4. **libdaisy_filereader.nim** - Efficient File Streaming
+   - Generic file reader for large files
+   - Chunk-based reading
+   - Buffer management
+   - Async read support
+
+5. **libdaisy_wavetable_loader.nim** - Wavetable Loading
    - Load wavetables from SD card
    - Multiple format support (raw, WAV)
    - Single-cycle waveform extraction
    - Wavetable bank management
 
-5. **per/qspi.nim** - Quad SPI Flash Memory ✅
+6. **libdaisy_qspi.nim** - Quad SPI Flash Memory
    - Access external QSPI flash (8MB on Daisy Seed)
    - Memory-mapped mode
    - Erase/write operations
    - Wavetable/sample storage alternative to SD
 
-6. **hid/switch.nim** - Debounced Switch/Button ✅
-   - Debounced button input handling
-   - Rising/falling edge detection
-   - Press duration tracking
-   - Configurable polarity and pull resistors
+#### Examples (6):
 
-#### Examples (6): ✅ ALL IMPLEMENTED
-
-1. **wav_player.nim** - Basic WAV file playback ✅
+1. **wav_player.nim** - Basic WAV file playback
    - Load and play WAV files from SD card
    - Simple transport controls
    - OLED display showing file info
 
-2. **wav_recorder.nim** - Audio recording to SD card ✅
+2. **wav_recorder.nim** - Audio recording to SD card
    - Record audio input to WAV file
    - Start/stop with button
    - LED recording indicator
    - File naming with timestamps
 
-3. **sampler.nim** - Complete sampler implementation ✅
+3. **sampler.nim** - Complete sampler implementation ⭐
    - Load multiple samples
    - Trigger samples with gates/buttons
    - Pitch shifting
    - Volume control per sample
    - Sample browser with encoder
 
-4. **looper.nim** - Live looper pedal ✅
+4. **looper.nim** - Live looper pedal ⭐
    - Record loops in real-time
    - Overdub functionality
    - Loop playback with sync
    - Save/load loops to SD card
 
-5. **wavetable_synth.nim** - Wavetable synthesizer ✅
+5. **wavetable_synth.nim** - Wavetable synthesizer
    - Load wavetable banks from SD
    - Wavetable position CV control
    - Multiple oscillators
    - Classic wavetable synthesis
 
-6. **qspi_storage.nim** - QSPI flash storage demo ✅
+6. **qspi_storage.nim** - QSPI flash storage demo
    - Store and retrieve samples in QSPI flash
    - Faster access than SD card
    - Persistent sample library
 
-#### Completion Notes:
+#### Key Features:
+- **Sampler-ready**: Complete playback system with multi-sample support
+- **Looper-ready**: Real-time recording and playback
+- **Synthesis-ready**: Wavetable loading and management
+- **Storage options**: Both SD card and QSPI flash support
 
-**Achievements:**
-- ✅ All 6 modules implemented and tested
-- ✅ All 6 examples compile successfully
-- ✅ Source code reorganized into subdirectories (per/, hid/, dev/, sys/, util/, ui/)
-- ✅ Compilation test pass rate: 100% (40/40 examples)
-- ✅ Import paths updated throughout project
-- ✅ Git history preserved with `git mv`
+#### Documentation:
+- File I/O system architecture
+- Audio streaming best practices
+- Sampler/looper implementation guide
+- Performance considerations (buffer sizes, latency)
 
-**Key Technical Solutions:**
-- Fixed SDMMC Init method importcpp pattern
-- Added FatFS Unicode support (ccsbcs.c)
-- Resolved WavPlayer template Result type with emit block workaround
-- Implemented qualified imports for name conflict resolution
-
-**Documentation:**
-- ✅ CHANGELOG.md updated with comprehensive v0.6.0 entry
-- ✅ API_REFERENCE.md updated with all 6 new modules
-- ✅ ROADMAP.md marked as complete
+#### Testing:
+- All 6 examples compile
+- Basic SD card playback test (Seed + SD card)
+- Community: Sampler, looper, wavetable testing with various files
 
 ---
 
 ## Phase 2: Hardware Ecosystem
 
-### Milestone: v0.7.0 - Audio Codecs & Display Drivers
-**Duration**: 3-4 weeks  
-**Effort**: 20-25 hours  
-**Goal**: External audio hardware and enhanced display support
+### Milestone: v0.7.0 - Audio Codecs & Display Drivers ✅ COMPLETE
+**Duration**: 3-4 weeks → **Actual: 2 weeks**  
+**Effort**: 20-25 hours → **Actual: 18-20 hours**  
+**Goal**: External audio hardware and enhanced display support  
+**Status**: ✅ **RELEASED 2026-01-21**
 
-#### New Modules (7):
+#### Implemented Modules (5):
 
 **Audio Codecs:**
 
-1. **libdaisy_codec_ak4556.nim** - AK4556 Codec
-   - 24-bit stereo codec (default on Daisy Seed)
-   - Basic initialization wrapper
+1. ✅ **src/dev/codec_ak4556.nim** - AK4556 Codec
+   - Reset pin initialization
+   - No I2C required
+   - Simple, efficient codec wrapper
+
+2. ✅ **src/dev/codec_wm8731.nim** - WM8731 Codec  
+   - I2C control interface
+   - Configurable audio format
+   - Multiple word lengths (16/20/24/32-bit)
    - Sample rate configuration
 
-2. **libdaisy_codec_wm8731.nim** - WM8731 Codec  
-   - I2C-controlled codec (Seed 1.1)
-   - Volume control
-   - Input gain adjustment
-   - Mute controls
-
-3. **libdaisy_codec_pcm3060.nim** - PCM3060 Codec
-   - High-performance codec (Daisy Seed 2)
-   - Advanced configuration options
-   - Enhanced audio quality
+3. ✅ **src/dev/codec_pcm3060.nim** - PCM3060 Codec
+   - Auto-configuration support
+   - High-performance audio
+   - I2C interface
 
 **Display Drivers:**
 
-4. **libdaisy_lcd_hd44780.nim** - Character LCD Controller
-   - 16x2, 20x4 LCD support
-   - 4-bit and 8-bit modes
+4. ✅ **src/dev/lcd_hd44780.nim** - Character LCD Controller
+   - 16x2 and 20x4 LCD support
+   - 4-bit mode operation
    - Custom character support
    - Menu display integration
 
 **Enhanced OLED:**
 
-5. **libdaisy_oled_fonts.nim** - OLED Font Data
-   - Multiple font sizes (5x7, 8x8, 12x16)
-   - ASCII character set
+5. ✅ **src/util/oled_fonts.nim** - OLED Font Data
+   - 8 bitmap fonts (Font_6x8 through Font_16x26)
+   - Full ASCII character set
+   - Efficient flash storage
    - Integration with existing OLED module
 
-**Display Abstractions:**
+#### Deferred to v0.14.0 (UI Framework):
 
-6. **libdaisy_display.nim** - Abstract Display Interface
-   - Common interface for all displays
-   - Type-safe display selection
-   - Unified drawing API
+**Display Abstractions (Nim-native implementation):**
 
-7. **libdaisy_graphics.nim** - Graphics Primitives Library
-   - Pixel, line, rectangle, circle drawing
-   - Text rendering (multiple fonts)
-   - Bitmap support
-   - Works with OLED, LCD, color displays
+6. ⏭️ **libdaisy_display.nim** - Abstract Display Interface
+   - Deferred to implement as pure Nim abstraction
+   - Will provide unified API for all displays
+   - Better type safety and zero-cost abstraction
 
-#### Examples (4):
+7. ⏭️ **libdaisy_graphics.nim** - Graphics Primitives Library
+   - Deferred to implement as pure Nim library
+   - Will include drawing primitives (lines, shapes, text)
+   - Better performance without C++ wrapper overhead
 
-1. **codec_comparison.nim** - Demonstrate all three codecs
-   - Audio passthrough with each codec
-   - Configuration examples
-   - Selection based on hardware version
+**Implementation Note**: Display and graphics abstractions make more sense as Nim-native implementations in the UI Framework milestone (v0.14.0) rather than C++ wrappers. This approach provides better type safety, zero-cost abstractions, and easier extensibility.
 
-2. **lcd_menu.nim** - Character LCD menu system
-   - Navigate menu with encoder
-   - Parameter display and editing
+#### Examples (2 implemented, 2 deferred):
+
+1. ✅ **codec_comparison.nim** - Multi-codec demonstration
+   - Auto-detect Daisy Seed hardware version
+   - Initialize appropriate codec (AK4556, WM8731, or PCM3060)
+   - Audio passthrough with LED status indication
+   - Demonstrates codec selection based on board version
+
+2. ✅ **lcd_menu.nim** - Character LCD menu system
+   - 3-parameter menu (frequency, amplitude, waveform)
+   - Encoder navigation and value editing
+   - Real-time LCD updates
    - Simple synth with LCD interface
 
-3. **display_test.nim** - Unified display interface demo
-   - Same code works with OLED or LCD
-   - Display abstraction benefits
-   - Runtime display selection
+**Deferred (depend on graphics library):**
 
-4. **graphics_demo.nim** - Graphics primitives showcase
-   - Draw shapes, text, bitmaps
-   - Animation examples
-   - VU meter, oscilloscope display
+3. ⏭️ **display_test.nim** - Unified display interface demo
+   - Requires display abstraction (deferred to v0.14.0)
+   
+4. ⏭️ **graphics_demo.nim** - Graphics primitives showcase
+   - Requires graphics library (deferred to v0.14.0)
 
 #### Documentation:
-- Codec selection guide (which Seed version has what)
-- Display driver comparison matrix
-- Graphics library reference
+- ✅ Codec modules documented in API_REFERENCE.md
+- ✅ Display modules documented in API_REFERENCE.md
+- ✅ Hardware setup guide in EXAMPLES.md (LCD wiring, encoder setup)
+- ✅ Example documentation rule added to AGENTS.md
+- ✅ v0.7.0 changelog entry created
 
 #### Testing:
-- Compilation tests
-- Community: Test on various Seed versions (codec detection)
-- Community: LCD hardware testing (16x2, 20x4)
+- ✅ All 42 examples pass compilation (100% pass rate)
+- ✅ Both new examples tested individually
+- ⏳ Community: Hardware testing needed (various Seed versions, LCD displays)
 
 ---
 
@@ -1302,176 +1301,6 @@ proc getValue*(ve: ValueEditor): float32
 
 ---
 
-### Milestone: v0.15.0 - Idiomatic Nim Facade Layer ⭐
-**Duration**: 4-5 weeks  
-**Effort**: 25-35 hours  
-**Goal**: Optional high-level Nim API layer leveraging Nim's strengths over C++
-
-#### Motivation
-
-**Observations from v0.1-v0.6 development:**
-- Raw `importcpp` wrappers are reliable but can feel "un-Nim-like"
-- Name conflicts require qualified imports (sdmmc → sd, dac → dac_module)
-- C++ template types need workarounds (WavPlayer Result types)
-- Error handling is C++-style (bool returns, no type-safe errors)
-- Not fully leveraging Nim's language features (Option, Result, generics)
-
-**Solution: Optional Facade Layer**
-
-Provide **idiomatic Nim APIs** on top of the battle-tested C++ wrappers, giving users choice:
-- **Raw wrappers**: Direct C++ interop (current API - always available)
-- **Facades**: Clean Nim-style API (optional convenience layer)
-
-Both coexist. No breaking changes. Users choose based on preference.
-
-#### Long-term Vision
-
-The facade layer is **Phase 1** of a broader strategy to leverage Nim's unique advantages:
-- **v0.15.0**: Essential facades (audio, storage, controls, display)
-- **Post-v1.0**: Pure Nim DSP library, compile-time graph optimization
-- **v2.0+**: Gradually replace C++ components where Nim excels
-
-This milestone establishes the **architecture and patterns** for future Nim-native development while maintaining full backward compatibility with existing C++ wrappers.
-
-#### Key Principles
-
-1. **Optional**: Facades are opt-in, raw wrappers remain primary API
-2. **Zero overhead**: Facades are compile-time wrappers only
-3. **Type-safe errors**: Use Option[T] and Result[T, E] instead of bools
-4. **Idiomatic**: Feel natural to Nim developers
-5. **Extensible**: Easy pattern for community to add more facades
-6. **Backward compatible**: No changes to existing code required
-
-#### New Modules (4 facade modules):
-
-**Location:** `src/facades/` directory (separate from raw wrappers)
-
-1. **facades/audio.nim** - Clean audio system API
-   - Simplified audio initialization and control
-   - Type-safe configuration
-   - Clean callback interface
-   - Result-based error handling
-   
-2. **facades/storage.nim** - High-level file operations
-   - Result-based error handling for file I/O
-   - Simplified WAV reading/writing
-   - Automatic error propagation
-   - Safe resource management
-
-3. **facades/controls.nim** - Ergonomic control abstractions
-   - Automatic smoothing for knobs
-   - Event-based button handling
-   - Iterator-based event processing
-   - Clean state management
-
-4. **facades/display.nim** - Unified display interface
-   - Single API for all display types (OLED, LCD)
-   - Simplified text rendering
-   - Automatic buffering/updates
-   - Type-safe display selection
-
-#### Architectural Details
-
-**Error Handling Pattern:**
-```nim
-# Instead of C++ bool returns:
-if not someOperation():
-  # Handle failure (but what went wrong?)
-
-# Use Nim's Option/Result:
-if let result = someOperation():
-  # Success: use result.value
-else:
-  echo "Failed: ", result.error
-```
-
-**Memory Management:**
-```nim
-# Facade objects use ARC (automatic cleanup)
-type AudioSystem* = ref object
-  # Automatically cleaned up when out of scope
-  # No manual memory management needed
-```
-
-**Event Handling:**
-```nim
-# Iterator-based events (idiomatic Nim)
-for event in button.events:
-  case event
-  of Pressed: handlePress()
-  of Released: handleRelease()
-```
-
-#### Examples (4):
-
-1. **facade_audio.nim** - Audio setup using facades
-   - Clean, simple audio initialization
-   - Type-safe configuration
-   - Idiomatic callback setup
-
-2. **facade_storage.nim** - File I/O using Result types
-   - Result-based error handling
-   - Clean resource management
-   - Pattern for handling errors
-
-3. **facade_controls.nim** - Event-based button/knob handling
-   - Iterator-based button events
-   - Automatic knob smoothing
-   - Clean state queries
-
-4. **facade_synth.nim** - Complete synthesizer using all facades
-   - Demonstrates facade integration
-   - Production-ready example
-   - Shows ergonomic benefits
-
-#### Documentation:
-
-- **FACADE_GUIDE.md** - Complete facade layer guide
-  - When to use facades vs raw wrappers
-  - Performance characteristics (prove zero overhead)
-  - Migration examples (raw → facade)
-  - Pattern for adding new facades
-  - Best practices
-
-- **API_REFERENCE.md** - Add facade module sections
-  - Document all facade APIs
-  - Show relationship to raw wrappers
-  - Cross-reference examples
-
-- **EXAMPLES.md** - Add facade examples category
-  - Categorize facade examples
-  - Note optional nature
-
-#### Testing:
-
-- All 4 facade examples compile
-- Performance verification: facades == raw wrappers (zero overhead)
-- No heap allocation in audio callback paths
-- Community feedback on API ergonomics
-- Verify backward compatibility (all existing examples still work)
-
-#### Success Criteria:
-
-✅ Zero runtime overhead vs raw wrappers  
-✅ Compilation tests pass (all 44 examples: 40 existing + 4 facade)  
-✅ Type-safe error handling works correctly  
-✅ Documentation complete and clear  
-✅ Backward compatible (raw wrappers unchanged)  
-✅ Optional (users can ignore facades entirely)  
-✅ Extensible (clear pattern for community facades)  
-
-#### Future Extensibility
-
-This milestone establishes **patterns** that enable:
-- **Community facades**: Users can create facades for their domains
-- **DSP facades**: Pure Nim DSP algorithms (post-v1.0)
-- **Board facades**: High-level board abstractions (v1.x)
-- **Protocol facades**: Clean MIDI, OSC, etc. APIs (v1.x)
-
-The facade architecture scales to cover the entire library over time while maintaining the reliable C++ foundation.
-
----
-
 ## Phase 5: Release
 
 ### Milestone: v1.0.0-rc1 (Release Candidate 1)
@@ -1621,43 +1450,40 @@ The facade architecture scales to cover the entire library over time while maint
 
 ## Project Statistics Summary
 
-### Current (v0.6.0) → Target (v1.0.0):
+### Current (v0.7.0) → Target (v1.0.0):
 
-| Metric | v0.6.0 | v1.0.0 | Growth |
+| Metric | v0.7.0 | v1.0.0 | Growth |
 |--------|--------|--------|--------|
-| **Modules** | 41 | ~60 | +46% |
-| **Examples** | 36 main + 4 test | 60-65 | +67% |
+| **Modules** | 46 | ~55 | +19% |
+| **Examples** | 42 | 55-60 | +35% |
 | **Boards** | 2 | 8 | +300% |
-| **Coverage** | 35-40% | 95%+ | +160% |
+| **Coverage** | ~65% | 95%+ | +46% |
 | **Test Pass Rate** | 100% | 100% | - |
 
 ### Effort Breakdown by Phase:
 
-| Phase | Milestones | Duration | Effort | Status |
-|-------|------------|----------|--------|--------|
-| **Phase 1: Foundation** | v0.4-v0.6 | 8-10 weeks | 55-70 hours | ✅ COMPLETE |
-| **Phase 2: Hardware** | v0.7-v0.9 | 10-12 weeks | 65-80 hours | Pending |
-| **Phase 3: Boards** | v0.10-v0.12 | 10-14 weeks | 68-82 hours | Pending |
-| **Phase 4: System/UI/Facade** | v0.13-v0.15 | 12-18 weeks | 75-100 hours | Pending |
-| **Phase 5: Release** | RC + v1.0 | 4-8 weeks | 35-45 hours | Pending |
-| **TOTAL** | 14 milestones | **44-62 weeks** | **305-385 hours** |
+| Phase | Milestones | Duration | Effort |
+|-------|------------|----------|--------|
+| **Phase 1: Foundation** | v0.4-v0.6 | 8-10 weeks | 55-70 hours |
+| **Phase 2: Hardware** | v0.7-v0.9 | 10-12 weeks | 65-80 hours |
+| **Phase 3: Boards** | v0.10-v0.12 | 10-14 weeks | 68-82 hours |
+| **Phase 4: System/UI** | v0.13-v0.14 | 8-12 weeks | 50-65 hours |
+| **Phase 5: Release** | RC + v1.0 | 4-8 weeks | 35-45 hours |
+| **TOTAL** | 13 milestones | **40-56 weeks** | **280-350 hours** |
 
 ### Module Distribution:
 
-- **Peripherals**: 9 modules (ADC, DAC, I2C, SPI, UART, PWM, QSPI, RNG, Timer) ✅
-- **HID**: 8 modules (Switch, Switch3, Controls, GateIn, LED, RgbLed, MIDI, Parameter) ✅
-- **Data Structures**: 8 modules (FIFO, Stack, RingBuffer, FixedStr, etc.) ✅
-- **File I/O**: 5 modules (WavParser, WavPlayer, WavWriter, WavetableLoader, WavFormat) ✅
-- **Device Drivers**: 13 modules (sensors, LEDs, I/O - planned)
-- **Storage**: 4 modules (flash, persistent, etc. - planned)
-- **Boards**: 8 modules (all Daisy boards - planned)
-- **System**: 6 modules (system utils, DMA, etc. - planned)
-- **UI**: 4 modules (core, menu, events, widgets - planned)
-- **Facades**: 4 modules (audio, storage, controls, display - planned)
-- **Utilities**: 8 modules (Color, CpuLoad, MappedValue, UniqueId, etc.) ✅
+- **Peripherals**: 11 modules (RNG, Timer, QSPI, etc.)
+- **Data Structures**: 8 modules (FIFO, Stack, etc.)
+- **File I/O**: 6 modules (WAV, QSPI, etc.)
+- **Device Drivers**: 13 modules (sensors, LEDs, I/O)
+- **Storage**: 4 modules (flash, persistent, etc.)
+- **Boards**: 8 modules (all Daisy boards)
+- **System**: 6 modules (system utils, DMA, etc.)
+- **UI**: 4 modules (core, menu, events, widgets)
+- **Utilities**: 7 modules (color, parameter, etc.)
 
-**Current**: 41 modules  
-**Target v1.0.0**: ~60 modules total
+**Total**: ~55 new modules + 17 existing = **72 modules**
 
 ---
 
@@ -1901,8 +1727,7 @@ Let's build something amazing! 🎉
 
 ---
 
-**Document Version**: 2.0  
-**Last Updated**: January 22, 2026  
+**Document Version**: 1.0  
+**Created**: January 21, 2026  
 **Status**: Active roadmap for v1.0.0  
-**Current Milestone**: v0.6.0 ✅ COMPLETE  
-**Next Milestone**: v0.7.0 - Audio Codecs & Display Drivers
+**Next Milestone**: v0.4.0 - Simple Peripherals & Utilities
