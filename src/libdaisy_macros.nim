@@ -112,9 +112,22 @@ const sdmmcTypedefs* = [
   "FatFSInterface FatFSInterface"
 ]
 
+# Codec module typedefs
+const codec_ak4556Typedefs* : seq[string] = @[]
+const codec_wm8731Typedefs* = [
+  "Wm8731::Result Wm8731Result",
+  "Wm8731::Config Wm8731Config",
+  "Wm8731::Config::Format Wm8731Format",
+  "Wm8731::Config::WordLength Wm8731WordLength"
+]
+const codec_pcm3060Typedefs* = [
+  "Pcm3060::Result Pcm3060Result"
+]
+
 # All typedefs combined (for full inclusion)
 const daisyTypedefsList* = @coreTypedefs & @controlsTypedefs & @adcTypedefs & @pwmTypedefs &
-                           @oledTypedefs & @i2cTypedefs & @spiTypedefs & @sdramTypedefs & @usbTypedefs & @sdmmcTypedefs
+                           @oledTypedefs & @i2cTypedefs & @spiTypedefs & @sdramTypedefs & @usbTypedefs & @sdmmcTypedefs &
+                           @codec_wm8731Typedefs & @codec_pcm3060Typedefs
 
 # ============================================================================
 # C++ Header Includes
@@ -155,6 +168,15 @@ proc getModuleHeaders*(moduleName: string): string =
 """
   of "usb":
     """#include "hid/usb.h"
+"""
+  of "codec_ak4556":
+    """#include "dev/codec_ak4556.h"
+"""
+  of "codec_wm8731":
+    """#include "dev/codec_wm8731.h"
+"""
+  of "codec_pcm3060":
+    """#include "dev/codec_pcm3060.h"
 """
   else: ""
 
