@@ -10,10 +10,14 @@ Thank you for your interest in contributing! This guide will help you get starte
 - [How to Contribute](#how-to-contribute)
 - [Wrapper Development Guide](#wrapper-development-guide)
 - [Testing Requirements](#testing-requirements)
+- [Hardware Testing](#hardware-testing)
 - [Code Style Guidelines](#code-style-guidelines)
 - [Documentation Standards](#documentation-standards)
+- [Performance Guidelines](#performance-guidelines)
+- [Breaking Changes Policy](#breaking-changes-policy)
 - [Submitting Changes](#submitting-changes)
 - [Areas Needing Help](#areas-needing-help)
+- [Roadmap](#roadmap)
 
 ## Code of Conduct
 
@@ -402,6 +406,42 @@ make TARGET=blink program-dfu
 make TARGET=i2c_scanner program-dfu
 ```
 
+## Hardware Testing
+
+For complete hardware testing procedures, see **[HARDWARE_TESTING.md](HARDWARE_TESTING.md)**.
+
+### Quick Overview
+
+libdaisy_nim development relies heavily on **community hardware testing** due to limited maintainer hardware access.
+
+**Testing Levels:**
+
+1. **Compilation Testing** (Required for all PRs)
+   ```bash
+   cd examples
+   ./test_all.sh
+   ```
+
+2. **Basic Hardware Testing** (Maintainer - Daisy Seed only)
+   - LED, GPIO, Audio, SDRAM, USB, RNG, Timers
+
+3. **Extended Hardware Testing** (Community - peripherals needed)
+   - Displays (OLED, LCD)
+   - Sensors (IMU, touch, gesture)
+   - I/O expansion (shift registers, I2C expanders)
+   - LED strips (NeoPixel, DotStar)
+
+4. **Board-Specific Testing** (Community - critical!)
+   - Daisy Pod, Field, PatchSM, Petal, Versio, Legio
+   - Full feature validation per board
+
+**How to Help:**
+- Check GitHub issues with `needs-hardware-testing` label
+- Use the test report template in HARDWARE_TESTING.md
+- Get credited in release notes!
+
+See [HARDWARE_TESTING.md](HARDWARE_TESTING.md) for detailed procedures and templates.
+
 ## Code Style Guidelines
 
 ### Naming Conventions
@@ -547,6 +587,84 @@ Every new feature needs an example in `examples/`.
 
 Add entry to `API_REFERENCE.md` for new modules/features.
 
+## Performance Guidelines
+
+### Performance Target: ≤5-10% overhead vs C++ libDaisy
+
+**Measurement Areas:**
+- Audio callback execution time
+- DMA operations
+- File I/O throughput
+- UI rendering speed
+
+**Best Practices:**
+
+1. **Use `{.inline.}` pragma** for hot-path functions
+2. **Avoid heap allocation** in real-time audio code (no `seq`, no `string`)
+3. **Minimize branching** in audio callback
+4. **Profile before optimizing** - measure first!
+
+**Safety vs Performance:**
+
+Provide both checked and unchecked variants when appropriate:
+
+```nim
+# Safe version (bounds checked)
+proc get*(buffer: var Buffer, index: int): float32 =
+  assert index >= 0 and index < buffer.len
+  result = buffer.data[index]
+
+# Fast version (no checks)
+proc getUnchecked*(buffer: var Buffer, index: int): float32 {.inline.} =
+  result = buffer.data[index]
+```
+
+**Acceptable Tradeoffs:**
+- Sacrifice up to 5-10% performance for safety features
+- Document the tradeoff in code comments
+- Provide unsafe alternative for performance-critical code
+
+## Breaking Changes Policy
+
+### Pre-v1.0 (Current)
+
+✅ **Breaking changes are allowed** to improve API quality
+
+**Requirements:**
+1. **Document in CHANGELOG.md** - List all breaking changes
+2. **Provide migration notes** - Explain how to update code
+3. **Justify the change** - Explain why it's necessary
+4. **Group related changes** - Minimize number of releases with breaking changes
+
+**Acceptable Reasons:**
+- API consistency improvements
+- Better naming conventions
+- Adding necessary configuration options
+- Module reorganization for clarity
+- Fixing design mistakes
+
+### Post-v1.0 (Future)
+
+After v1.0.0 release:
+- ❌ **No breaking changes** in minor/patch releases
+- ✅ **Semantic versioning**: Major.Minor.Patch
+- ✅ **Deprecation period**: 2 releases before removal
+- ✅ **Stability guarantee**: APIs remain stable
+
+**Example Migration Note:**
+
+```markdown
+### Breaking Changes in v0.6.0
+
+**libdaisy_adc.nim:**
+- `initAdc()` renamed to `createAdc()` for consistency
+- Migration: Replace `initAdc(...)` with `createAdc(...)`
+
+**libdaisy_wavplayer.nim:**
+- `WavPlayer.Config` added `bufferSize` field (required)
+- Migration: Set `config.bufferSize = 4096` (or your desired size)
+```
+
 ## Submitting Changes
 
 ### Before Submitting
@@ -641,41 +759,71 @@ Any other information...
 
 ## Areas Needing Help
 
-### High Priority
+### High Priority (v0.4.0 Milestone)
 
-**1. WavPlayer/WavWriter Utilities** 
-- **Files:** `src/util/wavplayer.h`, `src/util/wavwriter.h` (if exists)
-- **Difficulty:** Medium
-- **Impact:** High (audio playback/recording)
-- **Status:** WAV format structures done in v0.3.0, player/writer pending
+**See [ROADMAP.md](ROADMAP.md) for the complete v1.0.0 roadmap.**
 
-**2. More Board Support**
-- **Files:** `src/daisy_pod.h`, `src/daisy_field.h`, `src/daisy_petal.h`
-- **Difficulty:** Low to Medium
-- **Impact:** Medium (community value)
-- **Status:** Daisy Patch completed in v0.3.0
+**Next Milestone: v0.4.0 - Simple Peripherals & Utilities**
+- **Modules:** RNG, Timer, Color, GateIn, Led, RgbLed, Switch3
+- **Examples:** 4 grouped examples covering multiple features
+- **Duration:** 2-3 weeks
+- **Effort:** 10-15 hours
 
 ### Medium Priority
 
-**3. Additional Device Drivers**
-- IMU, codecs, sensors, etc.
-- See TECHNICAL_REPORT.md for full list
+**1. File I/O & Storage** (v0.5.0)
+- FatFS filesystem wrapper
+- WAV file player/writer utilities
+- Persistent settings storage
 
-**4. UI Framework Wrapper**
-- Menu system
-- Button/Pot monitoring
+**2. Device Drivers** (v0.7-v0.9)
+- Audio codecs (WM8731, AK4556, PCM3060)
+- IMU sensors (ICM20948, MPU6050)
+- Touch sensors (MPR121)
+- LED drivers (NeoPixel, DotStar, IS31FL3731)
+
+**3. More Board Support** (v0.10-v0.12)
+- Daisy Pod, Field, PatchSM
+- Daisy Petal, Versio, Legio
+- Board-specific examples
+
+**4. UI Framework** (v0.14.0)
+- Nim-native menu system (no C++ wrapper)
+- Button/pot monitoring
+- Canvas abstraction
+- Real-time audio safe (no heap allocation)
 
 **5. More Examples**
 - Complex audio processing
 - Multi-peripheral integration
 - Real-world applications
-- DAC-based CV outputs
-- Patch-specific examples
+- Board-specific examples
 
 **6. Documentation**
 - Tutorials
 - API reference expansion
 - Example explanations
+
+## Roadmap
+
+For the complete roadmap to v1.0.0, see **[ROADMAP.md](ROADMAP.md)**.
+
+### Quick Overview
+
+**Current:** v0.3.0 (25-30% libDaisy coverage)  
+**Target:** v1.0.0 (95%+ coverage, all boards, full UI framework)
+
+**Timeline:** 8-12 months, 13 milestones  
+**Next Milestone:** v0.4.0 - Simple Peripherals & Utilities
+
+**Phases:**
+1. **Foundation** (v0.4-v0.6) - Peripherals, data structures, file I/O
+2. **Hardware** (v0.7-v0.9) - Codecs, sensors, LED drivers, I/O expansion
+3. **Boards** (v0.10-v0.12) - All Daisy boards + storage systems
+4. **System/UI** (v0.13-v0.14) - System utilities + Nim-native UI framework
+5. **Release** (v1.0.0-rc1, v1.0.0) - Testing, polish, production release
+
+See [ROADMAP.md](ROADMAP.md) for detailed milestone breakdowns, module lists, and contribution opportunities.
 
 ## Getting Help
 

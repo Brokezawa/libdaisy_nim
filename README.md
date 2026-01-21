@@ -149,7 +149,9 @@ Each example is a complete, working program that compiles and runs on hardware.
 - **[API_REFERENCE.md](API_REFERENCE.md)** - Complete API documentation
 - **[EXAMPLES.md](examples/EXAMPLES.md)** - Detailed example descriptions
 - **[TECHNICAL_REPORT.md](TECHNICAL_REPORT.md)** - How the wrapper works internally
+- **[ROADMAP.md](ROADMAP.md)** - v1.0.0 roadmap and development plan
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - How to contribute to the project
+- **[HARDWARE_TESTING.md](HARDWARE_TESTING.md)** - Community hardware testing guide
 
 ## Project Structure
 
