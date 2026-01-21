@@ -124,10 +124,20 @@ const codec_pcm3060Typedefs* = [
   "Pcm3060::Result Pcm3060Result"
 ]
 
+# LCD module typedefs
+const lcd_hd44780Typedefs* = [
+  "LcdHD44780::Config LcdHD44780Config"
+]
+
+# OLED fonts module typedefs
+const oled_fontsTypedefs* = [
+  "FontDef FontDef"
+]
+
 # All typedefs combined (for full inclusion)
 const daisyTypedefsList* = @coreTypedefs & @controlsTypedefs & @adcTypedefs & @pwmTypedefs &
                            @oledTypedefs & @i2cTypedefs & @spiTypedefs & @sdramTypedefs & @usbTypedefs & @sdmmcTypedefs &
-                           @codec_wm8731Typedefs & @codec_pcm3060Typedefs
+                           @codec_wm8731Typedefs & @codec_pcm3060Typedefs & @lcd_hd44780Typedefs & @oled_fontsTypedefs
 
 # ============================================================================
 # C++ Header Includes
@@ -177,6 +187,12 @@ proc getModuleHeaders*(moduleName: string): string =
 """
   of "codec_pcm3060":
     """#include "dev/codec_pcm3060.h"
+"""
+  of "lcd_hd44780":
+    """#include "dev/lcd_hd44780.h"
+"""
+  of "oled_fonts":
+    """#include "util/oled_fonts.h"
 """
   else: ""
 
