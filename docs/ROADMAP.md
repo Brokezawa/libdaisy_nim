@@ -8,21 +8,24 @@
 
 ---
 
-## Current Status (v0.3.0)
+## Current Status (v0.8.0)
 
 **Completed:**
 - ✅ Core peripherals: GPIO, Audio, I2C, SPI, UART, ADC, PWM, DAC
 - ✅ USB: Device CDC, MIDI (device/host)
 - ✅ Storage: SD card (FatFS), SDRAM
-- ✅ Displays: OLED (SSD130x family)
-- ✅ Controls: Switch, Encoder, AnalogControl
-- ✅ MIDI: USB MIDI
+- ✅ Displays: OLED (SSD130x family), LCD HD44780
+- ✅ Controls: Switch, Encoder, AnalogControl, GateIn, Switch3
+- ✅ Audio Codecs: AK4556, WM8731, PCM3060
+- ✅ Sensors: ICM20948 (9-axis IMU), APDS9960 (gesture/light), DPS310 (pressure), TLV493D (magnetic), MPR121 (capacitive touch), NeoTrellis (RGB buttons)
+- ✅ Peripherals: RNG, Timer, Color, RgbLed
+- ✅ Data Structures: FIFO, Stack, RingBuffer, FixedStr, Parameter mapping
 - ✅ Boards: Daisy Seed, Daisy Patch (basic)
 - ✅ WAV format structures
 
-**Coverage**: ~25-30% of libDaisy  
-**Modules**: 17  
-**Examples**: 27  
+**Coverage**: ~72% of libDaisy  
+**Modules**: 52 (Core: 1, Peripherals: 11, Controls: 1, Audio: 4, Data: 4, Utilities: 9, Displays: 3, Codecs: 3, Sensors: 6, Power: 1, Storage: 9)  
+**Examples**: 46  
 **Compilation test pass rate**: 100%
 
 ---
@@ -462,7 +465,118 @@ All data structures implemented in **pure Nim** using:
 
 ---
 
-### Milestone: v0.8.0 - Sensors & IMU
+### Milestone: v0.8.0 - Sensors & IMU ✅ COMPLETE
+**Duration**: 3-4 weeks (Actual: 1 day - same-day completion with v0.7.0)  
+**Effort**: 25-30 hours (Actual: ~6 hours including patch system)  
+**Goal**: Motion sensing and environmental sensors  
+**Status**: Released 2026-01-21
+
+#### Completed Modules (6/6): ✅
+
+1. **src/dev/icm20948.nim** - 9-Axis IMU ⭐ ✅
+   - 3-axis gyroscope (250-2000 dps configurable range)
+   - 3-axis accelerometer (2-16g configurable range)
+   - 3-axis magnetometer (AK09916 with 16-bit resolution)
+   - Temperature sensor
+   - I2C and SPI transport support
+   - Configurable filters and sample rates
+   - **Note**: Includes libDaisy upstream patch for magnetometer bug fix
+
+2. **src/dev/apds9960.nim** - Gesture/Proximity/Light/Color Sensor ✅
+   - Gesture recognition (up, down, left, right, near, far)
+   - Proximity detection (0-255 range)
+   - RGB color sensing (16-bit per channel)
+   - Ambient light sensing
+   - I2C interface with configurable sensitivity
+
+3. **src/dev/dps310.nim** - Barometric Pressure Sensor ✅
+   - High-precision pressure measurement (260-1260 hPa)
+   - Temperature sensing
+   - Altitude calculation from pressure
+   - I2C and SPI transport support
+   - Configurable oversampling for precision
+
+4. **src/dev/tlv493d.nim** - 3D Magnetic Sensor ✅
+   - 3-axis magnetic field measurement (12-bit resolution)
+   - Returns values in millitesla (mT)
+   - Low power operation
+   - I2C interface
+   - Position/angle detection applications
+
+5. **src/dev/mpr121.nim** - 12-Channel Capacitive Touch Sensor ✅
+   - 12 independent touch inputs
+   - Configurable touch/release thresholds
+   - Returns 12-bit bitmask for all channels
+   - I2C interface
+   - Touch keyboard applications
+
+6. **src/dev/neotrellis.nim** - 4x4 RGB Button Pad ✅
+   - 16 mechanical switches with RGB LEDs
+   - Individually addressable RGB LEDs
+   - Button press/release event system
+   - I2C interface (Adafruit seesaw)
+   - Grid controller/sequencer applications
+
+#### Completed Examples (4/4): ✅
+
+1. **examples/imu_demo.nim** - IMU motion control ⭐ ✅
+   - Accelerometer controls audio volume (tilt-based)
+   - Gyroscope controls audio panning (rotation-based)
+   - Magnetometer visualized via RGB LEDs
+   - Temperature monitoring included
+   - Serial output for all sensor readings
+
+2. **examples/environmental.nim** - Environmental sensor suite ✅
+   - DPS310 pressure and altitude monitoring
+   - DPS310 temperature measurement
+   - TLV493D 3-axis magnetic field visualization
+   - Dual I2C sensor demonstration
+   - Serial output every 500ms
+
+3. **examples/gesture_control.nim** - Gesture-based audio (renamed from touch_input.nim) ✅
+   - APDS9960 gesture recognition for audio effects
+   - Swipe gestures control audio parameters
+   - Proximity detection adjusts sensitivity
+   - RGB color sensing for visual feedback
+   - LED indicators for recognized gestures
+
+4. **examples/touch_sequencer.nim** - Grid sequencer (renamed from neotrellis_sequencer.nim) ✅
+   - MPR121 capacitive touch for step programming (12 steps)
+   - NeoTrellis 4x4 RGB LED matrix for visual feedback
+   - Real-time audio sequencer implementation
+   - Synchronized I2C peripheral demonstration
+   - Touch-responsive LED colors
+
+#### Additional Deliverables: ✅
+
+- **Patch System**: Created `patches/` directory with automated patch management
+  - `patches/icm20948_fix.patch` - Fixes libDaisy magnetometer bug (line 686)
+  - `patches/README.md` - Comprehensive patch documentation
+  - `apply_patches.sh` - Automated patch application script
+  
+- **Documentation**: Full API documentation in docs/API_REFERENCE.md (600+ lines)
+- **Hardware Guide**: I2C sensor setup in docs/EXAMPLES.md with wiring diagrams
+- **Testing**: All 4 examples compile successfully (compilation verified, hardware untested)
+
+#### Key Achievements:
+
+- ✅ All 6 planned sensor modules implemented
+- ✅ All 4 example programs completed and compiling
+- ✅ Discovered and patched upstream libDaisy bug in ICM20948
+- ✅ Created reusable patch management system for future libDaisy fixes
+- ✅ Full I2C sensor ecosystem with multi-device examples
+- ✅ Comprehensive documentation covering 6 sensors
+
+#### Notes:
+
+- **Upstream Contribution**: ICM20948 patch prepared for upstream PR (not yet submitted pending approval)
+- **Hardware Testing**: All examples compile but are untested on actual hardware (marked as ⚠️ in docs)
+- **I2C Compatibility**: All sensor examples use standard I2C pins (D11=SCL, D12=SDA)
+- **Coverage Impact**: Increased libDaisy coverage from ~65% (v0.7.0) to ~72% (v0.8.0)
+
+---
+
+### Milestone: v0.8.0 - Sensors & IMU (Original Plan - Archived)
 **Duration**: 3-4 weeks  
 **Effort**: 25-30 hours  
 **Goal**: Motion sensing and environmental sensors

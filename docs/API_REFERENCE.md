@@ -2069,6 +2069,473 @@ display.writeString("Hello", Font_7x10, true)  # true = white text
 
 ---
 
+## Sensor Modules (v0.8.0)
+
+### ICM20948 9-Axis IMU Module (icm20948.nim)
+
+**Import:**
+```nim
+import src/dev/icm20948
+import src/libdaisy_i2c  # or libdaisy_spi
+```
+
+**Description:**
+9-axis motion sensor with 3-axis gyroscope, 3-axis accelerometer, 3-axis magnetometer (AK09916), and temperature sensor. Supports both I2C and SPI interfaces.
+
+**Important:** Requires applying libDaisy patch before use. See `patches/README.md` for details.
+
+**Types:**
+```nim
+type
+  AccelFullScale* {.size: sizeof(cint).} = enum
+    ## Accelerometer full scale range
+    ACCEL_RANGE_2G = 0
+    ACCEL_RANGE_4G = 1
+    ACCEL_RANGE_8G = 2
+    ACCEL_RANGE_16G = 3
+
+  GyroFullScale* {.size: sizeof(cint).} = enum
+    ## Gyroscope full scale range
+    GYRO_RANGE_250DPS = 0
+    GYRO_RANGE_500DPS = 1
+    GYRO_RANGE_1000DPS = 2
+    GYRO_RANGE_2000DPS = 3
+
+  ICM20948I2CTransportConfig* = object
+    ## I2C transport configuration
+    periph*: I2CPeripheral
+    speed*: I2CSpeed
+    scl*: Pin
+    sda*: Pin
+    address*: uint8  # 0x68 (AD0=LOW) or 0x69 (AD0=HIGH)
+
+  ICM20948Config* = object
+    ## Main configuration structure
+    transport_config*: ICM20948I2CTransportConfig  # or SPITransportConfig
+    accel_scale*: AccelFullScale
+    gyro_scale*: GyroFullScale
+    accel_odr_div*: uint16  # Sample rate divider (1-4095)
+    gyro_odr_div*: uint8    # Sample rate divider (0-255)
+
+  ICM20948I2C* = object
+    ## Main sensor type (I2C version)
+
+  ICM20948Data* = object
+    ## Sensor reading structure
+    accel_x*, accel_y*, accel_z*: float32  # m/s²
+    gyro_x*, gyro_y*, gyro_z*: float32     # degrees/sec
+    mag_x*, mag_y*, mag_z*: float32        # microtesla (µT)
+    temp*: float32                          # Celsius
+```
+
+**Methods:**
+```nim
+proc init*(config: ICM20948Config): Result[ICM20948I2C, string]
+  ## Initialize the sensor. Returns Result with sensor object or error message.
+
+proc read*(imu: var ICM20948I2C): ICM20948Data
+  ## Read accelerometer and gyroscope data (not magnetometer)
+
+proc setupMag*(imu: var ICM20948I2C): bool
+  ## Initialize magnetometer (AK09916). Returns true on success.
+  ## Requires libDaisy patch to function correctly.
+
+proc readMag*(imu: var ICM20948I2C): tuple[x, y, z: float32]
+  ## Read magnetometer data in microtesla (µT)
+
+proc getTemp*(imu: var ICM20948I2C): float32
+  ## Read temperature in Celsius
+```
+
+**Example:**
+```nim
+import src/dev/icm20948
+import src/libdaisy_i2c
+
+var config: ICM20948Config
+config.transport_config.periph = I2C_1
+config.transport_config.speed = I2C_400KHZ
+config.transport_config.scl = D11()
+config.transport_config.sda = D12()
+config.transport_config.address = 0x68
+config.accel_scale = ACCEL_RANGE_4G
+config.gyro_scale = GYRO_RANGE_500DPS
+
+let result = init(config)
+if result.isOk:
+  var imu = result.get()
+  discard imu.setupMag()  # Enable magnetometer
+  
+  while true:
+    let data = imu.read()
+    let mag = imu.readMag()
+    # Use data.accel_x, data.gyro_y, mag.x, etc.
+```
+
+---
+
+### APDS9960 Gesture/Light Sensor Module (apds9960.nim)
+
+**Import:**
+```nim
+import src/dev/apds9960
+import src/libdaisy_i2c
+```
+
+**Description:**
+Multi-function sensor with gesture recognition, proximity detection, RGB color sensing, and ambient light detection. I2C interface only.
+
+**Types:**
+```nim
+type
+  Gesture* {.size: sizeof(cint).} = enum
+    ## Recognized gestures
+    NONE = 0
+    UP = 1
+    DOWN = 2
+    LEFT = 3
+    RIGHT = 4
+    NEAR = 5
+    FAR = 6
+
+  APDS9960I2CTransportConfig* = object
+    periph*: I2CPeripheral
+    speed*: I2CSpeed
+    scl*: Pin
+    sda*: Pin
+
+  APDS9960Config* = object
+    transport_config*: APDS9960I2CTransportConfig
+
+  APDS9960I2C* = object
+    ## Main sensor type
+```
+
+**Methods:**
+```nim
+proc init*(config: APDS9960Config): Result[APDS9960I2C, string]
+  ## Initialize the sensor
+
+proc enableGesture*(sensor: var APDS9960I2C, enable: bool): bool
+  ## Enable or disable gesture detection. Returns true on success.
+
+proc readGesture*(sensor: var APDS9960I2C): Gesture
+  ## Read detected gesture. Returns NONE if no gesture detected.
+
+proc readProximity*(sensor: var APDS9960I2C): uint8
+  ## Read proximity value (0-255, higher = closer)
+
+proc readColor*(sensor: var APDS9960I2C): tuple[r, g, b, c: uint16]
+  ## Read RGBC values (16-bit per channel, c = clear/ambient)
+
+proc setGestureGain*(sensor: var APDS9960I2C, gain: uint8): bool
+  ## Set gesture sensitivity (0=1x, 1=2x, 2=4x, 3=8x)
+```
+
+**Example:**
+```nim
+import src/dev/apds9960
+
+var config: APDS9960Config
+config.transport_config.periph = I2C_1
+config.transport_config.speed = I2C_400KHZ
+config.transport_config.scl = D11()
+config.transport_config.sda = D12()
+
+let result = init(config)
+if result.isOk:
+  var sensor = result.get()
+  discard sensor.enableGesture(true)
+  
+  while true:
+    let gesture = sensor.readGesture()
+    if gesture != NONE:
+      # Handle UP, DOWN, LEFT, RIGHT, NEAR, FAR
+      discard
+```
+
+---
+
+### DPS310 Barometric Pressure Sensor Module (dps310.nim)
+
+**Import:**
+```nim
+import src/dev/dps310
+import src/libdaisy_i2c  # or libdaisy_spi
+```
+
+**Description:**
+High-precision barometric pressure and temperature sensor with altitude calculation. Supports both I2C and SPI interfaces.
+
+**Types:**
+```nim
+type
+  DPS310I2CTransportConfig* = object
+    periph*: I2CPeripheral
+    speed*: I2CSpeed
+    scl*: Pin
+    sda*: Pin
+
+  DPS310Config* = object
+    transport_config*: DPS310I2CTransportConfig  # or SPITransportConfig
+
+  DPS310I2C* = object
+    ## Main sensor type (I2C version)
+```
+
+**Methods:**
+```nim
+proc init*(config: DPS310Config): Result[DPS310I2C, string]
+  ## Initialize the sensor
+
+proc startContinuous*(sensor: var DPS310I2C): bool
+  ## Start continuous measurement mode. Returns true on success.
+
+proc getData*(sensor: var DPS310I2C): tuple[pressure: float32, hasData: bool]
+  ## Read pressure in Pascals (Pa). hasData indicates if new data available.
+
+proc getTemperatureC*(sensor: var DPS310I2C): float32
+  ## Read temperature in Celsius
+
+proc getAltitude*(sensor: var DPS310I2C, seaLevelPressure: float32 = 101325.0): float32
+  ## Calculate altitude in meters from current pressure
+  ## seaLevelPressure: reference pressure in Pa (default 101325 Pa = 1013.25 hPa)
+```
+
+**Example:**
+```nim
+import src/dev/dps310
+
+var config: DPS310Config
+config.transport_config.periph = I2C_1
+config.transport_config.speed = I2C_400KHZ
+config.transport_config.scl = D11()
+config.transport_config.sda = D12()
+
+let result = init(config)
+if result.isOk:
+  var sensor = result.get()
+  discard sensor.startContinuous()
+  
+  while true:
+    let (pressure, hasData) = sensor.getData()
+    if hasData:
+      let temp = sensor.getTemperatureC()
+      let altitude = sensor.getAltitude()  # Default sea level pressure
+      # pressure in Pa, temp in °C, altitude in meters
+```
+
+---
+
+### TLV493D 3D Magnetic Sensor Module (tlv493d.nim)
+
+**Import:**
+```nim
+import src/dev/tlv493d
+import src/libdaisy_i2c
+```
+
+**Description:**
+3-axis magnetic field sensor with 12-bit resolution. I2C interface only. Useful for position sensing, compass applications, and magnetic field measurement.
+
+**Types:**
+```nim
+type
+  TLV493DI2CTransportConfig* = object
+    periph*: I2CPeripheral
+    speed*: I2CSpeed
+    scl*: Pin
+    sda*: Pin
+
+  TLV493DConfig* = object
+    transport_config*: TLV493DI2CTransportConfig
+
+  TLV493DI2C* = object
+    ## Main sensor type
+```
+
+**Methods:**
+```nim
+proc init*(config: TLV493DConfig): Result[TLV493DI2C, string]
+  ## Initialize the sensor
+
+proc result*(sensor: var TLV493DI2C): tuple[x, y, z: float32]
+  ## Read magnetic field values in millitesla (mT)
+  ## Returns x, y, z magnetic field components
+```
+
+**Example:**
+```nim
+import src/dev/tlv493d
+
+var config: TLV493DConfig
+config.transport_config.periph = I2C_1
+config.transport_config.speed = I2C_400KHZ
+config.transport_config.scl = D11()
+config.transport_config.sda = D12()
+
+let result = init(config)
+if result.isOk:
+  var sensor = result.get()
+  
+  while true:
+    let mag = sensor.result()
+    # mag.x, mag.y, mag.z in millitesla (mT)
+```
+
+---
+
+### MPR121 Capacitive Touch Sensor Module (mpr121.nim)
+
+**Import:**
+```nim
+import src/dev/mpr121
+import src/libdaisy_i2c
+```
+
+**Description:**
+12-channel capacitive touch controller. Detects touch/release on 12 independent electrodes. I2C interface only.
+
+**Types:**
+```nim
+type
+  MPR121I2CTransportConfig* = object
+    periph*: I2CPeripheral
+    speed*: I2CSpeed
+    scl*: Pin
+    sda*: Pin
+
+  MPR121Config* = object
+    transport_config*: MPR121I2CTransportConfig
+
+  MPR121I2C* = object
+    ## Main sensor type
+```
+
+**Methods:**
+```nim
+proc init*(config: MPR121Config): Result[MPR121I2C, string]
+  ## Initialize the sensor with default touch/release thresholds
+
+proc touched*(sensor: var MPR121I2C): uint16
+  ## Read touch state of all 12 channels as bitmask
+  ## Bit 0 = channel 0, bit 1 = channel 1, etc.
+  ## Returns 0 if no channels touched
+
+proc setThresholds*(sensor: var MPR121I2C, touch, release: uint8): bool
+  ## Set global touch and release thresholds for all channels
+  ## Higher values = less sensitive (default: touch=12, release=6)
+```
+
+**Example:**
+```nim
+import src/dev/mpr121
+
+var config: MPR121Config
+config.transport_config.periph = I2C_1
+config.transport_config.speed = I2C_400KHZ
+config.transport_config.scl = D11()
+config.transport_config.sda = D12()
+
+let result = init(config)
+if result.isOk:
+  var sensor = result.get()
+  
+  while true:
+    let state = sensor.touched()
+    
+    # Check individual channels
+    if (state and (1 shl 0)) != 0:
+      # Channel 0 is touched
+      discard
+    if (state and (1 shl 5)) != 0:
+      # Channel 5 is touched
+      discard
+```
+
+---
+
+### NeoTrellis 4x4 RGB Button Pad Module (neotrellis.nim)
+
+**Import:**
+```nim
+import src/dev/neotrellis
+import src/libdaisy_i2c
+```
+
+**Description:**
+4x4 matrix of mechanical switches with RGB LEDs. Based on Adafruit seesaw firmware. I2C interface only.
+
+**Types:**
+```nim
+type
+  NeoTrellisI2CTransportConfig* = object
+    periph*: I2CPeripheral
+    speed*: I2CSpeed
+    scl*: Pin
+    sda*: Pin
+
+  NeoTrellisConfig* = object
+    transport_config*: NeoTrellisI2CTransportConfig
+
+  NeoTrellisI2C* = object
+    ## Main device type
+
+  KeyEvent* = object
+    ## Button event structure
+    key*: uint8   # Key number (0-15)
+    edge*: uint8  # 0=released, 1=pressed
+```
+
+**Methods:**
+```nim
+proc init*(config: NeoTrellisConfig): Result[NeoTrellisI2C, string]
+  ## Initialize the device
+
+proc setPixelColor*(trellis: var NeoTrellisI2C, index: uint8, r, g, b: uint8): bool
+  ## Set RGB color for button LED (index 0-15)
+  ## Returns true on success
+
+proc show*(trellis: var NeoTrellisI2C): bool
+  ## Update all LEDs with set colors. Must call after setPixelColor.
+
+proc readButtons*(trellis: var NeoTrellisI2C): seq[KeyEvent]
+  ## Read button events since last call
+  ## Returns sequence of press/release events
+```
+
+**Example:**
+```nim
+import src/dev/neotrellis
+
+var config: NeoTrellisConfig
+config.transport_config.periph = I2C_1
+config.transport_config.speed = I2C_400KHZ
+config.transport_config.scl = D11()
+config.transport_config.sda = D12()
+
+let result = init(config)
+if result.isOk:
+  var trellis = result.get()
+  
+  # Set button 0 to red
+  discard trellis.setPixelColor(0, 255, 0, 0)
+  discard trellis.show()
+  
+  while true:
+    let events = trellis.readButtons()
+    for event in events:
+      if event.edge == 1:
+        # Button pressed
+        discard trellis.setPixelColor(event.key, 0, 255, 0)  # Green
+      else:
+        # Button released
+        discard trellis.setPixelColor(event.key, 0, 0, 0)    # Off
+    discard trellis.show()
+```
+
+---
+
 For more examples, see [EXAMPLES.md](EXAMPLES.md).
 
 For technical details, see [TECHNICAL_REPORT.md](TECHNICAL_REPORT.md).

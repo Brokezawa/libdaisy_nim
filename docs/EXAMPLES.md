@@ -147,6 +147,23 @@ If you find a discrepancy:
 | **control_mapping.nim** | Parameter Mapping | Serial output | Shows Parameter curves (linear/exp/log/cubic) and MappedValue quantization. Simulates synth controls: frequency (exp curve), filter (linear), resonance (log), steps (quantized). Prints mapped values. | Values out of range = curve misconfiguration | ⬜ |
 | **system_info.nim** | System Monitoring | Serial output | Displays STM32 unique device ID (96-bit hex). Real-time CPU load monitoring showing average and peak usage. Performance tips based on CPU load thresholds. Runs indefinitely. | CPU = 0% = CpuLoad not measuring; ID all zeros = chip issue | ⬜ |
 
+### Sensor Examples (v0.8.0)
+
+| Example | Category | Hardware Required | Expected Behavior | Common Issues | Status |
+|---------|----------|-------------------|-------------------|---------------|--------|
+| **imu_demo.nim** | IMU/Motion | ICM20948 9-axis IMU on I2C (D11=SCL, D12=SDA) | 9-axis motion tracking demo. Accelerometer controls audio volume (tilt), gyroscope controls panning (rotation), magnetometer visualized via LEDs. Serial output shows all sensor readings (accel, gyro, mag, temp) every 100ms. Temperature monitoring included. **Note**: Requires libDaisy patch (see patches/README.md). | No magnetometer data = patch not applied; Noisy readings = sensor not calibrated; I2C errors = check connections | ⚠️ |
+| **gesture_control.nim** | Gesture/Light | APDS9960 sensor on I2C (D11=SCL, D12=SDA) | Gesture-based audio manipulation. Swipe gestures (up/down/left/right/near/far) control audio effects. Proximity detection adjusts parameters. RGB color sensing provides visual feedback. LED indicators show recognized gestures. Serial output for debugging gesture events. | No gestures detected = check sensor orientation; False triggers = adjust thresholds; I2C timeout = check pull-ups | ⚠️ |
+| **environmental.nim** | Environment/Mag | DPS310 (0x77) + TLV493D (0x5E) on I2C (D11=SCL, D12=SDA) | Dual-sensor environmental monitoring. Real-time pressure and altitude display from DPS310. Temperature monitoring. 3-axis magnetic field visualization from TLV493D. Dual I2C device demonstration. Serial output every 500ms with all readings. | Wrong altitude = set sea level pressure; Mag interference = remove nearby magnets; Address conflict = check sensor addresses | ⚠️ |
+| **touch_sequencer.nim** | Touch/RGB | MPR121 (0x5A) + NeoTrellis (0x2E) on I2C (D11=SCL, D12=SDA) | 16-step audio sequencer. MPR121 provides 12 capacitive touch inputs for step programming. NeoTrellis 4x4 RGB LED matrix shows active steps with color feedback. Real-time playback control. Visual feedback for all touch events. Demonstrates synchronized I2C peripherals. | Touch not detected = adjust sensitivity; LEDs wrong color = check RGB order; Steps skip = timing issue | ⚠️ |
+
+**Hardware Notes for Sensor Examples:**
+- All sensor examples use I2C on pins D11 (SCL) and D12 (SDA)
+- I2C pull-up resistors (4.7kΩ typical) required on SCL and SDA lines
+- Power sensors from 3.3V output (most sensors are 3.3V only)
+- ICM20948 example requires applying libDaisy patch before compilation
+- Status "⚠️" indicates compilation verified but untested on actual hardware
+- Sensor addresses shown in parentheses (verify with i2c_scanner.nim if issues)
+
 ### Special Examples
 
 | Example | Category | Hardware Required | Expected Behavior | Common Issues | Status |
@@ -251,6 +268,7 @@ Wiring:
 
 ```
 Examples: i2c_scanner.nim, oled_basic.nim, oled_graphics.nim
+Sensors (v0.8.0): imu_demo.nim, gesture_control.nim, environmental.nim, touch_sequencer.nim
 
 Wiring:
   D11 (SCL) ──┬──── Device SCL
@@ -270,6 +288,15 @@ Wiring:
 ```
 
 **Note:** Many I2C breakout boards include pull-ups. Check before adding external resistors.
+
+**Sensor-specific notes (v0.8.0):**
+- ICM20948 (IMU): Supports both I2C and SPI, example uses I2C at address 0x68/0x69
+- APDS9960 (Gesture): I2C only, default address 0x39
+- DPS310 (Pressure): Supports both I2C and SPI, example uses I2C at address 0x77
+- TLV493D (Magnetic): I2C only, default address 0x5E
+- MPR121 (Touch): I2C only, default address 0x5A
+- NeoTrellis (RGB buttons): I2C only (Adafruit seesaw), default address 0x2E
+- Run `i2c_scanner.nim` to verify sensor addresses if experiencing connection issues
 
 ### SPI Setup
 

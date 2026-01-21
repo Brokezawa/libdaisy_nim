@@ -5,6 +5,157 @@ All notable changes to libdaisy_nim will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-01-21
+
+### Added
+
+#### Sensor Module Support
+
+- **ICM20948 9-Axis IMU Module** (`src/dev/icm20948.nim`) - Motion and orientation sensor
+  - 3-axis gyroscope with configurable range (250-2000 dps)
+  - 3-axis accelerometer with configurable range (2-16g)
+  - 3-axis magnetometer (AK09916) with 16-bit resolution
+  - Temperature sensor
+  - I2C and SPI transport support
+  - Configurable low-pass filters and sample rate dividers
+  - Methods: `init()`, `read()`, `setupMag()`, `readMag()`
+  - **Note**: Requires libDaisy patch for magnetometer functionality
+
+- **APDS9960 Gesture/Light Sensor Module** (`src/dev/apds9960.nim`) - Multi-function proximity sensor
+  - Gesture recognition (up/down/left/right/near/far)
+  - Proximity detection (0-255 range)
+  - RGB color sensing (16-bit per channel)
+  - Ambient light detection
+  - I2C interface only
+  - Configurable gesture sensitivity and thresholds
+  - Methods: `init()`, `enableGesture()`, `readGesture()`, `readProximity()`, `readColor()`
+
+- **DPS310 Barometric Pressure Sensor Module** (`src/dev/dps310.nim`) - Precision altimeter
+  - Pressure measurement (260-1260 hPa)
+  - Temperature measurement
+  - Altitude calculation from pressure
+  - I2C and SPI transport support
+  - Configurable oversampling and sample rate
+  - Methods: `init()`, `startContinuous()`, `getData()`, `getTemperatureC()`, `getAltitude()`
+
+- **TLV493D 3D Magnetic Sensor Module** (`src/dev/tlv493d.nim`) - Triaxial magnetic field sensor
+  - 3-axis magnetic field measurement
+  - 12-bit resolution per axis
+  - I2C interface only
+  - Low power mode support
+  - Temperature measurement
+  - Methods: `init()`, `result()` (returns x, y, z in mT)
+
+- **MPR121 Capacitive Touch Sensor Module** (`src/dev/mpr121.nim`) - 12-channel touch controller
+  - 12 independent touch/release channels
+  - Configurable touch/release thresholds per channel
+  - Configurable debounce settings
+  - I2C interface only
+  - Methods: `init()`, `touched()` (returns 12-bit bitmask)
+
+- **NeoTrellis 4x4 RGB Button Pad Module** (`src/dev/neotrellis.nim`) - Interactive RGB LED matrix
+  - 16 mechanical key switches with RGB LEDs
+  - Individually addressable RGB LEDs (Adafruit seesaw)
+  - Button state tracking for all 16 keys
+  - I2C interface only
+  - Methods: `init()`, `setPixelColor()`, `show()`, `readButtons()`
+
+#### New Examples
+
+- `imu_demo.nim` - ICM20948 motion-controlled audio effects
+  - Demonstrates 9-axis motion tracking
+  - Accelerometer controls audio volume
+  - Gyroscope controls audio panning
+  - Magnetometer visualized via LEDs
+  - Serial output for all sensor readings
+  - Temperature monitoring
+  
+- `gesture_control.nim` - APDS9960 gesture-based audio manipulation
+  - Swipe gestures control audio effects
+  - Proximity detection adjusts parameters
+  - RGB color sensing for visual feedback
+  - LED indicators for gesture recognition
+  - Serial output for debugging
+
+- `environmental.nim` - DPS310 + TLV493D environmental monitoring
+  - Real-time pressure and altitude display
+  - Temperature monitoring from DPS310
+  - 3-axis magnetic field visualization
+  - Dual-sensor I2C demonstration
+  - Serial output every 500ms
+
+- `touch_sequencer.nim` - MPR121 + NeoTrellis step sequencer
+  - 16-step audio sequencer
+  - MPR121 capacitive touch for step programming
+  - NeoTrellis RGB LEDs show active steps
+  - Real-time playback control
+  - Visual feedback for touch events
+
+### Changed
+
+- **Module organization**: Sensor modules added to `src/dev/` subdirectory
+- **Macro system**: Added 6 sensor modules to `useDaisyModules()` macro
+- **I2C/SPI dependencies**: Sensor modules import transport layers directly
+
+### Fixed
+
+- **ICM20948 upstream bug**: Created patch for libDaisy ReadExternalRegister bug
+  - Bug location: `libDaisy/src/dev/icm20948.h:686`
+  - Missing 4th argument to `AuxillaryRegisterTransaction()`
+  - Prevents magnetometer initialization without patch
+  - Patch system documented in `patches/README.md`
+  - Apply with `./apply_patches.sh` script
+
+### Technical
+
+- Added to `libdaisy_macros.nim`:
+  - `icm20948Typedefs` (8 type aliases)
+  - `apds9960Typedefs` (5 type aliases)
+  - `dps310Typedefs` (6 type aliases)
+  - `tlv493dTypedefs` (2 type aliases)
+  - `mpr121Typedefs` (1 type alias)
+  - `neotrellisTypedefs` (4 type aliases)
+- Module header support for all 6 sensors in `getModuleHeaders()`
+- Created patch management system:
+  - `patches/icm20948_fix.patch` - Single-line fix for magnetometer
+  - `patches/README.md` - Comprehensive patch documentation
+  - `apply_patches.sh` - Automated patch application script
+
+### Documentation
+
+- Updated `docs/EXAMPLES.md` with 4 sensor examples
+- Updated `docs/API_REFERENCE.md` with 6 sensor module APIs
+- Updated `docs/ROADMAP.md` to mark v0.8.0 complete
+- Updated `README.md` with patch requirement notes
+- All sensor examples marked as "Untested - Requires hardware"
+
+### Statistics
+
+- **Total modules**: 52 (46 → 52)
+  - Core: 1
+  - Peripherals: 11
+  - Controls: 1
+  - Audio: 4
+  - Data structures: 4
+  - Utilities: 9
+  - Displays: 3
+  - Codecs: 3
+  - Sensors: 6 (new)
+  - Power: 1
+  - Storage: 9
+- **Total examples**: 46 (42 → 46)
+- **Coverage**: ~72% of libDaisy features
+- **Lines added**: ~2930 (sensor modules + examples + docs + patches)
+
+### Breaking Changes
+
+None. All changes are backwards compatible.
+
+### Known Issues
+
+- ICM20948 magnetometer requires applying patch to libDaisy (see patches/README.md)
+- All sensor examples untested on actual hardware (compilation verified only)
+
 ## [0.7.0] - 2026-01-21
 
 ### Added
