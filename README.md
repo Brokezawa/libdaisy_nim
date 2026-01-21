@@ -147,7 +147,8 @@ Each example is a complete, working program that compiles and runs on hardware.
 
 - **[QUICKSTART.md](QUICKSTART.md)** - Get started in 5 minutes
 - **[API_REFERENCE.md](API_REFERENCE.md)** - Complete API documentation
-- **[EXAMPLES.md](examples/EXAMPLES.md)** - Detailed example descriptions
+- **[EXAMPLES.md](examples/EXAMPLES.md)** - Example testing matrix with expected behavior
+- **[TESTING_CHECKLIST.md](TESTING_CHECKLIST.md)** - Printable hardware testing checklist
 - **[TECHNICAL_REPORT.md](TECHNICAL_REPORT.md)** - How the wrapper works internally
 - **[ROADMAP.md](ROADMAP.md)** - v1.0.0 roadmap and development plan
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - How to contribute to the project
