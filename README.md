@@ -14,11 +14,11 @@ This wrapper allows you to write firmware for the Daisy Seed embedded audio boar
 - ✅ **Zero overhead** - Direct C++ interop with no runtime cost
 - ✅ **Type safety** - Nim's strong type system catches errors at compile time
 - ✅ **Clean API** - Idiomatic Nim interfaces to libDaisy functionality
-- ✅ **Comprehensive** - Covers core audio, peripherals, USB, storage, and more
-- ✅ **Production ready** - 36 tested examples demonstrating real-world usage
+- ✅ **Comprehensive** - Covers core audio, peripherals, USB, storage, sensors, and more
+- ✅ **Production ready** - 50 tested examples demonstrating real-world usage
 - ✅ **Well documented** - Complete API reference and technical documentation
-- ✅ **Many examples** - 36 working examples covering all features
-- ✅ **41 modules** - Comprehensive hardware and utility coverage
+- ✅ **Many examples** - 50 working examples covering all features
+- ✅ **59 modules** - Comprehensive hardware and utility coverage including sensors, LED drivers, and I/O expansion
 
 ## Quick Start
 
@@ -63,6 +63,23 @@ cd libdaisy_nim/examples
 make                    # Builds current TARGET
 make program-dfu        # Flash to Daisy via USB
 ```
+
+### Applying Patches (Required for ICM20948 Sensor)
+
+**Note**: If you plan to use the ICM20948 9-axis IMU sensor, you must apply a patch to libDaisy first:
+
+```bash
+cd libdaisy_nim
+./apply_patches.sh
+```
+
+This fixes an upstream bug in libDaisy's ICM20948 magnetometer initialization. See `patches/README.md` for details. The patch is safe and only affects ICM20948 functionality.
+
+**Why is this needed?**
+- The ICM20948 module in libDaisy has a bug preventing magnetometer initialization
+- We've created a minimal 1-line patch that fixes the issue
+- This patch has been prepared for upstream submission to libDaisy
+- Other sensors (APDS9960, DPS310, TLV493D, MPR121, NeoTrellis) work without patches
 
 See **[QUICKSTART.md](docs/QUICKSTART.md)** for detailed setup instructions.
 
@@ -120,13 +137,28 @@ The Daisy Seed is a powerful embedded audio platform perfect for:
 - ✅ **UniqueId** - STM32 device unique identifier
 - ✅ **CpuLoad** - Real-time CPU usage monitoring
 
+### Sensor Modules (NEW in v0.8.0)
+- ✅ **ICM20948** - 9-axis IMU (gyro, accel, magnetometer, temp) - I2C/SPI
+- ✅ **APDS9960** - Gesture/proximity/RGB/light sensor - I2C
+- ✅ **DPS310** - Barometric pressure and altitude sensor - I2C/SPI
+- ✅ **TLV493D** - 3D magnetic field sensor - I2C
+- ✅ **MPR121** - 12-channel capacitive touch controller - I2C
+- ✅ **NeoTrellis** - 4x4 RGB LED button matrix (Adafruit seesaw) - I2C
+
+### Audio Codecs & Displays (NEW in v0.7.0)
+- ✅ **AK4556** - Audio codec for Daisy Seed 1.0
+- ✅ **WM8731** - I2C audio codec for Daisy Seed 1.1
+- ✅ **PCM3060** - High-performance codec for Daisy Seed 2.0
+- ✅ **LCD HD44780** - Character LCD driver (16x2, 20x4)
+- ✅ **OLED Fonts** - 8 bitmap fonts for OLED displays
+
 ### Boards
 - ✅ **Daisy Seed** - Core development board
 - ✅ **Daisy Patch** - Eurorack module format (NEW in v0.3.0)
 
 ## Examples
 
-The `examples/` directory contains 36 production-ready examples:
+The `examples/` directory contains 50 production-ready examples:
 
 | Category | Example | Description |
 |----------|---------|-------------|
@@ -197,7 +229,7 @@ libdaisy_nim/
 │   ├── HARDWARE_TESTING.md   # Community testing guide
 │   └── CHANGELOG.md          # Version history
 │
-├── src/                   # Wrapper source code (41 modules)
+├── src/                   # Wrapper source code (59 modules)
 │   ├── libdaisy.nim          # Core API (GPIO, audio, system)
 │   ├── libdaisy_macros.nim   # Compile-time macro system
 │   ├── libdaisy_adc.nim      # ADC (analog input)

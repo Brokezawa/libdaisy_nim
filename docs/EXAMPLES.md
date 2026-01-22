@@ -147,6 +147,40 @@ If you find a discrepancy:
 | **control_mapping.nim** | Parameter Mapping | Serial output | Shows Parameter curves (linear/exp/log/cubic) and MappedValue quantization. Simulates synth controls: frequency (exp curve), filter (linear), resonance (log), steps (quantized). Prints mapped values. | Values out of range = curve misconfiguration | ⬜ |
 | **system_info.nim** | System Monitoring | Serial output | Displays STM32 unique device ID (96-bit hex). Real-time CPU load monitoring showing average and peak usage. Performance tips based on CPU load thresholds. Runs indefinitely. | CPU = 0% = CpuLoad not measuring; ID all zeros = chip issue | ⬜ |
 
+### Sensor Examples (v0.8.0)
+
+| Example | Category | Hardware Required | Expected Behavior | Common Issues | Status |
+|---------|----------|-------------------|-------------------|---------------|--------|
+| **imu_demo.nim** | IMU/Motion | ICM20948 9-axis IMU on I2C (D11=SCL, D12=SDA) | 9-axis motion tracking demo. Accelerometer controls audio volume (tilt), gyroscope controls panning (rotation), magnetometer visualized via LEDs. Serial output shows all sensor readings (accel, gyro, mag, temp) every 100ms. Temperature monitoring included. **Note**: Requires libDaisy patch (see patches/README.md). | No magnetometer data = patch not applied; Noisy readings = sensor not calibrated; I2C errors = check connections | ⚠️ |
+| **gesture_control.nim** | Gesture/Light | APDS9960 sensor on I2C (D11=SCL, D12=SDA) | Gesture-based audio manipulation. Swipe gestures (up/down/left/right/near/far) control audio effects. Proximity detection adjusts parameters. RGB color sensing provides visual feedback. LED indicators show recognized gestures. Serial output for debugging gesture events. | No gestures detected = check sensor orientation; False triggers = adjust thresholds; I2C timeout = check pull-ups | ⚠️ |
+| **environmental.nim** | Environment/Mag | DPS310 (0x77) + TLV493D (0x5E) on I2C (D11=SCL, D12=SDA) | Dual-sensor environmental monitoring. Real-time pressure and altitude display from DPS310. Temperature monitoring. 3-axis magnetic field visualization from TLV493D. Dual I2C device demonstration. Serial output every 500ms with all readings. | Wrong altitude = set sea level pressure; Mag interference = remove nearby magnets; Address conflict = check sensor addresses | ⚠️ |
+| **touch_sequencer.nim** | Touch/RGB | MPR121 (0x5A) + NeoTrellis (0x2E) on I2C (D11=SCL, D12=SDA) | 16-step audio sequencer. MPR121 provides 12 capacitive touch inputs for step programming. NeoTrellis 4x4 RGB LED matrix shows active steps with color feedback. Real-time playback control. Visual feedback for all touch events. Demonstrates synchronized I2C peripherals. | Touch not detected = adjust sensitivity; LEDs wrong color = check RGB order; Steps skip = timing issue | ⚠️ |
+
+**Hardware Notes for Sensor Examples:**
+- All sensor examples use I2C on pins D11 (SCL) and D12 (SDA)
+- I2C pull-up resistors (4.7kΩ typical) required on SCL and SDA lines
+- Power sensors from 3.3V output (most sensors are 3.3V only)
+- ICM20948 example requires applying libDaisy patch before compilation
+- Status "⚠️" indicates compilation verified but untested on actual hardware
+- Sensor addresses shown in parentheses (verify with i2c_scanner.nim if issues)
+
+### LED Drivers & I/O Expansion Examples (v0.9.0)
+
+| Example | Category | Hardware Required | Expected Behavior | Common Issues | Status |
+|---------|----------|-------------------|-------------------|---------------|--------|
+| **led_drivers.nim** | LED Driver/PWM | PCA9685 16-ch PWM driver on I2C (D11=SCL, D12=SDA), 16 LEDs, optional OE pin on D10 | Smooth wave pattern across 16 LEDs. Each LED brightness controlled independently via PCA9685 PWM driver. Sine wave animation creates traveling wave effect. Updates at 10Hz. Uses DMA for efficient I2C transfers with gamma correction. | No LEDs = check I2C address (default 0x40); Flickering = DMA buffer issue; All LEDs same brightness = channel addressing wrong | ⬜ |
+| **io_expansion.nim** | GPIO/I2C | MCP23017 16-bit I/O expander on I2C (D11=SCL, D12=SDA), 8 buttons on Port A, 8 LEDs on Port B | Reads 8 buttons and mirrors state to 8 LEDs in real-time. Port A configured as inputs with pullups, Port B as outputs. LED turns ON when corresponding button pressed. Demonstrates basic GPIO expansion for button/LED applications. | No response = check I2C address (0x20-0x27); Inverted LEDs = check active-high/low wiring; Stuck buttons = verify pullup config | ⬜ |
+| **cv_expander.nim** | CV/DAC/ADC | MAX11300 PIXI breakout on SPI (D7=MOSI, D8=MISO, D9=SCK, D10=CS) | CV pass-through demo for Eurorack. Reads analog CV input on pin 0 (±5V range) and outputs same voltage on pin 1. Demonstrates mixed-signal I/O configuration. Note: Simplified example shows basic SPI protocol. | No output = check SPI wiring; Wrong voltage = verify DAC/ADC range config (±5V); Device not responding = verify CS pin | ⬜ |
+| **vu_meter.nim** | Audio/LED | APA102/SK9822 DotStar LED strip (16 LEDs) on SPI (D7=MOSI, D9=SCK), audio input | Stereo VU meter with RGB LEDs. Left channel (LEDs 0-7) shows green-to-red gradient, right channel (LEDs 8-15) shows blue-to-red gradient. Peak detection with smooth decay. Audio passthrough. Updates at 50Hz. 8 levels per channel. | LEDs wrong color = check color_order (GRB/RGB); No response to audio = verify audio input; Too bright = reduce global brightness | ⬜ |
+
+**Hardware Notes for LED/IO Examples:**
+- LED driver and GPIO expansion use I2C on pins D11 (SCL) and D12 (SDA)
+- I2C pull-up resistors (4.7kΩ typical) required on SCL and SDA lines
+- DotStar and MAX11300 use SPI interface (faster than I2C for high-bandwidth data)
+- PCA9685 supports up to 62 devices on same I2C bus (different addresses)
+- DotStar strips can be chained (up to 64 pixels per driver recommended)
+- All examples compile successfully (100% pass rate as of v0.9.0)
+
 ### Special Examples
 
 | Example | Category | Hardware Required | Expected Behavior | Common Issues | Status |
@@ -263,6 +297,7 @@ Wiring:
 
 ```
 Examples: i2c_scanner.nim, oled_basic.nim, oled_graphics.nim
+Sensors (v0.8.0): imu_demo.nim, gesture_control.nim, environmental.nim, touch_sequencer.nim
 
 Wiring:
   D11 (SCL) ──┬──── Device SCL
@@ -282,6 +317,15 @@ Wiring:
 ```
 
 **Note:** Many I2C breakout boards include pull-ups. Check before adding external resistors.
+
+**Sensor-specific notes (v0.8.0):**
+- ICM20948 (IMU): Supports both I2C and SPI, example uses I2C at address 0x68/0x69
+- APDS9960 (Gesture): I2C only, default address 0x39
+- DPS310 (Pressure): Supports both I2C and SPI, example uses I2C at address 0x77
+- TLV493D (Magnetic): I2C only, default address 0x5E
+- MPR121 (Touch): I2C only, default address 0x5A
+- NeoTrellis (RGB buttons): I2C only (Adafruit seesaw), default address 0x2E
+- Run `i2c_scanner.nim` to verify sensor addresses if experiencing connection issues
 
 ### SPI Setup
 
@@ -542,6 +586,123 @@ Features tested:
   - UniqueId (STM32 96-bit device ID)
   - CpuLoad (real-time CPU usage monitoring)
   - Performance monitoring and optimization tips
+```
+
+### LED Drivers & I/O Expansion Setup (v0.9.0)
+
+**Required for led_drivers.nim:** PCA9685 16-channel PWM breakout, 16 LEDs
+
+```
+Example: led_drivers.nim
+
+I2C wiring:
+  D11 (SCL) ──┬──── PCA9685 SCL
+              │
+            4.7kΩ
+              │
+             3.3V
+
+  D12 (SDA) ──┬──── PCA9685 SDA
+              │
+            4.7kΩ
+              │
+             3.3V
+
+  D10 ──────────── PCA9685 OE (Output Enable, optional)
+  3.3V ───────────  PCA9685 VCC
+  5V ────────────── PCA9685 V+ (LED power supply)
+  GND ───────────── PCA9685 GND
+
+LED connections (per channel):
+  PCA9685 CH0-15 ──── LED anode (+) ──── LED cathode (-) ──── GND
+
+Features demonstrated:
+  - 16-channel PWM control
+  - DMA I2C transfers
+  - Gamma correction
+  - Multi-chip support (up to 62 devices)
+  - Sine wave animation
+```
+
+**Required for io_expansion.nim:** MCP23017 16-bit I/O expander, 8 buttons, 8 LEDs
+
+```
+Example: io_expansion.nim
+
+I2C wiring (same as above):
+  D11 (SCL), D12 (SDA) with 4.7kΩ pull-ups to 3.3V
+  MCP23017 VCC ──── 3.3V
+  MCP23017 GND ──── GND
+  A0, A1, A2 ────── GND (address = 0x20)
+
+Port A inputs (buttons):
+  GPA0-7 ──── Button ──── GND
+  
+Port B outputs (LEDs):
+  GPB0-7 ──── 220Ω ──── LED+ ──── LED- ──── GND
+
+Features demonstrated:
+  - 16-bit GPIO expansion
+  - Configurable pull-ups
+  - Port-wide read/write
+  - Button debouncing
+```
+
+**Required for cv_expander.nim:** MAX11300 PIXI breakout
+
+```
+Example: cv_expander.nim
+
+SPI wiring:
+  D7 (MOSI) ──── MAX11300 MOSI
+  D8 (MISO) ──── MAX11300 MISO
+  D9 (SCK)  ──── MAX11300 SCK
+  D10 (CS)  ──── MAX11300 CS
+  3.3V ─────────  MAX11300 VDD
+  GND ──────────── MAX11300 GND
+  
+CV connections:
+  Pin 0 ──── Eurorack CV input (±5V)
+  Pin 1 ──── Eurorack CV output (±5V)
+
+Features demonstrated:
+  - Mixed-signal I/O (ADC/DAC/GPIO)
+  - Multiple voltage ranges (±5V, ±10V, 0-10V)
+  - 12-bit resolution
+  - SPI protocol
+  
+Note: This is a simplified example. Full Eurorack integration
+requires proper voltage scaling and buffering circuits.
+```
+
+**Required for vu_meter.nim:** APA102/SK9822 DotStar LED strip (16 pixels), audio input
+
+```
+Example: vu_meter.nim
+
+SPI wiring:
+  D7 (MOSI) ──── DotStar DI (Data In)
+  D9 (SCK)  ──── DotStar CI (Clock In)
+  5V ───────────  DotStar 5V (external PSU if >8 LEDs)
+  GND ──────────── DotStar GND
+  
+Audio wiring:
+  IN_L  ──── Audio source left
+  IN_R  ──── Audio source right
+  OUT_L ──── Headphones/amp left
+  OUT_R ──── Headphones/amp right
+  AGND  ──── Audio ground
+
+Features demonstrated:
+  - SPI RGB LED control (APA102/SK9822)
+  - Audio peak detection
+  - Stereo VU metering
+  - Color gradients
+  - Smooth decay curves
+  
+Note: DotStar strips require external 5V power supply for
+more than 8 LEDs at high brightness. Keep global brightness
+low (5-10) to avoid overloading USB power.
 ```
 
 ### Daisy Patch Setup

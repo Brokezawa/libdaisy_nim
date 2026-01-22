@@ -2069,6 +2069,907 @@ display.writeString("Hello", Font_7x10, true)  # true = white text
 
 ---
 
+## Sensor Modules (v0.8.0)
+
+### ICM20948 9-Axis IMU Module (icm20948.nim)
+
+**Import:**
+```nim
+import src/dev/icm20948
+import src/libdaisy_i2c  # or libdaisy_spi
+```
+
+**Description:**
+9-axis motion sensor with 3-axis gyroscope, 3-axis accelerometer, 3-axis magnetometer (AK09916), and temperature sensor. Supports both I2C and SPI interfaces.
+
+**Important:** Requires applying libDaisy patch before use. See `patches/README.md` for details.
+
+**Types:**
+```nim
+type
+  AccelFullScale* {.size: sizeof(cint).} = enum
+    ## Accelerometer full scale range
+    ACCEL_RANGE_2G = 0
+    ACCEL_RANGE_4G = 1
+    ACCEL_RANGE_8G = 2
+    ACCEL_RANGE_16G = 3
+
+  GyroFullScale* {.size: sizeof(cint).} = enum
+    ## Gyroscope full scale range
+    GYRO_RANGE_250DPS = 0
+    GYRO_RANGE_500DPS = 1
+    GYRO_RANGE_1000DPS = 2
+    GYRO_RANGE_2000DPS = 3
+
+  ICM20948I2CTransportConfig* = object
+    ## I2C transport configuration
+    periph*: I2CPeripheral
+    speed*: I2CSpeed
+    scl*: Pin
+    sda*: Pin
+    address*: uint8  # 0x68 (AD0=LOW) or 0x69 (AD0=HIGH)
+
+  ICM20948Config* = object
+    ## Main configuration structure
+    transport_config*: ICM20948I2CTransportConfig  # or SPITransportConfig
+    accel_scale*: AccelFullScale
+    gyro_scale*: GyroFullScale
+    accel_odr_div*: uint16  # Sample rate divider (1-4095)
+    gyro_odr_div*: uint8    # Sample rate divider (0-255)
+
+  ICM20948I2C* = object
+    ## Main sensor type (I2C version)
+
+  ICM20948Data* = object
+    ## Sensor reading structure
+    accel_x*, accel_y*, accel_z*: float32  # m/s²
+    gyro_x*, gyro_y*, gyro_z*: float32     # degrees/sec
+    mag_x*, mag_y*, mag_z*: float32        # microtesla (µT)
+    temp*: float32                          # Celsius
+```
+
+**Methods:**
+```nim
+proc init*(config: ICM20948Config): Result[ICM20948I2C, string]
+  ## Initialize the sensor. Returns Result with sensor object or error message.
+
+proc read*(imu: var ICM20948I2C): ICM20948Data
+  ## Read accelerometer and gyroscope data (not magnetometer)
+
+proc setupMag*(imu: var ICM20948I2C): bool
+  ## Initialize magnetometer (AK09916). Returns true on success.
+  ## Requires libDaisy patch to function correctly.
+
+proc readMag*(imu: var ICM20948I2C): tuple[x, y, z: float32]
+  ## Read magnetometer data in microtesla (µT)
+
+proc getTemp*(imu: var ICM20948I2C): float32
+  ## Read temperature in Celsius
+```
+
+**Example:**
+```nim
+import src/dev/icm20948
+import src/libdaisy_i2c
+
+var config: ICM20948Config
+config.transport_config.periph = I2C_1
+config.transport_config.speed = I2C_400KHZ
+config.transport_config.scl = D11()
+config.transport_config.sda = D12()
+config.transport_config.address = 0x68
+config.accel_scale = ACCEL_RANGE_4G
+config.gyro_scale = GYRO_RANGE_500DPS
+
+let result = init(config)
+if result.isOk:
+  var imu = result.get()
+  discard imu.setupMag()  # Enable magnetometer
+  
+  while true:
+    let data = imu.read()
+    let mag = imu.readMag()
+    # Use data.accel_x, data.gyro_y, mag.x, etc.
+```
+
+---
+
+### APDS9960 Gesture/Light Sensor Module (apds9960.nim)
+
+**Import:**
+```nim
+import src/dev/apds9960
+import src/libdaisy_i2c
+```
+
+**Description:**
+Multi-function sensor with gesture recognition, proximity detection, RGB color sensing, and ambient light detection. I2C interface only.
+
+**Types:**
+```nim
+type
+  Gesture* {.size: sizeof(cint).} = enum
+    ## Recognized gestures
+    NONE = 0
+    UP = 1
+    DOWN = 2
+    LEFT = 3
+    RIGHT = 4
+    NEAR = 5
+    FAR = 6
+
+  APDS9960I2CTransportConfig* = object
+    periph*: I2CPeripheral
+    speed*: I2CSpeed
+    scl*: Pin
+    sda*: Pin
+
+  APDS9960Config* = object
+    transport_config*: APDS9960I2CTransportConfig
+
+  APDS9960I2C* = object
+    ## Main sensor type
+```
+
+**Methods:**
+```nim
+proc init*(config: APDS9960Config): Result[APDS9960I2C, string]
+  ## Initialize the sensor
+
+proc enableGesture*(sensor: var APDS9960I2C, enable: bool): bool
+  ## Enable or disable gesture detection. Returns true on success.
+
+proc readGesture*(sensor: var APDS9960I2C): Gesture
+  ## Read detected gesture. Returns NONE if no gesture detected.
+
+proc readProximity*(sensor: var APDS9960I2C): uint8
+  ## Read proximity value (0-255, higher = closer)
+
+proc readColor*(sensor: var APDS9960I2C): tuple[r, g, b, c: uint16]
+  ## Read RGBC values (16-bit per channel, c = clear/ambient)
+
+proc setGestureGain*(sensor: var APDS9960I2C, gain: uint8): bool
+  ## Set gesture sensitivity (0=1x, 1=2x, 2=4x, 3=8x)
+```
+
+**Example:**
+```nim
+import src/dev/apds9960
+
+var config: APDS9960Config
+config.transport_config.periph = I2C_1
+config.transport_config.speed = I2C_400KHZ
+config.transport_config.scl = D11()
+config.transport_config.sda = D12()
+
+let result = init(config)
+if result.isOk:
+  var sensor = result.get()
+  discard sensor.enableGesture(true)
+  
+  while true:
+    let gesture = sensor.readGesture()
+    if gesture != NONE:
+      # Handle UP, DOWN, LEFT, RIGHT, NEAR, FAR
+      discard
+```
+
+---
+
+### DPS310 Barometric Pressure Sensor Module (dps310.nim)
+
+**Import:**
+```nim
+import src/dev/dps310
+import src/libdaisy_i2c  # or libdaisy_spi
+```
+
+**Description:**
+High-precision barometric pressure and temperature sensor with altitude calculation. Supports both I2C and SPI interfaces.
+
+**Types:**
+```nim
+type
+  DPS310I2CTransportConfig* = object
+    periph*: I2CPeripheral
+    speed*: I2CSpeed
+    scl*: Pin
+    sda*: Pin
+
+  DPS310Config* = object
+    transport_config*: DPS310I2CTransportConfig  # or SPITransportConfig
+
+  DPS310I2C* = object
+    ## Main sensor type (I2C version)
+```
+
+**Methods:**
+```nim
+proc init*(config: DPS310Config): Result[DPS310I2C, string]
+  ## Initialize the sensor
+
+proc startContinuous*(sensor: var DPS310I2C): bool
+  ## Start continuous measurement mode. Returns true on success.
+
+proc getData*(sensor: var DPS310I2C): tuple[pressure: float32, hasData: bool]
+  ## Read pressure in Pascals (Pa). hasData indicates if new data available.
+
+proc getTemperatureC*(sensor: var DPS310I2C): float32
+  ## Read temperature in Celsius
+
+proc getAltitude*(sensor: var DPS310I2C, seaLevelPressure: float32 = 101325.0): float32
+  ## Calculate altitude in meters from current pressure
+  ## seaLevelPressure: reference pressure in Pa (default 101325 Pa = 1013.25 hPa)
+```
+
+**Example:**
+```nim
+import src/dev/dps310
+
+var config: DPS310Config
+config.transport_config.periph = I2C_1
+config.transport_config.speed = I2C_400KHZ
+config.transport_config.scl = D11()
+config.transport_config.sda = D12()
+
+let result = init(config)
+if result.isOk:
+  var sensor = result.get()
+  discard sensor.startContinuous()
+  
+  while true:
+    let (pressure, hasData) = sensor.getData()
+    if hasData:
+      let temp = sensor.getTemperatureC()
+      let altitude = sensor.getAltitude()  # Default sea level pressure
+      # pressure in Pa, temp in °C, altitude in meters
+```
+
+---
+
+### TLV493D 3D Magnetic Sensor Module (tlv493d.nim)
+
+**Import:**
+```nim
+import src/dev/tlv493d
+import src/libdaisy_i2c
+```
+
+**Description:**
+3-axis magnetic field sensor with 12-bit resolution. I2C interface only. Useful for position sensing, compass applications, and magnetic field measurement.
+
+**Types:**
+```nim
+type
+  TLV493DI2CTransportConfig* = object
+    periph*: I2CPeripheral
+    speed*: I2CSpeed
+    scl*: Pin
+    sda*: Pin
+
+  TLV493DConfig* = object
+    transport_config*: TLV493DI2CTransportConfig
+
+  TLV493DI2C* = object
+    ## Main sensor type
+```
+
+**Methods:**
+```nim
+proc init*(config: TLV493DConfig): Result[TLV493DI2C, string]
+  ## Initialize the sensor
+
+proc result*(sensor: var TLV493DI2C): tuple[x, y, z: float32]
+  ## Read magnetic field values in millitesla (mT)
+  ## Returns x, y, z magnetic field components
+```
+
+**Example:**
+```nim
+import src/dev/tlv493d
+
+var config: TLV493DConfig
+config.transport_config.periph = I2C_1
+config.transport_config.speed = I2C_400KHZ
+config.transport_config.scl = D11()
+config.transport_config.sda = D12()
+
+let result = init(config)
+if result.isOk:
+  var sensor = result.get()
+  
+  while true:
+    let mag = sensor.result()
+    # mag.x, mag.y, mag.z in millitesla (mT)
+```
+
+---
+
+### MPR121 Capacitive Touch Sensor Module (mpr121.nim)
+
+**Import:**
+```nim
+import src/dev/mpr121
+import src/libdaisy_i2c
+```
+
+**Description:**
+12-channel capacitive touch controller. Detects touch/release on 12 independent electrodes. I2C interface only.
+
+**Types:**
+```nim
+type
+  MPR121I2CTransportConfig* = object
+    periph*: I2CPeripheral
+    speed*: I2CSpeed
+    scl*: Pin
+    sda*: Pin
+
+  MPR121Config* = object
+    transport_config*: MPR121I2CTransportConfig
+
+  MPR121I2C* = object
+    ## Main sensor type
+```
+
+**Methods:**
+```nim
+proc init*(config: MPR121Config): Result[MPR121I2C, string]
+  ## Initialize the sensor with default touch/release thresholds
+
+proc touched*(sensor: var MPR121I2C): uint16
+  ## Read touch state of all 12 channels as bitmask
+  ## Bit 0 = channel 0, bit 1 = channel 1, etc.
+  ## Returns 0 if no channels touched
+
+proc setThresholds*(sensor: var MPR121I2C, touch, release: uint8): bool
+  ## Set global touch and release thresholds for all channels
+  ## Higher values = less sensitive (default: touch=12, release=6)
+```
+
+**Example:**
+```nim
+import src/dev/mpr121
+
+var config: MPR121Config
+config.transport_config.periph = I2C_1
+config.transport_config.speed = I2C_400KHZ
+config.transport_config.scl = D11()
+config.transport_config.sda = D12()
+
+let result = init(config)
+if result.isOk:
+  var sensor = result.get()
+  
+  while true:
+    let state = sensor.touched()
+    
+    # Check individual channels
+    if (state and (1 shl 0)) != 0:
+      # Channel 0 is touched
+      discard
+    if (state and (1 shl 5)) != 0:
+      # Channel 5 is touched
+      discard
+```
+
+---
+
+### NeoTrellis 4x4 RGB Button Pad Module (neotrellis.nim)
+
+**Import:**
+```nim
+import src/dev/neotrellis
+import src/libdaisy_i2c
+```
+
+**Description:**
+4x4 matrix of mechanical switches with RGB LEDs. Based on Adafruit seesaw firmware. I2C interface only.
+
+**Types:**
+```nim
+type
+  NeoTrellisI2CTransportConfig* = object
+    periph*: I2CPeripheral
+    speed*: I2CSpeed
+    scl*: Pin
+    sda*: Pin
+
+  NeoTrellisConfig* = object
+    transport_config*: NeoTrellisI2CTransportConfig
+
+  NeoTrellisI2C* = object
+    ## Main device type
+
+  KeyEvent* = object
+    ## Button event structure
+    key*: uint8   # Key number (0-15)
+    edge*: uint8  # 0=released, 1=pressed
+```
+
+**Methods:**
+```nim
+proc init*(config: NeoTrellisConfig): Result[NeoTrellisI2C, string]
+  ## Initialize the device
+
+proc setPixelColor*(trellis: var NeoTrellisI2C, index: uint8, r, g, b: uint8): bool
+  ## Set RGB color for button LED (index 0-15)
+  ## Returns true on success
+
+proc show*(trellis: var NeoTrellisI2C): bool
+  ## Update all LEDs with set colors. Must call after setPixelColor.
+
+proc readButtons*(trellis: var NeoTrellisI2C): seq[KeyEvent]
+  ## Read button events since last call
+  ## Returns sequence of press/release events
+```
+
+**Example:**
+```nim
+import src/dev/neotrellis
+
+var config: NeoTrellisConfig
+config.transport_config.periph = I2C_1
+config.transport_config.speed = I2C_400KHZ
+config.transport_config.scl = D11()
+config.transport_config.sda = D12()
+
+let result = init(config)
+if result.isOk:
+  var trellis = result.get()
+  
+  # Set button 0 to red
+  discard trellis.setPixelColor(0, 255, 0, 0)
+  discard trellis.show()
+  
+  while true:
+    let events = trellis.readButtons()
+    for event in events:
+      if event.edge == 1:
+        # Button pressed
+        discard trellis.setPixelColor(event.key, 0, 255, 0)  # Green
+      else:
+        # Button released
+        discard trellis.setPixelColor(event.key, 0, 0, 0)    # Off
+    discard trellis.show()
+```
+
+---
+
+## LED Drivers & I/O Expansion Modules (v0.9.0)
+
+### PCA9685 LED Driver Module (leddriver.nim)
+
+**Import:**
+```nim
+import src/dev/leddriver
+import src/libdaisy_i2c
+```
+
+**Description:**
+16-channel 12-bit PWM LED driver chip via I2C. Supports multiple chips daisy-chained on a single bus (up to 62 chips). Features double-buffered DMA transfers for flicker-free updates and built-in gamma correction.
+
+**Types:**
+```nim
+type
+  LedDriverConfig*[N: static int] = object
+    i2c_config*: I2CConfig
+    addresses*: array[N, uint8]  # I2C addresses (0-63, ORed with 0x40)
+    oe_pin*: Pin                 # Optional output enable pin
+  
+  LedDriverPca9685*[N, P: static int] = object
+    ## N = number of chips, P = buffer persistence (true/false)
+  
+  LedDriverDmaBuffer*[N: static int] = array[N, Pca9685TransmitBuffer]
+```
+
+**Methods:**
+```nim
+proc init*[N, P](driver: var LedDriverPca9685[N, P], 
+                 config: LedDriverConfig[N],
+                 dmaBufferA: ptr LedDriverDmaBuffer[N],
+                 dmaBufferB: ptr LedDriverDmaBuffer[N])
+  ## Initialize LED driver with double buffers in D2 memory
+
+proc setLed*[N, P](driver: var LedDriverPca9685[N, P], 
+                   ledIndex: int, brightness: float32)
+  ## Set LED brightness (0.0-1.0) with gamma correction
+
+proc setAllTo*[N, P](driver: var LedDriverPca9685[N, P], brightness: float32)
+  ## Set all LEDs to same brightness
+
+proc swapBuffersAndTransmit*[N, P](driver: var LedDriverPca9685[N, P])
+  ## Swap draw/transmit buffers and start DMA (non-blocking)
+```
+
+**Example:**
+```nim
+import src/dev/leddriver
+
+# Allocate DMA buffers in D2 memory
+var bufferA {.codegenDecl: "$# $# __attribute__((section(\".sram_d2\")))".}: LedDriverDmaBuffer[1]
+var bufferB {.codegenDecl: "$# $# __attribute__((section(\".sram_d2\")))".}: LedDriverDmaBuffer[1]
+
+var config: LedDriverConfig[1]
+config.i2c_config.periph = I2C_1
+config.i2c_config.speed = I2C_400KHZ
+config.i2c_config.scl = D11()
+config.i2c_config.sda = D12()
+config.addresses = [0'u8]  # Address 0 (jumpers open)
+
+var driver: LedDriverPca9685[1, true]
+driver.init(config, addr bufferA, addr bufferB)
+
+# Animate LEDs
+while true:
+  for led in 0 ..< 16:
+    driver.setLed(led, 0.5)
+  driver.swapBuffersAndTransmit()
+```
+
+---
+
+### DotStar RGB LED Module (dotstar.nim)
+
+**Import:**
+```nim
+import src/dev/dotstar
+import src/libdaisy_spi
+import src/libdaisy_color  # Optional, for Color type
+```
+
+**Description:**
+APA102/SK9822 addressable RGB LED strips via SPI. Up to 64 pixels with 24-bit color and 5-bit global brightness control per pixel. No timing constraints (unlike WS2812B).
+
+**Types:**
+```nim
+type
+  ColorOrder* = enum
+    RGB, RBG, GRB, GBR, BRG, BGR
+  
+  DotStarSpiTransportConfig* = object
+    periph*: SpiPeripheral
+    baud_prescaler*: SpiBaudPrescaler
+    clk_pin*: Pin
+    data_pin*: Pin
+  
+  DotStarConfig* = object
+    transport_config*: DotStarSpiTransportConfig
+    color_order*: ColorOrder
+    num_pixels*: uint16  # Max 64
+  
+  DotStarSpi* = object
+  
+  DotStarResult* = enum
+    DS_OK = 0
+    DS_ERR_INVALID_ARGUMENT
+    DS_ERR_TRANSPORT
+```
+
+**Methods:**
+```nim
+proc init*(dotstar: var DotStarSpi, config: DotStarConfig): DotStarResult
+
+proc setPixelColor*(dotstar: var DotStarSpi, idx: uint16, 
+                    r, g, b: uint8): DotStarResult
+  ## Set pixel RGB color (0-255 per channel)
+
+proc setPixelColor*(dotstar: var DotStarSpi, idx: uint16, 
+                    color: uint32): DotStarResult
+  ## Set pixel from 32-bit color value
+
+proc setPixelColor*(dotstar: var DotStarSpi, idx: uint16, 
+                    color: Color): DotStarResult
+  ## Set pixel from Color object
+
+proc fill*(dotstar: var DotStarSpi, r, g, b: uint8)
+  ## Fill all pixels with RGB color
+
+proc clear*(dotstar: var DotStarSpi)
+  ## Set all pixels to black
+
+proc setAllGlobalBrightness*(dotstar: var DotStarSpi, brightness: uint16)
+  ## Set global brightness for all pixels (0-31)
+  ## WARNING: Keep low (<=10) for SK9822-EC20 to avoid overheating
+
+proc show*(dotstar: var DotStarSpi): DotStarResult
+  ## Update LED strip with buffered colors
+```
+
+**Example:**
+```nim
+var config: DotStarConfig
+config.transport_config.periph = SPI_1
+config.transport_config.baud_prescaler = SPI_PS_4
+config.transport_config.clk_pin = D10()
+config.transport_config.data_pin = D9()
+config.color_order = GRB
+config.num_pixels = 16
+
+var leds: DotStarSpi
+if leds.init(config) == DS_OK:
+  leds.setAllGlobalBrightness(5)  # Low brightness
+  discard leds.setPixelColor(0, 255, 0, 0)  # Red
+  discard leds.fill(0, 255, 0)              # Green all
+  discard leds.show()
+```
+
+---
+
+### NeoPixel RGB LED Module (neopixel.nim)
+
+**Import:**
+```nim
+import src/dev/neopixel
+import src/libdaisy_i2c
+```
+
+**Description:**
+Simplified WS2812B control via Adafruit Seesaw I2C bridge. Avoids timing-critical bit-banging by using I2C interface.
+
+**Types:**
+```nim
+type
+  NeoPixelResult* = enum
+    NEO_OK = 0
+    NEO_ERR = 1
+  
+  NeoPixelI2CTransportConfig* = object
+    periph*: I2CPeripheral
+    speed*: I2CSpeed
+    scl*: Pin
+    sda*: Pin
+  
+  NeoPixelConfig* = object
+    transport_config*: NeoPixelI2CTransportConfig
+    num_pixels*: uint16
+  
+  NeoPixelI2C* = object
+```
+
+**Methods:**
+```nim
+proc init*(config: NeoPixelConfig): Result[NeoPixelI2C, string]
+
+proc setPixelColor*(neo: var NeoPixelI2C, idx: uint16, 
+                    r, g, b: uint8): NeoPixelResult
+
+proc show*(neo: var NeoPixelI2C): NeoPixelResult
+  ## Update LED strip
+```
+
+---
+
+### MCP23017 GPIO Expander Module (mcp23x17.nim)
+
+**Import:**
+```nim
+import src/dev/mcp23x17
+import src/libdaisy_i2c
+```
+
+**Description:**
+16-bit I/O expander via I2C. Two 8-bit ports (A and B) with configurable direction, pullups, and polarity inversion.
+
+**Types:**
+```nim
+type
+  MCPPort* = enum
+    MCP_PORT_A = 0
+    MCP_PORT_B = 1
+  
+  MCPMode* = enum
+    MCP_INPUT
+    MCP_INPUT_PULLUP
+    MCP_OUTPUT
+  
+  Mcp23017TransportConfig* = object
+    periph*: I2CPeripheral
+    speed*: I2CSpeed
+    scl*, sda*: Pin
+    address*: uint8  # Default 0x27
+  
+  Mcp23017Config* = object
+    transport_config*: Mcp23017TransportConfig
+  
+  Mcp23017* = object
+```
+
+**Methods:**
+```nim
+proc init*(mcp: var Mcp23017, config: Mcp23017Config)
+
+proc portMode*(mcp: var Mcp23017, port: MCPPort, 
+               directions, pullups, inverted: uint8)
+  ## Configure 8-bit port (1=input/0=output, 1=pullup, 1=inverted)
+
+proc digitalWrite*(mcp: var Mcp23017, port: MCPPort, value: uint8)
+  ## Write 8 bits to port
+
+proc readPort*(mcp: var Mcp23017, port: MCPPort): uint8
+  ## Read 8 bits from port
+
+proc read*(mcp: var Mcp23017): uint16
+  ## Read all 16 bits (Port A = low byte, Port B = high byte)
+
+proc getPin*(mcp: Mcp23017, pin: uint8): bool
+  ## Get single pin state from last read()
+```
+
+**Example:**
+```nim
+var config: Mcp23017Config
+config.defaults()
+
+var mcp: Mcp23017
+mcp.init(config)
+
+# Port A = inputs with pullups (0xFF = all inputs, 0xFF = all pullups)
+mcp.portMode(MCP_PORT_A, 0xFF, 0xFF, 0x00)
+
+# Port B = outputs
+mcp.portMode(MCP_PORT_B, 0x00, 0x00, 0x00)
+
+while true:
+  let inputs = mcp.readPort(MCP_PORT_A)
+  mcp.digitalWrite(MCP_PORT_B, not inputs)  # Mirror inputs to outputs
+```
+
+---
+
+### 74HC595 Shift Register Module (sr595.nim)
+
+**Import:**
+```nim
+import src/dev/sr595
+```
+
+**Description:**
+8-bit serial-in parallel-out shift register for output expansion. Template-based for compile-time chip count.
+
+**Types:**
+```nim
+type
+  ShiftReg595PinConfig* = object
+    data*: Pin    # Serial data
+    clock*: Pin   # Shift clock
+    latch*: Pin   # Storage register clock
+  
+  ShiftReg595Config* = object
+    pin_config*: ShiftReg595PinConfig
+  
+  ShiftReg595*[N: static int] = object  # N = number of chips
+```
+
+**Methods:**
+```nim
+proc init*[N](sr: var ShiftReg595[N], config: ShiftReg595Config)
+
+proc set*[N](sr: var ShiftReg595[N], chipIndex: int, value: uint8)
+  ## Set 8-bit value for one chip
+
+proc write*[N](sr: var ShiftReg595[N])
+  ## Shift out all values to hardware
+```
+
+---
+
+### 74HC4021 Shift Register Module (sr4021.nim)
+
+**Import:**
+```nim
+import src/dev/sr4021
+```
+
+**Description:**
+8-bit parallel-in serial-out shift register for input expansion. Template-based for compile-time chip count.
+
+**Types:**
+```nim
+type
+  ShiftReg4021PinConfig* = object
+    data*: Pin    # Serial data
+    clock*: Pin   # Shift clock
+    latch*: Pin   # Parallel load
+  
+  ShiftReg4021Config* = object
+    pin_config*: ShiftReg4021PinConfig
+  
+  ShiftReg4021*[N: static int] = object  # N = number of chips
+```
+
+**Methods:**
+```nim
+proc init*[N](sr: var ShiftReg4021[N], config: ShiftReg4021Config)
+
+proc update*[N](sr: var ShiftReg4021[N])
+  ## Read all chips from hardware
+
+proc getPin*[N](sr: ShiftReg4021[N], chipIndex, pinIndex: int): bool
+  ## Get single pin state (after update())
+```
+
+---
+
+### MAX11300 PIXI Module (max11300.nim)
+
+**Import:**
+```nim
+import src/dev/max11300
+import src/libdaisy_spi
+```
+
+**Description:**
+20-port programmable mixed-signal I/O for Eurorack modular synthesis. Configurable as ADC/DAC/GPIO with multiple voltage ranges. Simplified blocking SPI implementation.
+
+**Types:**
+```nim
+type
+  MAX11300Result* = enum
+    MAX_OK = 0
+    MAX_ERR = 1
+  
+  AdcVoltageRange* = enum
+    ADC_0_TO_10 = 0x0100
+    ADC_NEG5_TO_5 = 0x0200
+    ADC_NEG10_TO_0 = 0x0300
+    ADC_0_TO_2P5 = 0x0400
+  
+  DacVoltageRange* = enum
+    DAC_0_TO_10 = 0x0100
+    DAC_NEG5_TO_5 = 0x0200
+    DAC_NEG10_TO_0 = 0x0300
+  
+  MAX11300SpiConfig*[N: static int] = object
+    periph*: SpiPeripheral
+    baud_prescaler*: SpiBaudPrescaler
+    nss_pins*: array[N, Pin]  # Chip select pins
+    mosi*, miso*, sclk*: Pin
+  
+  MAX11300Config*[N: static int] = object
+    spi_config*: MAX11300SpiConfig[N]
+  
+  MAX11300*[N: static int] = object
+```
+
+**Methods:**
+```nim
+proc init*[N](pixi: var MAX11300[N], config: MAX11300Config[N]): MAX11300Result
+
+proc configurePinAsAnalogRead*[N](pixi: var MAX11300[N], chipIndex: int, 
+                                   pin: int, range: AdcVoltageRange): MAX11300Result
+  ## Configure pin as ADC input
+
+proc configurePinAsAnalogWrite*[N](pixi: var MAX11300[N], chipIndex: int,
+                                    pin: int, range: DacVoltageRange): MAX11300Result
+  ## Configure pin as DAC output
+
+proc readAnalogPinVolts*[N](pixi: var MAX11300[N], chipIndex, pin: int): float32
+  ## Read ADC value in volts
+
+proc writeAnalogPinVolts*[N](pixi: var MAX11300[N], chipIndex, pin: int, 
+                              volts: float32): MAX11300Result
+  ## Write DAC value in volts
+```
+
+**Example:**
+```nim
+var config: MAX11300Config[1]
+config.spi_config.defaults()
+
+var pixi: MAX11300[1]
+if pixi.init(config) == MAX_OK:
+  # Configure for ±5V Eurorack CV
+  discard pixi.configurePinAsAnalogRead(0, 0, ADC_NEG5_TO_5)
+  discard pixi.configurePinAsAnalogWrite(0, 1, DAC_NEG5_TO_5)
+  
+  while true:
+    let cvIn = pixi.readAnalogPinVolts(0, 0)
+    discard pixi.writeAnalogPinVolts(0, 1, cvIn)  # Pass-through
+```
+
+---
+
 For more examples, see [EXAMPLES.md](EXAMPLES.md).
 
 For technical details, see [TECHNICAL_REPORT.md](TECHNICAL_REPORT.md).
