@@ -2536,6 +2536,440 @@ if result.isOk:
 
 ---
 
+## LED Drivers & I/O Expansion Modules (v0.9.0)
+
+### PCA9685 LED Driver Module (leddriver.nim)
+
+**Import:**
+```nim
+import src/dev/leddriver
+import src/libdaisy_i2c
+```
+
+**Description:**
+16-channel 12-bit PWM LED driver chip via I2C. Supports multiple chips daisy-chained on a single bus (up to 62 chips). Features double-buffered DMA transfers for flicker-free updates and built-in gamma correction.
+
+**Types:**
+```nim
+type
+  LedDriverConfig*[N: static int] = object
+    i2c_config*: I2CConfig
+    addresses*: array[N, uint8]  # I2C addresses (0-63, ORed with 0x40)
+    oe_pin*: Pin                 # Optional output enable pin
+  
+  LedDriverPca9685*[N, P: static int] = object
+    ## N = number of chips, P = buffer persistence (true/false)
+  
+  LedDriverDmaBuffer*[N: static int] = array[N, Pca9685TransmitBuffer]
+```
+
+**Methods:**
+```nim
+proc init*[N, P](driver: var LedDriverPca9685[N, P], 
+                 config: LedDriverConfig[N],
+                 dmaBufferA: ptr LedDriverDmaBuffer[N],
+                 dmaBufferB: ptr LedDriverDmaBuffer[N])
+  ## Initialize LED driver with double buffers in D2 memory
+
+proc setLed*[N, P](driver: var LedDriverPca9685[N, P], 
+                   ledIndex: int, brightness: float32)
+  ## Set LED brightness (0.0-1.0) with gamma correction
+
+proc setAllTo*[N, P](driver: var LedDriverPca9685[N, P], brightness: float32)
+  ## Set all LEDs to same brightness
+
+proc swapBuffersAndTransmit*[N, P](driver: var LedDriverPca9685[N, P])
+  ## Swap draw/transmit buffers and start DMA (non-blocking)
+```
+
+**Example:**
+```nim
+import src/dev/leddriver
+
+# Allocate DMA buffers in D2 memory
+var bufferA {.codegenDecl: "$# $# __attribute__((section(\".sram_d2\")))".}: LedDriverDmaBuffer[1]
+var bufferB {.codegenDecl: "$# $# __attribute__((section(\".sram_d2\")))".}: LedDriverDmaBuffer[1]
+
+var config: LedDriverConfig[1]
+config.i2c_config.periph = I2C_1
+config.i2c_config.speed = I2C_400KHZ
+config.i2c_config.scl = D11()
+config.i2c_config.sda = D12()
+config.addresses = [0'u8]  # Address 0 (jumpers open)
+
+var driver: LedDriverPca9685[1, true]
+driver.init(config, addr bufferA, addr bufferB)
+
+# Animate LEDs
+while true:
+  for led in 0 ..< 16:
+    driver.setLed(led, 0.5)
+  driver.swapBuffersAndTransmit()
+```
+
+---
+
+### DotStar RGB LED Module (dotstar.nim)
+
+**Import:**
+```nim
+import src/dev/dotstar
+import src/libdaisy_spi
+import src/libdaisy_color  # Optional, for Color type
+```
+
+**Description:**
+APA102/SK9822 addressable RGB LED strips via SPI. Up to 64 pixels with 24-bit color and 5-bit global brightness control per pixel. No timing constraints (unlike WS2812B).
+
+**Types:**
+```nim
+type
+  ColorOrder* = enum
+    RGB, RBG, GRB, GBR, BRG, BGR
+  
+  DotStarSpiTransportConfig* = object
+    periph*: SpiPeripheral
+    baud_prescaler*: SpiBaudPrescaler
+    clk_pin*: Pin
+    data_pin*: Pin
+  
+  DotStarConfig* = object
+    transport_config*: DotStarSpiTransportConfig
+    color_order*: ColorOrder
+    num_pixels*: uint16  # Max 64
+  
+  DotStarSpi* = object
+  
+  DotStarResult* = enum
+    DS_OK = 0
+    DS_ERR_INVALID_ARGUMENT
+    DS_ERR_TRANSPORT
+```
+
+**Methods:**
+```nim
+proc init*(dotstar: var DotStarSpi, config: DotStarConfig): DotStarResult
+
+proc setPixelColor*(dotstar: var DotStarSpi, idx: uint16, 
+                    r, g, b: uint8): DotStarResult
+  ## Set pixel RGB color (0-255 per channel)
+
+proc setPixelColor*(dotstar: var DotStarSpi, idx: uint16, 
+                    color: uint32): DotStarResult
+  ## Set pixel from 32-bit color value
+
+proc setPixelColor*(dotstar: var DotStarSpi, idx: uint16, 
+                    color: Color): DotStarResult
+  ## Set pixel from Color object
+
+proc fill*(dotstar: var DotStarSpi, r, g, b: uint8)
+  ## Fill all pixels with RGB color
+
+proc clear*(dotstar: var DotStarSpi)
+  ## Set all pixels to black
+
+proc setAllGlobalBrightness*(dotstar: var DotStarSpi, brightness: uint16)
+  ## Set global brightness for all pixels (0-31)
+  ## WARNING: Keep low (<=10) for SK9822-EC20 to avoid overheating
+
+proc show*(dotstar: var DotStarSpi): DotStarResult
+  ## Update LED strip with buffered colors
+```
+
+**Example:**
+```nim
+var config: DotStarConfig
+config.transport_config.periph = SPI_1
+config.transport_config.baud_prescaler = SPI_PS_4
+config.transport_config.clk_pin = D10()
+config.transport_config.data_pin = D9()
+config.color_order = GRB
+config.num_pixels = 16
+
+var leds: DotStarSpi
+if leds.init(config) == DS_OK:
+  leds.setAllGlobalBrightness(5)  # Low brightness
+  discard leds.setPixelColor(0, 255, 0, 0)  # Red
+  discard leds.fill(0, 255, 0)              # Green all
+  discard leds.show()
+```
+
+---
+
+### NeoPixel RGB LED Module (neopixel.nim)
+
+**Import:**
+```nim
+import src/dev/neopixel
+import src/libdaisy_i2c
+```
+
+**Description:**
+Simplified WS2812B control via Adafruit Seesaw I2C bridge. Avoids timing-critical bit-banging by using I2C interface.
+
+**Types:**
+```nim
+type
+  NeoPixelResult* = enum
+    NEO_OK = 0
+    NEO_ERR = 1
+  
+  NeoPixelI2CTransportConfig* = object
+    periph*: I2CPeripheral
+    speed*: I2CSpeed
+    scl*: Pin
+    sda*: Pin
+  
+  NeoPixelConfig* = object
+    transport_config*: NeoPixelI2CTransportConfig
+    num_pixels*: uint16
+  
+  NeoPixelI2C* = object
+```
+
+**Methods:**
+```nim
+proc init*(config: NeoPixelConfig): Result[NeoPixelI2C, string]
+
+proc setPixelColor*(neo: var NeoPixelI2C, idx: uint16, 
+                    r, g, b: uint8): NeoPixelResult
+
+proc show*(neo: var NeoPixelI2C): NeoPixelResult
+  ## Update LED strip
+```
+
+---
+
+### MCP23017 GPIO Expander Module (mcp23x17.nim)
+
+**Import:**
+```nim
+import src/dev/mcp23x17
+import src/libdaisy_i2c
+```
+
+**Description:**
+16-bit I/O expander via I2C. Two 8-bit ports (A and B) with configurable direction, pullups, and polarity inversion.
+
+**Types:**
+```nim
+type
+  MCPPort* = enum
+    MCP_PORT_A = 0
+    MCP_PORT_B = 1
+  
+  MCPMode* = enum
+    MCP_INPUT
+    MCP_INPUT_PULLUP
+    MCP_OUTPUT
+  
+  Mcp23017TransportConfig* = object
+    periph*: I2CPeripheral
+    speed*: I2CSpeed
+    scl*, sda*: Pin
+    address*: uint8  # Default 0x27
+  
+  Mcp23017Config* = object
+    transport_config*: Mcp23017TransportConfig
+  
+  Mcp23017* = object
+```
+
+**Methods:**
+```nim
+proc init*(mcp: var Mcp23017, config: Mcp23017Config)
+
+proc portMode*(mcp: var Mcp23017, port: MCPPort, 
+               directions, pullups, inverted: uint8)
+  ## Configure 8-bit port (1=input/0=output, 1=pullup, 1=inverted)
+
+proc digitalWrite*(mcp: var Mcp23017, port: MCPPort, value: uint8)
+  ## Write 8 bits to port
+
+proc readPort*(mcp: var Mcp23017, port: MCPPort): uint8
+  ## Read 8 bits from port
+
+proc read*(mcp: var Mcp23017): uint16
+  ## Read all 16 bits (Port A = low byte, Port B = high byte)
+
+proc getPin*(mcp: Mcp23017, pin: uint8): bool
+  ## Get single pin state from last read()
+```
+
+**Example:**
+```nim
+var config: Mcp23017Config
+config.defaults()
+
+var mcp: Mcp23017
+mcp.init(config)
+
+# Port A = inputs with pullups (0xFF = all inputs, 0xFF = all pullups)
+mcp.portMode(MCP_PORT_A, 0xFF, 0xFF, 0x00)
+
+# Port B = outputs
+mcp.portMode(MCP_PORT_B, 0x00, 0x00, 0x00)
+
+while true:
+  let inputs = mcp.readPort(MCP_PORT_A)
+  mcp.digitalWrite(MCP_PORT_B, not inputs)  # Mirror inputs to outputs
+```
+
+---
+
+### 74HC595 Shift Register Module (sr595.nim)
+
+**Import:**
+```nim
+import src/dev/sr595
+```
+
+**Description:**
+8-bit serial-in parallel-out shift register for output expansion. Template-based for compile-time chip count.
+
+**Types:**
+```nim
+type
+  ShiftReg595PinConfig* = object
+    data*: Pin    # Serial data
+    clock*: Pin   # Shift clock
+    latch*: Pin   # Storage register clock
+  
+  ShiftReg595Config* = object
+    pin_config*: ShiftReg595PinConfig
+  
+  ShiftReg595*[N: static int] = object  # N = number of chips
+```
+
+**Methods:**
+```nim
+proc init*[N](sr: var ShiftReg595[N], config: ShiftReg595Config)
+
+proc set*[N](sr: var ShiftReg595[N], chipIndex: int, value: uint8)
+  ## Set 8-bit value for one chip
+
+proc write*[N](sr: var ShiftReg595[N])
+  ## Shift out all values to hardware
+```
+
+---
+
+### 74HC4021 Shift Register Module (sr4021.nim)
+
+**Import:**
+```nim
+import src/dev/sr4021
+```
+
+**Description:**
+8-bit parallel-in serial-out shift register for input expansion. Template-based for compile-time chip count.
+
+**Types:**
+```nim
+type
+  ShiftReg4021PinConfig* = object
+    data*: Pin    # Serial data
+    clock*: Pin   # Shift clock
+    latch*: Pin   # Parallel load
+  
+  ShiftReg4021Config* = object
+    pin_config*: ShiftReg4021PinConfig
+  
+  ShiftReg4021*[N: static int] = object  # N = number of chips
+```
+
+**Methods:**
+```nim
+proc init*[N](sr: var ShiftReg4021[N], config: ShiftReg4021Config)
+
+proc update*[N](sr: var ShiftReg4021[N])
+  ## Read all chips from hardware
+
+proc getPin*[N](sr: ShiftReg4021[N], chipIndex, pinIndex: int): bool
+  ## Get single pin state (after update())
+```
+
+---
+
+### MAX11300 PIXI Module (max11300.nim)
+
+**Import:**
+```nim
+import src/dev/max11300
+import src/libdaisy_spi
+```
+
+**Description:**
+20-port programmable mixed-signal I/O for Eurorack modular synthesis. Configurable as ADC/DAC/GPIO with multiple voltage ranges. Simplified blocking SPI implementation.
+
+**Types:**
+```nim
+type
+  MAX11300Result* = enum
+    MAX_OK = 0
+    MAX_ERR = 1
+  
+  AdcVoltageRange* = enum
+    ADC_0_TO_10 = 0x0100
+    ADC_NEG5_TO_5 = 0x0200
+    ADC_NEG10_TO_0 = 0x0300
+    ADC_0_TO_2P5 = 0x0400
+  
+  DacVoltageRange* = enum
+    DAC_0_TO_10 = 0x0100
+    DAC_NEG5_TO_5 = 0x0200
+    DAC_NEG10_TO_0 = 0x0300
+  
+  MAX11300SpiConfig*[N: static int] = object
+    periph*: SpiPeripheral
+    baud_prescaler*: SpiBaudPrescaler
+    nss_pins*: array[N, Pin]  # Chip select pins
+    mosi*, miso*, sclk*: Pin
+  
+  MAX11300Config*[N: static int] = object
+    spi_config*: MAX11300SpiConfig[N]
+  
+  MAX11300*[N: static int] = object
+```
+
+**Methods:**
+```nim
+proc init*[N](pixi: var MAX11300[N], config: MAX11300Config[N]): MAX11300Result
+
+proc configurePinAsAnalogRead*[N](pixi: var MAX11300[N], chipIndex: int, 
+                                   pin: int, range: AdcVoltageRange): MAX11300Result
+  ## Configure pin as ADC input
+
+proc configurePinAsAnalogWrite*[N](pixi: var MAX11300[N], chipIndex: int,
+                                    pin: int, range: DacVoltageRange): MAX11300Result
+  ## Configure pin as DAC output
+
+proc readAnalogPinVolts*[N](pixi: var MAX11300[N], chipIndex, pin: int): float32
+  ## Read ADC value in volts
+
+proc writeAnalogPinVolts*[N](pixi: var MAX11300[N], chipIndex, pin: int, 
+                              volts: float32): MAX11300Result
+  ## Write DAC value in volts
+```
+
+**Example:**
+```nim
+var config: MAX11300Config[1]
+config.spi_config.defaults()
+
+var pixi: MAX11300[1]
+if pixi.init(config) == MAX_OK:
+  # Configure for ±5V Eurorack CV
+  discard pixi.configurePinAsAnalogRead(0, 0, ADC_NEG5_TO_5)
+  discard pixi.configurePinAsAnalogWrite(0, 1, DAC_NEG5_TO_5)
+  
+  while true:
+    let cvIn = pixi.readAnalogPinVolts(0, 0)
+    discard pixi.writeAnalogPinVolts(0, 1, cvIn)  # Pass-through
+```
+
+---
+
 For more examples, see [EXAMPLES.md](EXAMPLES.md).
 
 For technical details, see [TECHNICAL_REPORT.md](TECHNICAL_REPORT.md).

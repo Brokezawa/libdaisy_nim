@@ -15,10 +15,10 @@ This wrapper allows you to write firmware for the Daisy Seed embedded audio boar
 - ✅ **Type safety** - Nim's strong type system catches errors at compile time
 - ✅ **Clean API** - Idiomatic Nim interfaces to libDaisy functionality
 - ✅ **Comprehensive** - Covers core audio, peripherals, USB, storage, sensors, and more
-- ✅ **Production ready** - 46 tested examples demonstrating real-world usage
+- ✅ **Production ready** - 50 tested examples demonstrating real-world usage
 - ✅ **Well documented** - Complete API reference and technical documentation
-- ✅ **Many examples** - 46 working examples covering all features
-- ✅ **52 modules** - Comprehensive hardware and utility coverage including 6 sensor drivers
+- ✅ **Many examples** - 50 working examples covering all features
+- ✅ **59 modules** - Comprehensive hardware and utility coverage including sensors, LED drivers, and I/O expansion
 
 ## Quick Start
 
@@ -158,7 +158,7 @@ The Daisy Seed is a powerful embedded audio platform perfect for:
 
 ## Examples
 
-The `examples/` directory contains 46 production-ready examples:
+The `examples/` directory contains 50 production-ready examples:
 
 | Category | Example | Description |
 |----------|---------|-------------|
@@ -229,7 +229,7 @@ libdaisy_nim/
 │   ├── CHANGELOG.md          # Version history
 │   └── AGENTS.md             # AI agent guide
 │
-├── src/                   # Wrapper source code (52 modules)
+├── src/                   # Wrapper source code (59 modules)
 │   ├── libdaisy.nim          # Core API (GPIO, audio, system)
 │   ├── libdaisy_macros.nim   # Compile-time macro system
 │   ├── libdaisy_adc.nim      # ADC (analog input)

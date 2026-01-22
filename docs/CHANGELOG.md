@@ -5,6 +5,119 @@ All notable changes to libdaisy_nim will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-01-22
+
+### Added
+
+#### LED Drivers & I/O Expansion Modules
+
+- **PCA9685 LED Driver Module** (`src/dev/leddriver.nim`) - 16-channel PWM LED controller
+  - 16 channels per chip with multi-chip support (up to 62 chips)
+  - 12-bit PWM resolution (0-4095)
+  - Built-in gamma correction (8-bit → 12-bit)
+  - Double-buffered DMA transfers for flicker-free updates
+  - I2C interface with configurable address
+  - Persistent or volatile buffer modes
+  - Methods: `init()`, `setLed()`, `setAllTo()`, `swapBuffersAndTransmit()`
+
+- **DotStar RGB LED Module** (`src/dev/dotstar.nim`) - APA102/SK9822 addressable RGB LEDs
+  - Up to 64 pixels per strip
+  - 24-bit RGB color + 5-bit global brightness per pixel
+  - Configurable color channel ordering (RGB, GRB, BRG, BGR, RBG, GBR)
+  - SPI-based communication (no timing constraints)
+  - High refresh rate capability
+  - Methods: `init()`, `setPixelColor()`, `fill()`, `clear()`, `show()`, `setAllGlobalBrightness()`
+
+- **NeoPixel RGB LED Module** (`src/dev/neopixel.nim`) - WS2812B via I2C bridge
+  - Simplified wrapper for WS2812B using Adafruit Seesaw I2C bridge
+  - Basic color control and strip management
+  - I2C interface (avoids timing-critical bit-banging)
+  - Methods: `init()`, `setPixelColor()`, `show()`
+
+- **MCP23017 GPIO Expander Module** (`src/dev/mcp23x17.nim`) - 16-bit I/O expansion
+  - 16 GPIO pins (2 ports × 8 pins)
+  - Configurable as inputs with pullups or outputs
+  - Configurable polarity inversion
+  - I2C interface (polling mode)
+  - Default address 0x27
+  - Methods: `init()`, `portMode()`, `digitalWrite()`, `readPort()`, `read()`, `getPin()`
+
+- **74HC595 Shift Register Module** (`src/dev/sr595.nim`) - 8-bit output expansion
+  - 8-bit parallel output via serial-in
+  - Daisy-chain support for expansion
+  - Template-based for compile-time chip count
+  - Methods: `init()`, `set()`, `write()`
+
+- **74HC4021 Shift Register Module** (`src/dev/sr4021.nim`) - 8-bit input expansion
+  - 8-bit parallel input via serial-out
+  - Daisy-chain support for expansion
+  - Template-based for compile-time chip count
+  - Methods: `init()`, `update()`, `getPin()`
+
+- **MAX11300 PIXI Module** (`src/dev/max11300.nim`) - 20-port mixed-signal I/O
+  - 20 configurable ports (ADC/DAC/GPIO)
+  - Voltage ranges: 0-10V, ±5V, ±10V, 0-2.5V
+  - 12-bit resolution
+  - SPI interface (blocking mode)
+  - Simplified wrapper for Eurorack CV/gate applications
+  - Methods: `init()`, `configurePinAsAnalogRead()`, `configurePinAsAnalogWrite()`, `readAnalogPinVolts()`, `writeAnalogPinVolts()`
+
+#### New Examples
+
+- `led_drivers.nim` - PCA9685 wave pattern demo
+  - Demonstrates 16-channel PWM LED control
+  - Smooth sine wave brightness animation
+  - Double-buffered DMA transfers
+  - Shows gamma correction in action
+  - Hardware: PCA9685 breakout + 16 LEDs
+
+- `io_expansion.nim` - MCP23017 button/LED mirroring
+  - Demonstrates 16-bit GPIO expansion
+  - Port A: 8 button inputs with pullups
+  - Port B: 8 LED outputs
+  - Real-time button-to-LED mirroring
+  - Hardware: MCP23017 + 8 buttons + 8 LEDs
+
+- `cv_expander.nim` - MAX11300 Eurorack CV/gate demo
+  - Demonstrates mixed-signal I/O for modular synthesis
+  - CV input pass-through to CV output
+  - Configurable voltage ranges (±5V)
+  - Simplified SPI protocol
+  - Hardware: MAX11300 PIXI breakout
+
+- `vu_meter.nim` - DotStar stereo VU meter
+  - Audio-reactive LED visualization
+  - 16 RGB LEDs (8 per channel)
+  - Stereo peak detection with decay
+  - Color gradients (green→red, blue→red)
+  - 50Hz update rate
+  - Hardware: APA102/SK9822 LED strip
+
+### Changed
+
+- **Module organization**: Added 7 LED/IO modules to `src/dev/` subdirectory
+- **Macro system**: Extended `useDaisyModules()` to support `leddriver`, `dotstar`, `neopixel`, `mcp23x17`, `sr595`, `sr4021`, `max11300`
+- **I2C module**: Exported low-level functions for device drivers:
+  - `TransmitBlocking*` - Blocking I2C transmit
+  - `TransmitDma*` - DMA I2C transmit
+  - `GetConfig*` - Retrieve I2C configuration
+  - `Init*` - Re-initialize I2C peripheral
+- **SPI module**: Exported `BlockingTransmit*` for device driver use
+- **Module dependencies**: Device modules now properly declare `useDaisyModules(module, i2c)` or `useDaisyModules(module, spi)` dependencies
+
+### Fixed
+
+- **Device module compilation**: All device modules now include proper I2C/SPI header dependencies via `useDaisyModules()`
+- **Audio callback signatures**: Changed from `csize_t` to `int` to match `AudioCallback` type
+- **Example simplification**: Removed non-existent serial logging references from all examples
+
+### Statistics
+
+- **Total modules**: 52 → 59 (+7 LED/IO expansion modules)
+- **Total examples**: 46 → 50 (+4 LED/IO examples)
+- **libDaisy coverage**: ~72% → ~75%
+- **Code added**: 1,260 lines (modules + examples)
+
 ## [0.8.0] - 2026-01-21
 
 ### Added
