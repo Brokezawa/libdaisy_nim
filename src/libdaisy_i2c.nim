@@ -4,7 +4,26 @@
 ## for the Daisy Audio Platform. It supports both master and slave modes,
 ## blocking and DMA transfers.
 ##
-## Example - Simple I2C master:
+## ⚠️ **IMPORTANT - Blocking vs DMA Functions:**
+##
+## - **Blocking functions** (`write`, `read`, `writeRegister`, `readRegister`) will stall
+##   the CPU while waiting for the I2C transaction to complete. This can cause **audio glitches**
+##   if called from the audio callback or main loop during audio processing.
+##
+## - **DMA functions** (`transmitDma`, `receiveDma`) use Direct Memory Access to transfer
+##   data in the background without blocking the CPU. These are **safe to use during audio
+##   processing** if your buffers are in the correct memory region.
+##
+## **DMA Buffer Requirements:**
+## - Buffers must be in D2 memory domain (not stack variables!)
+## - Use `{.section: ".sram1_bss".}` or allocate on heap
+## - Or use `dsy_dma_clear_cache_for_buffer()` before transfer (advanced)
+##
+## **DMA Availability:**
+## - I2C1, I2C2, I2C3: Share a single DMA channel (only one can use DMA at a time)
+## - I2C4: No DMA support (use blocking functions only)
+##
+## Example - Simple I2C master (blocking):
 ## ```nim
 ## import libdaisy, libdaisy_i2c, libdaisy_serial
 ## 
@@ -13,29 +32,55 @@
 ## 
 ## startLog()
 ## 
-## # Scan for devices
-## let devices = i2c.scan()
+## # Scan for devices (BLOCKS - don't use in audio callback!)
+## var foundDevices: array[112, uint8]
+## let count = i2c.scan(foundDevices)
 ## print("Found ")
-## print(devices.len)
+## print(count)
 ## printLine(" devices")
 ## 
-## # Write to device
-## if i2c.write(0x48, [0x01'u8, 0xFF]) == I2C_OK:
+## # Write to device (BLOCKS)
+## var txData = [0x01'u8, 0xFF]
+## if i2c.write(0x48, txData) == I2C_OK:
 ##   printLine("Write OK")
 ## 
-## # Read from device  
-## let (result, data) = i2c.read(0x48, 4)
-## if result == I2C_OK:
+## # Read from device (BLOCKS)
+## var rxData: array[4, uint8]
+## if i2c.read(0x48, rxData) == I2C_OK:
 ##   printLine("Read OK")
 ## ```
 ##
-## Example - Register access:
+## Example - Register access (blocking):
 ## ```nim
-## # Write to register
+## # Write to register (BLOCKS)
 ## discard i2c.writeRegister(0x3C, 0x00, 0xAF)
 ## 
-## # Read from register
+## # Read from register (BLOCKS)
 ## let (result, value) = i2c.readRegister(0x3C, 0x01)
+## ```
+##
+## Example - Non-blocking DMA transfer:
+## ```nim
+## import libdaisy, libdaisy_i2c
+##
+## # DMA buffers MUST be in D2 memory, not on stack!
+## var txBuffer {.section: ".sram1_bss".}: array[64, uint8]
+## var transferComplete = false
+##
+## proc onTransferComplete(context: pointer, result: I2CResult) {.cdecl.} =
+##   # Called from interrupt - keep this FAST!
+##   transferComplete = true
+##
+## var daisy = initDaisy()
+## var i2c = initI2C(I2C_1, D11(), D12(), I2C_400KHZ)
+##
+## # Start DMA transfer (non-blocking)
+## discard i2c.transmitDma(0x48, txBuffer, onTransferComplete, nil)
+##
+## # CPU is free to do other work while transfer happens in background
+## while not transferComplete:
+##   # Do audio processing or other tasks
+##   discard
 ## ```
 
 # Import libdaisy which provides the macro system
@@ -97,13 +142,13 @@ type
 
 # Low-level C++ interface
 proc Init*(this: var I2CHandle, config: I2CConfig): I2CResult {.importcpp: "#.Init(@)".}
-proc GetConfig*(this: I2CHandle): I2CConfig {.importcpp: "#.GetConfig()", inline.}
+proc GetConfig*(this: I2CHandle): I2CConfig {.importcpp: "#.GetConfig()".}
 
 proc TransmitBlocking*(this: var I2CHandle, address: uint16, data: ptr uint8, 
-                        size: uint16, timeout: uint32): I2CResult {.importcpp: "#.TransmitBlocking(@)", inline.}
+                        size: uint16, timeout: uint32): I2CResult {.importcpp: "#.TransmitBlocking(@)".}
 
 proc ReceiveBlocking(this: var I2CHandle, address: uint16, data: ptr uint8, 
-                       size: uint16, timeout: uint32): I2CResult {.importcpp: "#.ReceiveBlocking(@)", inline.}
+                       size: uint16, timeout: uint32): I2CResult {.importcpp: "#.ReceiveBlocking(@)".}
 
 proc TransmitDma*(this: var I2CHandle, address: uint16, data: ptr uint8, size: uint16, 
                    callback: I2CCallbackFunctionPtr, callback_context: pointer): I2CResult {.importcpp: "#.TransmitDma(@)".}
@@ -123,7 +168,7 @@ proc WriteDataAtAddress(this: var I2CHandle, address: uint16, mem_address: uint1
 {.pop.} # header
 
 # C++ constructor
-proc cppNewI2CHandle(): I2CHandle {.importcpp: "daisy::I2CHandle()", constructor, header: "daisy_seed.h", inline.}
+proc cppNewI2CHandle(): I2CHandle {.importcpp: "daisy::I2CHandle()", constructor, header: "daisy_seed.h".}
 
 # =============================================================================
 # High-Level Nim-Friendly API
@@ -215,6 +260,89 @@ proc scan*(i2c: var I2CHandle, found: var openArray[uint8], timeout: uint32 = 10
     if res == I2C_OK:
       found[result] = uint8(addr)
       inc result
+
+# =============================================================================
+# DMA (Non-Blocking) API
+# =============================================================================
+
+proc transmitDma*(i2c: var I2CHandle,
+                  deviceAddr: uint16,
+                  buffer: var openArray[uint8],
+                  callback: I2CCallbackFunctionPtr = nil,
+                  context: pointer = nil): I2CResult =
+  ## Non-blocking DMA transmit to I2C device
+  ##
+  ## ⚠️ **CRITICAL:** Buffer MUST be in D2 memory domain:
+  ## - Use `{.section: ".sram1_bss".}` pragma on buffer declaration
+  ## - Or allocate on heap with alloc/create
+  ## - **DO NOT use stack variables** (will cause DMA errors)
+  ##
+  ## ⚠️ **DMA Sharing:** I2C1/I2C2/I2C3 share one DMA channel. Only one can use DMA at a time.
+  ## I2C4 has NO DMA support - use blocking functions only.
+  ##
+  ## Parameters:
+  ##   deviceAddr: 7-bit I2C device address (e.g., 0x48)
+  ##   buffer: Data to transmit (must be in D2 memory!)
+  ##   callback: Called when transfer completes (from interrupt, keep fast!)
+  ##   context: User data pointer passed to callback
+  ##
+  ## Returns:
+  ##   I2C_OK if transfer queued successfully, I2C_ERR on error
+  ##
+  ## Example:
+  ## ```nim
+  ## var txBuf {.section: ".sram1_bss".}: array[64, uint8]
+  ## 
+  ## proc onComplete(ctx: pointer, res: I2CResult) {.cdecl.} =
+  ##   echo "Transfer done!"
+  ##
+  ## discard i2c.transmitDma(0x48, txBuf, onComplete, nil)
+  ## ```
+  if buffer.len > 0:
+    result = i2c.TransmitDma(deviceAddr, addr buffer[0], uint16(buffer.len), 
+                             callback, context)
+  else:
+    result = I2C_OK
+
+proc receiveDma*(i2c: var I2CHandle,
+                 deviceAddr: uint16,
+                 buffer: var openArray[uint8],
+                 callback: I2CCallbackFunctionPtr = nil,
+                 context: pointer = nil): I2CResult =
+  ## Non-blocking DMA receive from I2C device
+  ##
+  ## ⚠️ **CRITICAL:** Buffer MUST be in D2 memory domain:
+  ## - Use `{.section: ".sram1_bss".}` pragma on buffer declaration
+  ## - Or allocate on heap with alloc/create
+  ## - **DO NOT use stack variables** (will cause DMA errors)
+  ##
+  ## ⚠️ **DMA Sharing:** I2C1/I2C2/I2C3 share one DMA channel. Only one can use DMA at a time.
+  ## I2C4 has NO DMA support - use blocking functions only.
+  ##
+  ## Parameters:
+  ##   deviceAddr: 7-bit I2C device address (e.g., 0x48)
+  ##   buffer: Buffer to receive data into (must be in D2 memory!)
+  ##   callback: Called when transfer completes (from interrupt, keep fast!)
+  ##   context: User data pointer passed to callback
+  ##
+  ## Returns:
+  ##   I2C_OK if transfer queued successfully, I2C_ERR on error
+  ##
+  ## Example:
+  ## ```nim
+  ## var rxBuf {.section: ".sram1_bss".}: array[64, uint8]
+  ##
+  ## proc onComplete(ctx: pointer, res: I2CResult) {.cdecl.} =
+  ##   # Process received data
+  ##   discard
+  ##
+  ## discard i2c.receiveDma(0x48, rxBuf, onComplete, nil)
+  ## ```
+  if buffer.len > 0:
+    result = i2c.ReceiveDma(deviceAddr, addr buffer[0], uint16(buffer.len),
+                            callback, context)
+  else:
+    result = I2C_OK
 
 # Common I2C device addresses
 const

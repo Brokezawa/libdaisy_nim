@@ -114,29 +114,29 @@ proc Stop(this: var AdcHandle)
   {.importcpp: "#.Stop()", header: "daisy_seed.h".}
 
 proc Get(this: AdcHandle, chn: uint8): uint16 
-  {.importcpp: "#.Get(@)", header: "daisy_seed.h", inline.}
+  {.importcpp: "#.Get(@)", header: "daisy_seed.h".}
 
 proc GetPtr(this: AdcHandle, chn: uint8): ptr uint16 
-  {.importcpp: "#.GetPtr(@)", header: "daisy_seed.h", inline.}
+  {.importcpp: "#.GetPtr(@)", header: "daisy_seed.h".}
 
 proc GetFloat(this: AdcHandle, chn: uint8): cfloat 
-  {.importcpp: "#.GetFloat(@)", header: "daisy_seed.h", inline.}
+  {.importcpp: "#.GetFloat(@)", header: "daisy_seed.h".}
 
 proc GetMux(this: AdcHandle, chn: uint8, idx: uint8): uint16 
-  {.importcpp: "#.GetMux(@)", header: "daisy_seed.h", inline.}
+  {.importcpp: "#.GetMux(@)", header: "daisy_seed.h".}
 
 proc GetMuxPtr(this: AdcHandle, chn: uint8, idx: uint8): ptr uint16 
-  {.importcpp: "#.GetMuxPtr(@)", header: "daisy_seed.h", inline.}
+  {.importcpp: "#.GetMuxPtr(@)", header: "daisy_seed.h".}
 
 proc GetMuxFloat(this: AdcHandle, chn: uint8, idx: uint8): cfloat 
-  {.importcpp: "#.GetMuxFloat(@)", header: "daisy_seed.h", inline.}
+  {.importcpp: "#.GetMuxFloat(@)", header: "daisy_seed.h".}
 
 # C++ constructors
 proc cppNewAdcChannelConfig(): AdcChannelConfig 
-  {.importcpp: "daisy::AdcChannelConfig()", constructor, header: "daisy_seed.h", inline.}
+  {.importcpp: "daisy::AdcChannelConfig()", constructor, header: "daisy_seed.h".}
 
 proc cppNewAdcHandle(): AdcHandle 
-  {.importcpp: "daisy::AdcHandle()", constructor, header: "daisy_seed.h", inline.}
+  {.importcpp: "daisy::AdcHandle()", constructor, header: "daisy_seed.h".}
 
 # =============================================================================
 # High-Level Nim-Friendly API
@@ -258,7 +258,7 @@ proc getPtr*(adc: AdcHandle, channel: int): ptr uint16 =
   ## Returns: Pointer to raw ADC value
   adc.GetPtr(channel.uint8)
 
-proc getFloat*(adc: AdcHandle, channel: int): float =
+proc getFloat*(adc: AdcHandle, channel: int): float {.inline.} =
   ## Get normalized floating-point ADC value from a channel
   ## 
   ## Parameters:
@@ -273,7 +273,7 @@ proc getFloat*(adc: AdcHandle, channel: int): float =
   ## ```
   adc.GetFloat(channel.uint8)
 
-proc getMux*(adc: AdcHandle, channel: int, muxIndex: int): uint16 =
+proc getMux*(adc: AdcHandle, channel: int, muxIndex: int): uint16 {.inline.} =
   ## Get raw 16-bit value from a multiplexed input
   ## 
   ## Parameters:
@@ -290,7 +290,7 @@ proc getMux*(adc: AdcHandle, channel: int, muxIndex: int): uint16 =
   ## ```
   adc.GetMux(channel.uint8, muxIndex.uint8)
 
-proc getMuxPtr*(adc: AdcHandle, channel: int, muxIndex: int): ptr uint16 =
+proc getMuxPtr*(adc: AdcHandle, channel: int, muxIndex: int): ptr uint16 {.inline.} =
   ## Get pointer to raw multiplexed ADC value
   ## 
   ## Parameters:
@@ -300,7 +300,7 @@ proc getMuxPtr*(adc: AdcHandle, channel: int, muxIndex: int): ptr uint16 =
   ## Returns: Pointer to raw ADC value
   adc.GetMuxPtr(channel.uint8, muxIndex.uint8)
 
-proc getMuxFloat*(adc: AdcHandle, channel: int, muxIndex: int): float =
+proc getMuxFloat*(adc: AdcHandle, channel: int, muxIndex: int): float {.inline.} =
   ## Get normalized floating-point value from a multiplexed input
   ## 
   ## Parameters:

@@ -9,6 +9,11 @@
 ## - Audio streaming optimized
 ## - Configurable overwrite behavior
 ## - Generic type support via templates
+## - ⚠️ **BREAKING CHANGE v0.9.1:** Capacity N must be a power of 2 (2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, etc.)
+##
+## **Performance:**
+## - Uses bitwise AND instead of modulo (1 cycle vs 12-30 cycles on ARM Cortex-M7)
+## - Compile-time validation ensures power-of-2 sizes
 ##
 ## **Use Cases:**
 ## - Audio sample buffering (delay lines, loopers)
@@ -21,11 +26,16 @@
 ## - Size known at compile time
 ## - Zero runtime overhead
 ##
+## **Migration from v0.9.0:**
+## - If you used non-power-of-2 sizes (e.g., 100, 500), round up to next power of 2
+## - Example: `RingBuffer[100, float32]` → `RingBuffer[128, float32]`
+## - Example: `RingBuffer[500, float32]` → `RingBuffer[512, float32]`
+##
 ## **Usage:**
 ## ```nim
 ## import libdaisy_ringbuffer
 ##
-## # Create ring buffer for 1024 samples
+## # Create ring buffer for 1024 samples (MUST be power of 2!)
 ## var buffer: RingBuffer[1024, float32]
 ## buffer.init()
 ##
@@ -50,11 +60,19 @@ type
     OVERWRITE_OLDEST  ## Overwrite oldest data (circular)
     REJECT_NEW        ## Reject new writes when full
 
-  RingBuffer*[N: static int, T] = object
+template isPowerOfTwo(n: static int): bool =
+  ## Compile-time check if a number is a power of 2
+  (n and (n - 1)) == 0 and n > 0
+
+type
+  RingBuffer*[N: static int; T] = object
     ## Lock-free circular buffer for audio streaming
     ##
+    ## ⚠️ **CRITICAL:** N must be a power of 2 (2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, etc.)
+    ## This is enforced at compile time for performance (bitwise AND vs modulo).
+    ##
     ## **Generic Parameters:**
-    ## - `N` - Capacity (must be known at compile time)
+    ## - `N` - Capacity (MUST be power of 2, checked at compile time)
     ## - `T` - Element type (typically float32 for audio)
     ##
     ## **Fields:**
@@ -73,6 +91,8 @@ proc init*[N: static int, T](this: var RingBuffer[N, T],
   ##
   ## **Parameters:**
   ## - `mode` - Overwrite behavior (default: OVERWRITE_OLDEST)
+  when not isPowerOfTwo(N):
+    {.error: "RingBuffer size N must be a power of 2 (2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, ...)".}
   ##
   ## **Example:**
   ## ```nim
@@ -134,7 +154,7 @@ proc isFull*[N: static int, T](this: RingBuffer[N, T]): bool {.inline.} =
   ## Check if buffer is full
   ##
   ## **Returns:** `true` if no space remaining
-  ((this.writeIdx + 1) mod N) == this.readIdx
+  ((this.writeIdx + 1) and (N - 1)) == this.readIdx
 
 proc write*[N: static int, T](this: var RingBuffer[N, T], value: T): bool {.inline.} =
   ## Write a single value to the buffer
@@ -149,7 +169,7 @@ proc write*[N: static int, T](this: var RingBuffer[N, T], value: T): bool {.inli
   ## if not buffer.write(0.5):
   ##   echo "Buffer full"
   ## ```
-  let nextWrite = (this.writeIdx + 1) mod N
+  let nextWrite = (this.writeIdx + 1) and (N - 1)
   
   if nextWrite == this.readIdx:
     # Buffer full
@@ -157,7 +177,7 @@ proc write*[N: static int, T](this: var RingBuffer[N, T], value: T): bool {.inli
       return false
     else:
       # Overwrite oldest - advance read pointer
-      this.readIdx = (this.readIdx + 1) mod N
+      this.readIdx = (this.readIdx + 1) and (N - 1)
   
   this.data[this.writeIdx] = value
   this.writeIdx = nextWrite
@@ -181,7 +201,7 @@ proc read*[N: static int, T](this: var RingBuffer[N, T], value: var T): bool {.i
     return false
   
   value = this.data[this.readIdx]
-  this.readIdx = (this.readIdx + 1) mod N
+  this.readIdx = (this.readIdx + 1) and (N - 1)
   return true
 
 proc writeBlock*[N: static int, T](this: var RingBuffer[N, T], 
@@ -249,7 +269,7 @@ proc peek*[N: static int, T](this: RingBuffer[N, T], value: var T,
   if offset >= this.available():
     return false
   
-  let peekIdx = (this.readIdx + offset) mod N
+  let peekIdx = (this.readIdx + offset) and (N - 1)
   value = this.data[peekIdx]
   return true
 
