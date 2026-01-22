@@ -102,6 +102,7 @@ If you find a discrepancy:
 |---------|----------|-------------------|-------------------|---------------|--------|
 | **i2c_scanner.nim** | I2C | I2C devices on bus | Scans addresses 0x03-0x77. Reports found devices via console/LED. Empty bus shows "No devices found". | False positives = pull-up resistor issue | ⬜ |
 | **spi_basic.nim** | SPI | SPI device (EEPROM/sensor) | Sends/receives SPI data. May write then read back for verification. Success indicated by LED or console. | No response = check MISO/MOSI; Wrong data = clock polarity | ⬜ |
+| **multi_spi.nim** (v0.10.0) | Multi-Device SPI | 3 SPI devices on one bus | Shares SPI bus between 3 devices with individual chip selects. Sends different data to each device. Console shows per-device status. LED on = all transfers OK. | Device not responding = check CS pin; Wrong device = CS pins swapped | ⬜ |
 | **usb_serial.nim** | USB | USB cable to computer | Creates virtual serial port. Text typed in terminal echoes back. Baud rate doesn't matter (USB CDC). | Not detected = enter DFU mode first; No echo = driver issue | ⬜ |
 | **midi_input.nim** | MIDI | MIDI controller (USB/UART) | Receives MIDI note on/off messages. LED flashes on note events. Console shows note number and velocity. | No response = check MIDI mode (USB vs UART) | ⬜ |
 
@@ -117,6 +118,8 @@ If you find a discrepancy:
 | Example | Category | Hardware Required | Expected Behavior | Common Issues | Status |
 |---------|----------|-------------------|-------------------|---------------|--------|
 | **sdram_test.nim** | SDRAM | External SDRAM chip | Writes test pattern to SDRAM, reads back and verifies. LED blinks on success, stays on for failure. May test full 64MB. | Fails = check SDRAM soldering/power | ⬜ |
+| **flash_storage.nim** (v0.10.0) | QSPI Flash | Built-in QSPI flash | Erases sector, writes test data, reads back. Console shows erase/write/read operations. LED on = success. Tests both INDIRECT and MEMORY_MAPPED modes. | Verify fails = flash chip defective; Erase timeout = flash not responding | ⬜ |
+| **settings_manager.nim** (v0.10.0) | Persistent Storage | Built-in QSPI flash | Demonstrates persistent settings: initializes with defaults, modifies values, saves (dirty detection), restores defaults. Console shows state transitions (UNKNOWN→FACTORY→USER). LED on when complete. | Settings lost = flash write failure; State = UNKNOWN = init() not called | ⬜ |
 
 ### DAC Examples
 

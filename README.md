@@ -103,6 +103,7 @@ The Daisy Seed is a powerful embedded audio platform perfect for:
 ### Peripherals  
 - ✅ **I2C** - 4 buses, master/slave modes, up to 1MHz
 - ✅ **SPI** - 6 buses, master/slave, full-duplex
+- ✅ **Multi-Slave SPI** - Share SPI bus between up to 4 devices (NEW in v0.10.0)
 - ✅ **UART** - 6 ports, configurable baud rates
 - ✅ **ADC** - Analog inputs, multi-channel, multiplexed
 - ✅ **PWM** - Hardware PWM output, 4 channels per timer
@@ -117,7 +118,8 @@ The Daisy Seed is a powerful embedded audio platform perfect for:
 - ✅ **SD Card** - SDMMC interface, FatFS filesystem, FAT32 support
 - ✅ **WAV Files** - WAV parser, streaming player, real-time recorder (NEW in v0.6.0)
 - ✅ **Wavetable Loading** - Multi-bank wavetable loader from SD (NEW in v0.6.0)
-- ✅ **QSPI Flash** - 8MB QSPI flash read/write/erase operations (NEW in v0.6.0)
+- ✅ **QSPI Flash** - 8MB QSPI flash read/write/erase operations
+- ✅ **Persistent Storage** - Type-safe settings storage with dirty detection (NEW in v0.10.0)
 - ✅ **External SDRAM** - 64MB for large audio buffers
 
 ### User Interface
@@ -151,6 +153,18 @@ The Daisy Seed is a powerful embedded audio platform perfect for:
 - ✅ **PCM3060** - High-performance codec for Daisy Seed 2.0
 - ✅ **LCD HD44780** - Character LCD driver (16x2, 20x4)
 - ✅ **OLED Fonts** - 8 bitmap fonts for OLED displays
+
+### Device Drivers & Expansion (NEW in v0.9.0)
+- ✅ **PCA9685** - 16-channel 12-bit PWM LED driver - I2C
+- ✅ **DotStar** - High-speed RGB LED strips - SPI
+- ✅ **74HC595** - 8-bit shift register (output) - SPI
+- ✅ **74HC4021** - 8-bit shift register (input) - SPI
+- ✅ **MCP23017** - 16-channel GPIO expander - I2C
+- ⚠️ **MAX11300 PIXI** - 20-channel programmable mixed-signal I/O (ADC/DAC/GPIO) - SPI
+  - **EXPERIMENTAL**: Full implementation available but **NOT tested on hardware**
+  - Wraps libDaisy C++ driver with complete API coverage
+  - Should be considered experimental until community validation
+  - See CHANGELOG.md for implementation details
 
 ### Boards
 - ✅ **Daisy Seed** - Core development board
@@ -202,6 +216,7 @@ Each example is a complete, working program that compiles and runs on hardware.
 
 - **[QUICKSTART.md](docs/QUICKSTART.md)** - Get started in 5 minutes
 - **[API_REFERENCE.md](docs/API_REFERENCE.md)** - Complete API documentation
+- **[FLASH_GUIDE.md](docs/FLASH_GUIDE.md)** - QSPI flash memory usage guide (NEW in v0.10.0)
 - **[EXAMPLES.md](docs/EXAMPLES.md)** - Example testing matrix with expected behavior
 - **[TESTING_CHECKLIST.md](docs/TESTING_CHECKLIST.md)** - Printable hardware testing checklist
 - **[TECHNICAL_REPORT.md](docs/TECHNICAL_REPORT.md)** - How the wrapper works internally
@@ -213,6 +228,7 @@ Each example is a complete, working program that compiles and runs on hardware.
 
 ```
 libdaisy_nim/
+├── AGENTS.md              # AI agent guide
 ├── README.md              # This file
 ├── LICENSE                # License file
 ├── libdaisy_nim.nimble    # Nimble package file
@@ -220,14 +236,14 @@ libdaisy_nim/
 ├── docs/                  # Documentation
 │   ├── QUICKSTART.md         # Quick start guide
 │   ├── API_REFERENCE.md      # Complete API documentation
+│   ├── FLASH_GUIDE.md        # QSPI flash memory guide (v0.10.0)
 │   ├── EXAMPLES.md           # Example testing matrix
 │   ├── TESTING_CHECKLIST.md  # Hardware testing checklist
 │   ├── TECHNICAL_REPORT.md   # Technical internals & architecture
 │   ├── ROADMAP.md            # v1.0.0 development plan
 │   ├── CONTRIBUTING.md       # Contribution guide
 │   ├── HARDWARE_TESTING.md   # Community testing guide
-│   ├── CHANGELOG.md          # Version history
-│   └── AGENTS.md             # AI agent guide
+│   └── CHANGELOG.md          # Version history
 │
 ├── src/                   # Wrapper source code (59 modules)
 │   ├── libdaisy.nim          # Core API (GPIO, audio, system)
@@ -366,13 +382,18 @@ Contributions are welcome! See **[CONTRIBUTING.md](docs/CONTRIBUTING.md)** for:
 
 ## Status
 
-**Current Version:** 0.6.0 
+**Current Version:** 0.10.0
+
+**Latest Updates (v0.10.0):**
+- ✅ **Persistent Storage** - Type-safe settings storage with dirty detection
+- ✅ **Multi-Slave SPI** - Share SPI bus between up to 4 devices
+- ✅ **Flash Guide** - Comprehensive QSPI flash memory usage guide
 
 **Stability:**
 - ✅ Core API - Stable, tested
-- ✅ Peripherals - I2C, SPI, UART working
+- ✅ Peripherals - I2C, SPI, UART, Multi-Slave SPI working
 - ✅ USB - CDC and MIDI working
-- ✅ Storage - SD card and SDRAM working  
+- ✅ Storage - SD card, SDRAM, QSPI flash, persistent settings working
 - ✅ ADC - ADC multiplexing working  
 - ✅ PWM - working  
 - ✅ OLED screen (SSD1306) - working  

@@ -574,6 +574,267 @@ while not transferComplete:
 
 ---
 
+## Multi-Slave SPI Module (libdaisy_spi_multislave.nim)
+
+**Import:**
+```nim
+import libdaisy_spi_multislave
+```
+
+Provides support for sharing a single SPI bus between multiple slave devices (up to 4). Each device has its own chip select (NSS) pin while SCLK, MISO, and MOSI are shared.
+
+### MultiSlaveSpiHandle Object
+
+Manages a single SPI bus shared between multiple slave devices.
+
+**Key Features:**
+- Support for up to 4 SPI slave devices on one bus
+- Software-controlled chip select per device  
+- Blocking and DMA-based transfers
+- Compatible with SPI1-SPI6 peripherals
+
+**Methods:**
+
+- `init(config: MultiSlaveSpiConfig): SpiResult` - Initialize multi-slave SPI bus
+- `getConfig(): MultiSlaveSpiConfig` - Get current configuration
+
+**Blocking Transfer Methods:**
+
+- `blockingTransmit(device_index: csize_t, buff: ptr uint8, size: csize_t, timeout: uint32 = 100): SpiResult` - Transmit to specific device
+- `blockingReceive(device_index: csize_t, buff: ptr uint8, size: uint16, timeout: uint32 = 100): SpiResult` - Receive from specific device
+- `blockingTransmitAndReceive(device_index: csize_t, tx_buff: ptr uint8, rx_buff: ptr uint8, size: csize_t, timeout: uint32 = 100): SpiResult` - Full-duplex transfer
+
+**DMA Transfer Methods:**
+
+- `dmaTransmit(device_index: csize_t, buff: ptr uint8, size: csize_t, start_callback, end_callback, callback_context: pointer): SpiResult`
+- `dmaReceive(device_index: csize_t, buff: ptr uint8, size: csize_t, start_callback, end_callback, callback_context: pointer): SpiResult`
+- `dmaTransmitAndReceive(device_index: csize_t, tx_buff: ptr uint8, rx_buff: ptr uint8, size: csize_t, start_callback, end_callback, callback_context: pointer): SpiResult`
+
+**Helper Methods (array overloads):**
+
+- `blockingTransmit(device_index: int, data: openArray[uint8], timeout: uint32 = 100): SpiResult`
+- `blockingReceive(device_index: int, data: var openArray[uint8], timeout: uint32 = 100): SpiResult`
+- `blockingTransmitAndReceive(device_index: int, tx_data: openArray[uint8], rx_data: var openArray[uint8], timeout: uint32 = 100): SpiResult`
+
+**Error Handling:**
+
+- `checkError(): cint` - Get HAL SPI error code
+
+**Example:**
+```nim
+import libdaisy
+import libdaisy_spi
+import libdaisy_spi_multislave
+
+var daisy = initDaisy()
+
+# Configure for 3 devices on SPI1
+var config = MultiSlaveSpiConfig(
+  periph: SPI_1,
+  direction: SPI_TWO_LINES,
+  datasize: 8,
+  clock_polarity: SPI_CLOCK_POL_LOW,
+  clock_phase: SPI_CLOCK_PHASE_1,
+  baud_prescaler: SPI_PS_16,
+  num_devices: 3
+)
+
+# Configure pins
+config.pin_config.sclk = D7()
+config.pin_config.miso = D8()
+config.pin_config.mosi = D9()
+config.pin_config.nss[0] = D10()  # Device 0 CS
+config.pin_config.nss[1] = D11()  # Device 1 CS
+config.pin_config.nss[2] = D12()  # Device 2 CS
+
+# Initialize
+var spi = initMultiSlaveSpi()
+if spi.init(config) != SPI_OK:
+  echo "SPI init failed"
+
+# Communicate with device 0
+var txData = [0x01'u8, 0x02, 0x03]
+if spi.blockingTransmit(0, txData) == SPI_OK:
+  echo "Sent to device 0"
+
+# Communicate with device 1
+var rxData: array[4, uint8]
+if spi.blockingReceive(1, rxData) == SPI_OK:
+  echo "Received from device 1"
+```
+
+---
+
+## QSPI Flash Module (libdaisy_qspi.nim)
+
+**Import:**
+```nim
+import libdaisy_qspi
+```
+
+Provides access to the onboard QSPI flash memory (IS25LP080D on Seed 1.0, IS25LP064A on Seed 1.1+). Used for persistent data storage, firmware updates, or sample storage.
+
+### QSPIHandle Object
+
+Interface to QSPI flash memory.
+
+**Key Features:**
+- Memory-mapped mode for fast read access
+- Indirect mode for erase/write operations
+- 1MB (Seed 1.0) or 8MB (Seed 1.1+) capacity
+- 4KB sector erase, 32KB block erase, full chip erase
+
+**Methods:**
+
+- `init(device: QSPIDevice, mode: QSPIMode): bool` - Initialize QSPI peripheral
+- `deinit()` - Deinitialize QSPI
+- `erase(start_addr: uint32, end_addr: uint32): bool` - Erase address range
+- `eraseSector(address: uint32): bool` - Erase 4KB sector
+- `write(address: uint32, size: uint32, buffer: ptr uint8): bool` - Write data
+- `writePage(address: uint32, offset: uint32, size: uint32, buffer: ptr uint8): bool` - Write to 256-byte page
+
+**Device Configuration:**
+
+- `QSPI_DEVICE_IS25LP080D` - 1MB flash (Seed 1.0)
+- `QSPI_DEVICE_IS25LP064A` - 8MB flash (Seed 1.1+)
+
+**Modes:**
+
+- `QSPI_MODE_INDIRECT_POLLING` - For erase/write operations
+- `QSPI_MODE_MEMORY_MAPPED` - For fast read access (maps to memory address space)
+
+**Example:**
+```nim
+import libdaisy
+import libdaisy_qspi
+
+var daisy = initDaisy()
+var qspi: QSPIHandle
+
+# Initialize QSPI
+if not qspi.init(QSPI_DEVICE_IS25LP064A, QSPI_MODE_INDIRECT_POLLING):
+  echo "QSPI init failed"
+
+# Erase first sector (4KB)
+if qspi.eraseSector(0):
+  echo "Sector erased"
+
+# Write data
+var data = [0x01'u8, 0x02, 0x03, 0x04]
+if qspi.write(0, 4, addr data[0]):
+  echo "Data written"
+
+# Switch to memory-mapped mode for reading
+if qspi.init(QSPI_DEVICE_IS25LP064A, QSPI_MODE_MEMORY_MAPPED):
+  # Flash is now accessible at base address
+  # Read operations are automatic
+  discard
+```
+
+---
+
+## Persistent Storage Module (libdaisy_persistent_storage.nim)
+
+**Import:**
+```nim
+import libdaisy_persistent_storage
+```
+
+Provides type-safe persistent settings storage in QSPI flash with dirty detection, versioning, and factory defaults restoration.
+
+### PersistentStorage[T] Generic Object
+
+Manages persistent storage for a settings struct of type T.
+
+**Key Features:**
+- Automatic dirty detection (only writes when settings change)
+- Factory defaults restoration
+- State tracking (UNKNOWN, FACTORY, USER)
+- Type-safe generic wrapper
+- Requires settings struct with `==` and `!=` operators
+
+**Methods:**
+
+- `init(defaults: T, address_offset: uint32 = 0)` - Initialize with factory defaults
+- `save()` - Save settings if changed (dirty flag)
+- `restoreDefaults()` - Restore factory defaults
+- `getSettings(): var T` - Get reference to current settings
+- `getState(): StorageState` - Get storage state
+- `overwritePreventionIsEnabled(): bool` - Check if overwrite protection is on
+- `setOverwritePrevention(enabled: bool)` - Enable/disable overwrite protection
+
+**Storage States:**
+
+- `UNKNOWN` - Before initialization
+- `FACTORY` - Factory defaults are loaded
+- `USER` - User-modified settings are loaded
+
+**Example:**
+```nim
+import libdaisy
+import libdaisy_qspi
+import libdaisy_persistent_storage
+
+# Define settings struct (must be POD type)
+type
+  SynthSettings {.bycopy, exportc: "SynthSettings".} = object
+    gain {.exportc.}: cfloat
+    frequency {.exportc.}: cfloat
+    waveform {.exportc.}: uint8
+
+# Implement == and != operators
+{.emit: """
+typedef daisy::PersistentStorage<int>::State StorageState;
+
+inline bool operator==(const SynthSettings& a, const SynthSettings& b) {
+  return a.gain == b.gain && 
+         a.frequency == b.frequency && 
+         a.waveform == b.waveform;
+}
+inline bool operator!=(const SynthSettings& a, const SynthSettings& b) {
+  return !(a == b);
+}
+""".}
+
+var daisy = initDaisy()
+var qspi: QSPIHandle
+
+# Initialize QSPI in memory-mapped mode
+if not qspi.init(QSPI_DEVICE_IS25LP064A, QSPI_MODE_MEMORY_MAPPED):
+  echo "QSPI init failed"
+
+# Create persistent storage
+var storage = newPersistentStorage[SynthSettings](qspi)
+
+# Initialize with defaults
+let defaults = SynthSettings(gain: 0.5, frequency: 440.0, waveform: 0)
+storage.init(defaults)
+
+# Check state
+case storage.getState()
+of UNKNOWN: echo "Not initialized"
+of FACTORY: echo "Using factory defaults"
+of USER: echo "User settings loaded"
+
+# Modify and save
+var settings = storage.getSettings()
+settings.gain = 0.8
+storage.save()  # Only writes if changed
+
+# Restore factory defaults
+storage.restoreDefaults()
+```
+
+**Important Notes:**
+- Settings struct must be Plain Old Data (POD) type
+- Must implement `operator==` and `operator!=` in C++
+- Use `{.exportc.}` pragma for stable struct name
+- QSPI must be initialized in `MEMORY_MAPPED` mode
+- First call to `init()` writes defaults to flash (~100ms)
+- Address offset is masked to 256-byte page boundary
+
+---
+
 ## Serial/UART Module (libdaisy_serial.nim)
 
 **Import:**
