@@ -18,7 +18,7 @@ import ../src/util/fixedstr
 useDaisyNamespace()
 
 # Audio buffer example - delay line using RingBuffer
-const DELAY_SAMPLES = 4800  # 100ms at 48kHz
+const DELAY_SAMPLES = 4096  # 85.3ms at 48kHz (nearest power of 2)
 
 var
   daisy: DaisySeed

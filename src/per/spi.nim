@@ -2,30 +2,72 @@
 ##
 ## This module provides SPI communication support for the Daisy Audio Platform.
 ##
-## Example - Simple SPI master:
+## ⚠️ **IMPORTANT - Blocking vs DMA Functions:**
+##
+## - **Blocking functions** (`write`, `read`, `transfer`) will stall the CPU while waiting
+##   for the SPI transaction to complete. This can cause **audio glitches** if called from
+##   the audio callback or main loop during audio processing.
+##
+## - **DMA functions** (`dmaTransmit`, `dmaReceive`, `dmaTransmitAndReceive`) use Direct
+##   Memory Access to transfer data in the background without blocking the CPU. These are
+##   **safe to use during audio processing** if your buffers are in the correct memory region.
+##
+## **DMA Buffer Requirements:**
+## - Buffers must be in D2 memory domain (not stack variables!)
+## - Use `{.section: ".sram1_bss".}` or allocate on heap
+## - Or use `dsy_dma_clear_cache_for_buffer()` before transfer (advanced)
+##
+## Example - Simple SPI master (blocking):
 ## ```nim
 ## import libdaisy, libdaisy_spi
 ## 
 ## var daisy = initDaisy()
 ## var spi = initSPI(SPI_1, D8(), D9(), D10())
 ## 
-## # Write bytes
+## # Write bytes (BLOCKS - don't use in audio callback!)
 ## discard spi.write([0x01'u8, 0x02, 0x03, 0x04])
 ## 
-## # Read bytes
-## let (result, data) = spi.read(4)
+## # Read bytes (BLOCKS)
+## var buffer: array[4, uint8]
+## discard spi.read(buffer)
 ## 
-## # Full-duplex transfer
-## let (res2, rxData) = spi.transfer([0xAA'u8, 0xBB, 0xCC])
+## # Full-duplex transfer (BLOCKS)
+## let txData = [0xAA'u8, 0xBB, 0xCC]
+## var rxData: array[3, uint8]
+## discard spi.transfer(txData, rxData)
 ## ```
 ##
-## Example - SPI with register access:
+## Example - SPI with register access (blocking):
 ## ```nim
-## # Write to register
+## # Write to register (BLOCKS)
 ## discard spi.writeRegister(0x20, 0xFF)
 ## 
-## # Read from register
+## # Read from register (BLOCKS)
 ## let (result, value) = spi.readRegister(0x21)
+## ```
+##
+## Example - Non-blocking DMA transfer:
+## ```nim
+## import libdaisy, libdaisy_spi
+##
+## # DMA buffers MUST be in D2 memory, not on stack!
+## var txBuffer {.section: ".sram1_bss".}: array[256, uint8]
+## var transferComplete = false
+##
+## proc onTransferComplete(context: pointer, result: SpiResult) {.cdecl.} =
+##   # Called from interrupt - keep this FAST!
+##   transferComplete = true
+##
+## var daisy = initDaisy()
+## var spi = initSPI(SPI_1, D8(), D9(), D10())
+##
+## # Start DMA transfer (non-blocking)
+## discard spi.dmaTransmit(txBuffer, nil, onTransferComplete, nil)
+##
+## # CPU is free to do other work while transfer happens in background
+## while not transferComplete:
+##   # Do audio processing or other tasks
+##   discard
 ## ```
 
 # Import libdaisy which provides the macro system
@@ -121,16 +163,16 @@ type
 
 # Low-level C++ interface
 proc Init(this: var SpiHandle, config: SpiConfig): SpiResult {.importcpp: "#.Init(@)".}
-proc GetConfig(this: SpiHandle): SpiConfig {.importcpp: "#.GetConfig()", inline.}
+proc GetConfig(this: SpiHandle): SpiConfig {.importcpp: "#.GetConfig()".}
 
 proc BlockingTransmit*(this: var SpiHandle, buff: ptr uint8, size: csize_t, 
-                        timeout: uint32 = 100): SpiResult {.importcpp: "#.BlockingTransmit(@)", inline.}
+                        timeout: uint32 = 100): SpiResult {.importcpp: "#.BlockingTransmit(@)".}
 
 proc BlockingReceive(this: var SpiHandle, buffer: ptr uint8, size: uint16, 
-                       timeout: uint32): SpiResult {.importcpp: "#.BlockingReceive(@)", inline.}
+                       timeout: uint32): SpiResult {.importcpp: "#.BlockingReceive(@)".}
 
 proc BlockingTransmitAndReceive(this: var SpiHandle, tx_buff: ptr uint8, rx_buff: ptr uint8, 
-                                  size: csize_t, timeout: uint32 = 100): SpiResult {.importcpp: "#.BlockingTransmitAndReceive(@)", inline.}
+                                  size: csize_t, timeout: uint32 = 100): SpiResult {.importcpp: "#.BlockingTransmitAndReceive(@)".}
 
 proc DmaTransmit(this: var SpiHandle, buff: ptr uint8, size: csize_t, 
                    start_callback: SpiStartCallbackFunctionPtr, 
@@ -153,7 +195,7 @@ proc CheckError(this: var SpiHandle): cint {.importcpp: "#.CheckError()".}
 {.pop.} # header
 
 # Nim-friendly constructors and helpers
-proc cppNewSpiHandle(): SpiHandle {.importcpp: "daisy::SpiHandle()", constructor, header: "daisy_seed.h", inline.}
+proc cppNewSpiHandle(): SpiHandle {.importcpp: "daisy::SpiHandle()", constructor, header: "daisy_seed.h".}
 
 # =============================================================================
 # High-Level Nim-Friendly API
@@ -287,6 +329,128 @@ proc readRegisters*(spi: var SpiHandle, regAddr: uint8, buffer: var openArray[ui
   if result == SPI_OK:
     for i in 0..<count:
       buffer[i] = rxData[i + 1]
+
+# =============================================================================
+# DMA (Non-Blocking) API
+# =============================================================================
+
+proc dmaTransmit*(spi: var SpiHandle, 
+                  buffer: var openArray[uint8],
+                  startCallback: SpiStartCallbackFunctionPtr = nil,
+                  endCallback: SpiEndCallbackFunctionPtr = nil,
+                  context: pointer = nil): SpiResult =
+  ## Non-blocking DMA transmit
+  ##
+  ## ⚠️ **CRITICAL:** Buffer MUST be in D2 memory domain:
+  ## - Use `{.section: ".sram1_bss".}` pragma on buffer declaration
+  ## - Or allocate on heap with alloc/create
+  ## - **DO NOT use stack variables** (will cause DMA errors)
+  ##
+  ## Parameters:
+  ##   buffer: Data to transmit (must be in D2 memory!)
+  ##   startCallback: Called when transfer starts (from interrupt, keep fast!)
+  ##   endCallback: Called when transfer completes (from interrupt, keep fast!)
+  ##   context: User data pointer passed to callbacks
+  ##
+  ## Returns:
+  ##   SPI_OK if transfer queued successfully, SPI_ERR on error
+  ##
+  ## Example:
+  ## ```nim
+  ## var txBuf {.section: ".sram1_bss".}: array[256, uint8]
+  ## 
+  ## proc onComplete(ctx: pointer, res: SpiResult) {.cdecl.} =
+  ##   echo "Transfer done!"
+  ##
+  ## discard spi.dmaTransmit(txBuf, nil, onComplete, nil)
+  ## ```
+  if buffer.len > 0:
+    result = spi.DmaTransmit(addr buffer[0], csize_t(buffer.len), 
+                             startCallback, endCallback, context)
+  else:
+    result = SPI_OK
+
+proc dmaReceive*(spi: var SpiHandle,
+                 buffer: var openArray[uint8],
+                 startCallback: SpiStartCallbackFunctionPtr = nil,
+                 endCallback: SpiEndCallbackFunctionPtr = nil,
+                 context: pointer = nil): SpiResult =
+  ## Non-blocking DMA receive
+  ##
+  ## ⚠️ **CRITICAL:** Buffer MUST be in D2 memory domain:
+  ## - Use `{.section: ".sram1_bss".}` pragma on buffer declaration
+  ## - Or allocate on heap with alloc/create
+  ## - **DO NOT use stack variables** (will cause DMA errors)
+  ##
+  ## Parameters:
+  ##   buffer: Buffer to receive data into (must be in D2 memory!)
+  ##   startCallback: Called when transfer starts (from interrupt, keep fast!)
+  ##   endCallback: Called when transfer completes (from interrupt, keep fast!)
+  ##   context: User data pointer passed to callbacks
+  ##
+  ## Returns:
+  ##   SPI_OK if transfer queued successfully, SPI_ERR on error
+  ##
+  ## Example:
+  ## ```nim
+  ## var rxBuf {.section: ".sram1_bss".}: array[256, uint8]
+  ##
+  ## proc onComplete(ctx: pointer, res: SpiResult) {.cdecl.} =
+  ##   # Process received data
+  ##   discard
+  ##
+  ## discard spi.dmaReceive(rxBuf, nil, onComplete, nil)
+  ## ```
+  if buffer.len > 0:
+    result = spi.DmaReceive(addr buffer[0], csize_t(buffer.len),
+                            startCallback, endCallback, context)
+  else:
+    result = SPI_OK
+
+proc dmaTransmitAndReceive*(spi: var SpiHandle,
+                            txBuffer: var openArray[uint8],
+                            rxBuffer: var openArray[uint8],
+                            startCallback: SpiStartCallbackFunctionPtr = nil,
+                            endCallback: SpiEndCallbackFunctionPtr = nil,
+                            context: pointer = nil): SpiResult =
+  ## Non-blocking DMA full-duplex transfer (transmit and receive simultaneously)
+  ##
+  ## ⚠️ **CRITICAL:** Both buffers MUST be in D2 memory domain:
+  ## - Use `{.section: ".sram1_bss".}` pragma on buffer declarations
+  ## - Or allocate on heap with alloc/create
+  ## - **DO NOT use stack variables** (will cause DMA errors)
+  ##
+  ## Parameters:
+  ##   txBuffer: Data to transmit (must be in D2 memory!)
+  ##   rxBuffer: Buffer to receive data into (must be in D2 memory!)
+  ##   startCallback: Called when transfer starts (from interrupt, keep fast!)
+  ##   endCallback: Called when transfer completes (from interrupt, keep fast!)
+  ##   context: User data pointer passed to callbacks
+  ##
+  ## Returns:
+  ##   SPI_OK if transfer queued successfully, SPI_ERR on error
+  ##
+  ## Note: txBuffer and rxBuffer must be the same length
+  ##
+  ## Example:
+  ## ```nim
+  ## var txBuf {.section: ".sram1_bss".}: array[256, uint8]
+  ## var rxBuf {.section: ".sram1_bss".}: array[256, uint8]
+  ##
+  ## proc onComplete(ctx: pointer, res: SpiResult) {.cdecl.} =
+  ##   # Transfer complete, process rxBuf
+  ##   discard
+  ##
+  ## discard spi.dmaTransmitAndReceive(txBuf, rxBuf, nil, onComplete, nil)
+  ## ```
+  if txBuffer.len != rxBuffer.len:
+    return SPI_ERR
+  if txBuffer.len > 0:
+    result = spi.DmaTransmitAndReceive(addr txBuffer[0], addr rxBuffer[0], 
+                                       csize_t(txBuffer.len),
+                                       startCallback, endCallback, context)
+  else:
+    result = SPI_OK
 
 # Common SPI modes
 const

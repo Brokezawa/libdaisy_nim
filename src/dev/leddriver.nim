@@ -291,13 +291,32 @@ proc continueTransmission*[N, P](driver: var LedDriverPca9685[N, P]) =
     discard driver.i2c.Init(config)
     driver.currentDriverIdx = -1
 
-proc swapBuffersAndTransmit*[N, P](driver: var LedDriverPca9685[N, P]) =
+proc swapBuffersAndTransmit*[N, P](driver: var LedDriverPca9685[N, P], 
+                                    timeoutMs: int = 100): bool =
   ## Swap draw and transmit buffers, then start DMA transmission to all chips
   ## This is non-blocking - transmission happens in background via DMA
+  ## 
+  ## **Parameters:**
+  ## - `timeoutMs` - Maximum time to wait for previous transmission (default 100ms)
+  ## 
+  ## **Returns:** 
+  ## - `true` if buffers swapped and transmission started successfully
+  ## - `false` if timeout occurred waiting for previous transmission
+  ## 
+  ## **Note:** On timeout, the driver state is reset to prevent hangs, but
+  ## the previous transmission may have been incomplete.
   
-  # Wait for current transmission to complete
-  while driver.currentDriverIdx >= 0:
-    discard  # Busy wait (could use System.delay)
+  # Wait for current transmission to complete with timeout
+  var timeout = timeoutMs
+  while driver.currentDriverIdx >= 0 and timeout > 0:
+    delayMs(1)  # Use proper 1ms delay instead of busy-wait
+    timeout -= 1
+  
+  # Check if timeout occurred
+  if timeout <= 0 and driver.currentDriverIdx >= 0:
+    # Force reset driver state to prevent permanent hang
+    driver.currentDriverIdx = -1
+    return false  # Indicate timeout/failure
   
   # Swap buffers
   swap(driver.drawBuffer, driver.transmitBuffer)
@@ -311,3 +330,5 @@ proc swapBuffersAndTransmit*[N, P](driver: var LedDriverPca9685[N, P]) =
   # Start transmission sequence
   driver.currentDriverIdx = -1
   driver.continueTransmission()
+  
+  return true  # Success

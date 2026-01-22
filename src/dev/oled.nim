@@ -77,29 +77,29 @@ type
 
 # Generic C++ member functions
 proc Init[T, C](display: var T, config: C) {.importcpp: "#.Init(@)", header: "daisy_seed.h".}
-proc Width[T](display: T): csize_t {.importcpp: "#.Width()", header: "daisy_seed.h", inline.}
-proc Height[T](display: T): csize_t {.importcpp: "#.Height()", header: "daisy_seed.h", inline.}
-proc DrawPixel[T](display: var T, x: uint8, y: uint8, on: bool) {.importcpp: "#.DrawPixel(@)", header: "daisy_seed.h", inline.}
+proc Width[T](display: T): csize_t {.importcpp: "#.Width()", header: "daisy_seed.h".}
+proc Height[T](display: T): csize_t {.importcpp: "#.Height()", header: "daisy_seed.h".}
+proc DrawPixel[T](display: var T, x: uint8, y: uint8, on: bool) {.importcpp: "#.DrawPixel(@)", header: "daisy_seed.h".}
 proc Fill[T](display: var T, on: bool) {.importcpp: "#.Fill(@)", header: "daisy_seed.h".}
 proc Update[T](display: var T) {.importcpp: "#.Update()", header: "daisy_seed.h".}
 
 # Constructors
-proc cppNew128x64I2c(): OledDisplay128x64I2c {.importcpp: "daisy::SSD130xI2c128x64Driver()", constructor, header: "daisy_seed.h", inline.}
-proc cppNew128x32I2c(): OledDisplay128x32I2c {.importcpp: "daisy::SSD130xI2c128x32Driver()", constructor, header: "daisy_seed.h", inline.}
-proc cppNew64x48I2c(): OledDisplay64x48I2c {.importcpp: "daisy::SSD130xI2c64x48Driver()", constructor, header: "daisy_seed.h", inline.}
-proc cppNew64x32I2c(): OledDisplay64x32I2c {.importcpp: "daisy::SSD130xI2c64x32Driver()", constructor, header: "daisy_seed.h", inline.}
+proc cppNew128x64I2c(): OledDisplay128x64I2c {.importcpp: "daisy::SSD130xI2c128x64Driver()", constructor, header: "daisy_seed.h".}
+proc cppNew128x32I2c(): OledDisplay128x32I2c {.importcpp: "daisy::SSD130xI2c128x32Driver()", constructor, header: "daisy_seed.h".}
+proc cppNew64x48I2c(): OledDisplay64x48I2c {.importcpp: "daisy::SSD130xI2c64x48Driver()", constructor, header: "daisy_seed.h".}
+proc cppNew64x32I2c(): OledDisplay64x32I2c {.importcpp: "daisy::SSD130xI2c64x32Driver()", constructor, header: "daisy_seed.h".}
 
-proc cppNew128x64Spi(): OledDisplay128x64Spi {.importcpp: "daisy::SSD130x4WireSpi128x64Driver()", constructor, header: "daisy_seed.h", inline.}
-proc cppNew128x32Spi(): OledDisplay128x32Spi {.importcpp: "daisy::SSD130x4WireSpi128x32Driver()", constructor, header: "daisy_seed.h", inline.}
-proc cppNew64x48Spi(): OledDisplay64x48Spi {.importcpp: "daisy::SSD130x4WireSpi64x48Driver()", constructor, header: "daisy_seed.h", inline.}
-proc cppNew64x32Spi(): OledDisplay64x32Spi {.importcpp: "daisy::SSD130x4WireSpi64x32Driver()", constructor, header: "daisy_seed.h", inline.}
+proc cppNew128x64Spi(): OledDisplay128x64Spi {.importcpp: "daisy::SSD130x4WireSpi128x64Driver()", constructor, header: "daisy_seed.h".}
+proc cppNew128x32Spi(): OledDisplay128x32Spi {.importcpp: "daisy::SSD130x4WireSpi128x32Driver()", constructor, header: "daisy_seed.h".}
+proc cppNew64x48Spi(): OledDisplay64x48Spi {.importcpp: "daisy::SSD130x4WireSpi64x48Driver()", constructor, header: "daisy_seed.h".}
+proc cppNew64x32Spi(): OledDisplay64x32Spi {.importcpp: "daisy::SSD130x4WireSpi64x32Driver()", constructor, header: "daisy_seed.h".}
 
-proc cppNewI2cConfig(): OledDisplayI2cConfig {.importcpp: "daisy::SSD130xI2c128x64Driver::Config()", constructor, header: "daisy_seed.h", inline.}
-proc cppNewSpiConfig(): OledDisplaySpiConfig {.importcpp: "daisy::SSD130x4WireSpi128x64Driver::Config()", constructor, header: "daisy_seed.h", inline.}
+proc cppNewI2cConfig(): OledDisplayI2cConfig {.importcpp: "daisy::SSD130xI2c128x64Driver::Config()", constructor, header: "daisy_seed.h".}
+proc cppNewSpiConfig(): OledDisplaySpiConfig {.importcpp: "daisy::SSD130x4WireSpi128x64Driver::Config()", constructor, header: "daisy_seed.h".}
 
 # Transport defaults
-proc Defaults*(config: var SSD130xI2CTransportConfig) {.importcpp: "#.Defaults()", header: "daisy_seed.h", inline.}
-proc Defaults*(config: var SSD130x4WireSpiTransportConfig) {.importcpp: "#.Defaults()", header: "daisy_seed.h", inline.}
+proc Defaults*(config: var SSD130xI2CTransportConfig) {.importcpp: "#.Defaults()", header: "daisy_seed.h".}
+proc Defaults*(config: var SSD130x4WireSpiTransportConfig) {.importcpp: "#.Defaults()", header: "daisy_seed.h".}
 
 # =============================================================================
 # High-Level Nim API - compile-time dispatch to correct template instantiation

@@ -402,6 +402,11 @@ while true:
 
 ## I2C Module (libdaisy_i2c.nim)
 
+⚠️ **IMPORTANT - Blocking vs DMA Functions:**
+- **Blocking functions** (`write`, `read`, `writeRegister`, `readRegister`) stall the CPU and can cause **audio glitches** if used during audio processing
+- **DMA functions** (`transmitDma`, `receiveDma`) use hardware to transfer data in the background without blocking
+- **DMA Availability:** I2C1/I2C2/I2C3 share one DMA channel; I2C4 has NO DMA support
+
 **Import:**
 ```nim
 import src/libdaisy_i2c
@@ -426,20 +431,51 @@ cfg.pin_config.sda = DPin12
 i2c.init(cfg)
 ```
 
-**Communication:**
+**Blocking Communication (DO NOT use in audio callback):**
 ```nim
-proc transmitBlocking*(this: var I2CHandle, addr: uint8, 
-                       data: ptr uint8, size: csize_t,
-                       timeout: uint32): I2CResult
+proc write*(this: var I2CHandle, deviceAddr: uint16, data: openArray[uint8], timeout: uint32 = 100): I2CResult
+proc read*(this: var I2CHandle, deviceAddr: uint16, buffer: var openArray[uint8], timeout: uint32 = 100): I2CResult
+proc writeRegister*(this: var I2CHandle, deviceAddr: uint16, regAddr: uint8, value: uint8, timeout: uint32 = 100): I2CResult
+proc readRegister*(this: var I2CHandle, deviceAddr: uint16, regAddr: uint8, timeout: uint32 = 100): tuple[result: I2CResult, value: uint8]
+```
 
-proc receiveBlocking*(this: var I2CHandle, addr: uint8,
-                      data: ptr uint8, size: csize_t,
-                      timeout: uint32): I2CResult
+**Non-Blocking DMA Communication (safe for audio processing):**
+```nim
+proc transmitDma*(this: var I2CHandle,
+                  deviceAddr: uint16,
+                  buffer: var openArray[uint8],
+                  callback: I2CCallbackFunctionPtr = nil,
+                  context: pointer = nil): I2CResult
 
-proc writeDataAtAddress*(this: var I2CHandle, addr: uint8, 
-                         regAddr: uint16, regSize: uint16,
-                         data: ptr uint8, dataSize: csize_t,
-                         timeout: uint32): I2CResult
+proc receiveDma*(this: var I2CHandle,
+                 deviceAddr: uint16,
+                 buffer: var openArray[uint8],
+                 callback: I2CCallbackFunctionPtr = nil,
+                 context: pointer = nil): I2CResult
+```
+
+**DMA Buffer Requirements:**
+- Buffers MUST be in D2 memory domain
+- Use `{.section: ".sram1_bss".}` pragma on buffer declaration
+- Or allocate on heap with alloc/create
+- **DO NOT use stack variables** (will cause DMA errors)
+
+**Example - DMA Transfer:**
+```nim
+# DMA buffers MUST be in D2 memory
+var txBuffer {.section: ".sram1_bss".}: array[64, uint8]
+var transferComplete = false
+
+proc onComplete(context: pointer, result: I2CResult) {.cdecl.} =
+  transferComplete = true
+
+# Start non-blocking transfer
+discard i2c.transmitDma(0x48, txBuffer, onComplete, nil)
+
+# CPU is free while transfer happens
+while not transferComplete:
+  # Do other work
+  discard
 ```
 
 **Result Codes:**
@@ -453,6 +489,10 @@ type
 ---
 
 ## SPI Module (libdaisy_spi.nim)
+
+⚠️ **IMPORTANT - Blocking vs DMA Functions:**
+- **Blocking functions** (`write`, `read`, `transfer`) stall the CPU and can cause **audio glitches** if used during audio processing
+- **DMA functions** (`dmaTransmit`, `dmaReceive`, `dmaTransmitAndReceive`) use hardware to transfer data in the background without blocking
 
 **Import:**
 ```nim
@@ -479,13 +519,57 @@ cfg.baud_prescaler = SPI_BaudPrescaler.PS_8
 spi.init(cfg)
 ```
 
-**Communication:**
+**Blocking Communication (DO NOT use in audio callback):**
 ```nim
-proc transmitAndReceiveBlocking*(this: var SPIHandle,
-                                  txBuff: ptr uint8,
-                                  rxBuff: ptr uint8,
-                                  size: csize_t,
-                                  timeout: uint32): cint
+proc write*(this: var SpiHandle, data: openArray[uint8], timeout: uint32 = 100): SpiResult
+proc read*(this: var SpiHandle, buffer: var openArray[uint8], timeout: uint32 = 100): SpiResult
+proc transfer*(this: var SpiHandle, txData: openArray[uint8], rxBuffer: var openArray[uint8], timeout: uint32 = 100): SpiResult
+```
+
+**Non-Blocking DMA Communication (safe for audio processing):**
+```nim
+proc dmaTransmit*(this: var SpiHandle, 
+                  buffer: var openArray[uint8],
+                  startCallback: SpiStartCallbackFunctionPtr = nil,
+                  endCallback: SpiEndCallbackFunctionPtr = nil,
+                  context: pointer = nil): SpiResult
+
+proc dmaReceive*(this: var SpiHandle,
+                 buffer: var openArray[uint8],
+                 startCallback: SpiStartCallbackFunctionPtr = nil,
+                 endCallback: SpiEndCallbackFunctionPtr = nil,
+                 context: pointer = nil): SpiResult
+
+proc dmaTransmitAndReceive*(this: var SpiHandle,
+                            txBuffer: var openArray[uint8],
+                            rxBuffer: var openArray[uint8],
+                            startCallback: SpiStartCallbackFunctionPtr = nil,
+                            endCallback: SpiEndCallbackFunctionPtr = nil,
+                            context: pointer = nil): SpiResult
+```
+
+**DMA Buffer Requirements:**
+- Buffers MUST be in D2 memory domain
+- Use `{.section: ".sram1_bss".}` pragma on buffer declaration
+- Or allocate on heap with alloc/create
+- **DO NOT use stack variables** (will cause DMA errors)
+
+**Example - DMA Transfer:**
+```nim
+# DMA buffers MUST be in D2 memory
+var txBuffer {.section: ".sram1_bss".}: array[256, uint8]
+var transferComplete = false
+
+proc onComplete(context: pointer, result: SpiResult) {.cdecl.} =
+  transferComplete = true
+
+# Start non-blocking transfer
+discard spi.dmaTransmit(txBuffer, nil, onComplete, nil)
+
+# CPU is free while transfer happens
+while not transferComplete:
+  # Do other work
+  discard
 ```
 
 ---

@@ -98,25 +98,25 @@ proc DeInit(this: var PwmHandle): PwmResult
   {.importcpp: "#.DeInit()", header: "daisy_seed.h".}
 
 proc GetConfig(this: PwmHandle): PwmConfig
-  {.importcpp: "#.GetConfig()", header: "daisy_seed.h", inline.}
+  {.importcpp: "#.GetConfig()", header: "daisy_seed.h".}
 
 proc Channel1(this: var PwmHandle): var PwmChannel
-  {.importcpp: "#.Channel1()", header: "daisy_seed.h", inline.}
+  {.importcpp: "#.Channel1()", header: "daisy_seed.h".}
 
 proc Channel2(this: var PwmHandle): var PwmChannel
-  {.importcpp: "#.Channel2()", header: "daisy_seed.h", inline.}
+  {.importcpp: "#.Channel2()", header: "daisy_seed.h".}
 
 proc Channel3(this: var PwmHandle): var PwmChannel
-  {.importcpp: "#.Channel3()", header: "daisy_seed.h", inline.}
+  {.importcpp: "#.Channel3()", header: "daisy_seed.h".}
 
 proc Channel4(this: var PwmHandle): var PwmChannel
-  {.importcpp: "#.Channel4()", header: "daisy_seed.h", inline.}
+  {.importcpp: "#.Channel4()", header: "daisy_seed.h".}
 
 proc SetPrescaler(this: var PwmHandle, prescaler: uint32)
-  {.importcpp: "#.SetPrescaler(@)", header: "daisy_seed.h", inline.}
+  {.importcpp: "#.SetPrescaler(@)", header: "daisy_seed.h".}
 
 proc SetPeriod(this: var PwmHandle, period: uint32)
-  {.importcpp: "#.SetPeriod(@)", header: "daisy_seed.h", inline.}
+  {.importcpp: "#.SetPeriod(@)", header: "daisy_seed.h".}
 
 # Low-level C++ interface for PwmChannel
 proc Init(this: var PwmChannel, config: PwmChannelConfig): PwmResult
@@ -129,29 +129,29 @@ proc DeInit(this: var PwmChannel): PwmResult
   {.importcpp: "#.DeInit()", header: "daisy_seed.h".}
 
 proc SetRaw(this: var PwmChannel, raw: uint32)
-  {.importcpp: "#.SetRaw(@)", header: "daisy_seed.h", inline.}
+  {.importcpp: "#.SetRaw(@)", header: "daisy_seed.h".}
 
 proc Set(this: var PwmChannel, val: cfloat)
-  {.importcpp: "#.Set(@)", header: "daisy_seed.h", inline.}
+  {.importcpp: "#.Set(@)", header: "daisy_seed.h".}
 
 proc GetConfig(this: PwmChannel): PwmChannelConfig
-  {.importcpp: "#.GetConfig()", header: "daisy_seed.h", inline.}
+  {.importcpp: "#.GetConfig()", header: "daisy_seed.h".}
 
 # C++ constructors
 proc cppNewPwmHandle(): PwmHandle 
-  {.importcpp: "daisy::PWMHandle()", constructor, header: "daisy_seed.h", inline.}
+  {.importcpp: "daisy::PWMHandle()", constructor, header: "daisy_seed.h".}
 
 proc cppNewPwmConfig(): PwmConfig
-  {.importcpp: "daisy::PWMHandle::Config()", constructor, header: "daisy_seed.h", inline.}
+  {.importcpp: "daisy::PWMHandle::Config()", constructor, header: "daisy_seed.h".}
 
 proc cppNewPwmConfig(periph: PwmPeripheral, prescaler: uint32, period: uint32): PwmConfig
-  {.importcpp: "daisy::PWMHandle::Config(@)", constructor, header: "daisy_seed.h", inline.}
+  {.importcpp: "daisy::PWMHandle::Config(@)", constructor, header: "daisy_seed.h".}
 
 proc cppNewPwmChannelConfig(): PwmChannelConfig
-  {.importcpp: "daisy::PWMHandle::Channel::Config()", constructor, header: "daisy_seed.h", inline.}
+  {.importcpp: "daisy::PWMHandle::Channel::Config()", constructor, header: "daisy_seed.h".}
 
 proc cppNewPwmChannelConfig(pin: Pin, polarity: PwmPolarity): PwmChannelConfig
-  {.importcpp: "daisy::PWMHandle::Channel::Config(@)", constructor, header: "daisy_seed.h", inline.}
+  {.importcpp: "daisy::PWMHandle::Channel::Config(@)", constructor, header: "daisy_seed.h".}
 
 # =============================================================================
 # High-Level Nim-Friendly API
