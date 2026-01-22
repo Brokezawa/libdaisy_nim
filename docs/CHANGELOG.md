@@ -9,6 +9,115 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Nothing yet
 
+## [0.10.0] - 2026-01-22
+
+### Added - External Storage & Multi-Device SPI
+
+#### Core Feature: Persistent Settings Storage
+
+- **PersistentStorage Module** (`src/libdaisy_persistent_storage.nim`) - Type-safe flash storage
+  - Generic `PersistentStorage[T]` wrapper for settings structs
+  - Automatic dirty detection (only writes when changed)
+  - Factory defaults restoration support
+  - State tracking: UNKNOWN, FACTORY, USER
+  - Overwrite protection option
+  - Requires POD types with `operator==` and `operator!=`
+  - Uses QSPI flash for non-volatile storage
+  - 380 lines of comprehensive wrapper code
+  - Files: `src/libdaisy_persistent_storage.nim`
+
+- **Example: Settings Manager** (`examples/settings_manager.nim`) - Persistent configuration demo
+  - Demonstrates factory defaults initialization
+  - Shows dirty detection and automatic save
+  - Includes restore defaults functionality
+  - POD struct definition with comparison operators
+  - Binary size: 79,496 bytes text
+  - Files: `examples/settings_manager.nim`
+
+#### Core Feature: Multi-Device SPI Bus Sharing
+
+- **MultiSlaveSPI Module** (`src/libdaisy_spi_multislave.nim`) - Share SPI bus between devices
+  - Support for up to 4 SPI slave devices on one bus
+  - Individual chip select (NSS) per device
+  - Shared SCLK, MISO, MOSI pins
+  - Blocking and DMA transfer modes
+  - Software-controlled device selection
+  - Compatible with SPI1-SPI6 peripherals
+  - 543 lines including comprehensive documentation
+  - Files: `src/libdaisy_spi_multislave.nim`
+
+- **Example: Multi-SPI** (`examples/multi_spi.nim`) - Multi-device SPI demo
+  - Shows configuration for 3 devices on one bus
+  - Demonstrates individual device communication
+  - Blocking transfers to different slaves
+  - Binary size: 78,128 bytes text
+  - Files: `examples/multi_spi.nim`
+
+#### Enhanced: QSPI Flash Documentation
+
+- **Flash Storage Example** (`examples/flash_storage.nim`) - QSPI basic operations
+  - Demonstrates sector erase
+  - Shows write and read operations
+  - Mode switching (INDIRECT_POLLING ↔ MEMORY_MAPPED)
+  - Binary size: 78,260 bytes text
+  - Files: `examples/flash_storage.nim`
+
+### Technical Notes
+
+#### Type System Improvements
+
+- **C++ Template Enum Handling** - Fixed cross-instantiation compatibility
+  - Added typedef workaround for `PersistentStorage<T>::State` enum
+  - C++ template enums don't convert between different `T` types
+  - Solution: Cast to common typedef in emit blocks
+  - Affects: `libdaisy_persistent_storage.nim:99-110`
+
+- **SPI Type Compatibility** - Fixed Nim enum ↔ C++ type mapping
+  - Added typedefs for `SpiResult`, `SpiPeripheral`, etc.
+  - Ensures Nim helper functions can use C++ enum types
+  - Emit blocks provide C++ type aliases
+  - Affects: `libdaisy_spi_multislave.nim:117-131`
+
+#### Callback Type Fixes
+
+- **SPI Callback Names** - Corrected DMA callback type references
+  - Fixed: `SpiStartCallback` → `SpiStartCallbackFunctionPtr`
+  - Fixed: `SpiEndCallback` → `SpiEndCallbackFunctionPtr`
+  - Ensures consistency with `libdaisy_spi.nim` type definitions
+  - Affects: `libdaisy_spi_multislave.nim:305, 343, 370`
+
+### Documentation
+
+- **API Reference** (`docs/API_REFERENCE.md`) - New module documentation
+  - Added Multi-Slave SPI Module section (60+ lines)
+  - Added QSPI Flash Module section (50+ lines)
+  - Added Persistent Storage Module section (100+ lines)
+  - Comprehensive examples for each module
+  - Usage notes and important warnings
+  - Files: `docs/API_REFERENCE.md:575-787`
+
+### Files Changed
+
+**New Modules:**
+- `src/libdaisy_persistent_storage.nim` (380 lines)
+- `src/libdaisy_spi_multislave.nim` (543 lines)
+
+**New Examples:**
+- `examples/flash_storage.nim` (87 lines)
+- `examples/settings_manager.nim` (108 lines)
+- `examples/multi_spi.nim` (88 lines)
+
+**Updated Documentation:**
+- `docs/API_REFERENCE.md` (+212 lines)
+- `docs/CHANGELOG.md` (this file)
+
+### Build Statistics
+
+All examples compile successfully:
+- `flash_storage`: 78,260 bytes text, 2,256 data, 39,540 bss
+- `multi_spi`: 78,128 bytes text, 2,256 data, 39,540 bss
+- `settings_manager`: 79,496 bytes text, 2,256 data, 39,540 bss
+
 ## [0.9.1] - 2026-01-22
 
 ### Added - Performance Enhancements
