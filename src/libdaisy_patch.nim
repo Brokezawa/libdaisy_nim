@@ -36,6 +36,9 @@ import libdaisy_macros
 import libdaisy
 import libdaisy_controls
 import libdaisy_oled
+import libdaisy_gatein
+
+export libdaisy_gatein  # Export GateIn methods for gate input access
 
 type
   PatchCtrl* = enum
@@ -214,3 +217,141 @@ proc displayControls*(this: var DaisyPatch, invert: bool = true)
   ## **Parameters:**
   ## - `invert` - Invert display colors
   discard
+
+# ============================================================================
+# Enhanced Features (v0.11.0)
+# ============================================================================
+
+# Gate Output Control
+
+proc writeGateOutput*(this: var DaisyPatch, state: bool)
+  {.importcpp: "#.gate_output.Write(#)".} =
+  ## Write to gate output
+  ##
+  ## **Parameters:**
+  ## - `state` - `true` = HIGH (gate on), `false` = LOW (gate off)
+  ##
+  ## **Voltage levels:** LOW = 0V, HIGH = 3.3V (can drive gate inputs)
+  ##
+  ## **Example:**
+  ## ```nim
+  ## # Trigger gate output
+  ## patch.writeGateOutput(true)
+  ## patch.seed.delay(5)
+  ## patch.writeGateOutput(false)
+  ## ```
+  discard
+
+proc toggleGateOutput*(this: var DaisyPatch)
+  {.importcpp: "#.gate_output.Toggle()".} =
+  ## Toggle gate output state
+  ##
+  ## Switches between HIGH and LOW.
+  discard
+
+# Encoder Button Detection
+
+proc encoderPressed*(this: var DaisyPatch): bool
+  {.importcpp: "#.encoder.Pressed()".} =
+  ## Check if encoder button is currently pressed
+  ##
+  ## **Returns:** `true` if button is pressed
+  ##
+  ## **Note:** Call `processDigitalControls()` first to update state.
+  discard
+
+proc encoderRisingEdge*(this: var DaisyPatch): bool
+  {.importcpp: "#.encoder.RisingEdge()".} =
+  ## Detect encoder button press (rising edge)
+  ##
+  ## **Returns:** `true` if button was just pressed
+  ##
+  ## **Use case:** Menu selection, mode switching
+  ##
+  ## **Example:**
+  ## ```nim
+  ## if patch.encoderRisingEdge():
+  ##   currentMenu = (currentMenu + 1) mod NUM_MENUS
+  ## ```
+  discard
+
+proc encoderFallingEdge*(this: var DaisyPatch): bool
+  {.importcpp: "#.encoder.FallingEdge()".} =
+  ## Detect encoder button release (falling edge)
+  ##
+  ## **Returns:** `true` if button was just released
+  discard
+
+proc encoderTimeHeldMs*(this: var DaisyPatch): cfloat
+  {.importcpp: "#.encoder.TimeHeldMs()".} =
+  ## Get how long encoder button has been held
+  ##
+  ## **Returns:** Time in milliseconds
+  ##
+  ## **Use case:** Long-press detection
+  ##
+  ## **Example:**
+  ## ```nim
+  ## if patch.encoderPressed() and patch.encoderTimeHeldMs() > 1000.0:
+  ##   # Long press detected (>1 second)
+  ## ```
+  discard
+
+# Convenience Helpers
+
+proc delay*(this: var DaisyPatch, milliseconds: int) {.inline.} =
+  ## Delay execution (convenience wrapper)
+  this.delayMs(milliseconds.csize_t)
+
+# Gate Input Helpers
+
+proc gateInputTrig*(this: var DaisyPatch, input: PatchGateInput): bool
+  {.importcpp: "#.gate_input[#].Trig()".} =
+  ## Check if gate input has triggered (rising edge)
+  ##
+  ## **Parameters:**
+  ## - `input` - Gate input identifier (GATE_IN_1 or GATE_IN_2)
+  ##
+  ## **Returns:** `true` if gate just went high
+  ##
+  ## **Example:**
+  ## ```nim
+  ## if patch.gateInputTrig(GATE_IN_1):
+  ##   # Gate 1 triggered
+  ## ```
+  discard
+
+proc gateInputState*(this: var DaisyPatch, input: PatchGateInput): bool
+  {.importcpp: "#.gate_input[#].State()".} =
+  ## Get current state of gate input
+  ##
+  ## **Parameters:**
+  ## - `input` - Gate input identifier (GATE_IN_1 or GATE_IN_2)
+  ##
+  ## **Returns:** `true` if gate is currently high
+  discard
+
+# ============================================================================
+# Encoder Helper Methods
+# ============================================================================
+
+proc increment*(enc: var Encoder): int32 {.importcpp: "#.Increment()", header: "hid/encoder.h".} =
+  ## Get encoder increment since last call
+  discard
+
+proc pressed*(enc: var Encoder): bool {.importcpp: "#.Pressed()", header: "hid/encoder.h".} =
+  ## Check if encoder button is pressed
+  discard
+
+proc risingEdge*(enc: var Encoder): bool {.importcpp: "#.RisingEdge()", header: "hid/encoder.h".} =
+  ## Check if encoder button has rising edge
+  discard
+
+proc fallingEdge*(enc: var Encoder): bool {.importcpp: "#.FallingEdge()", header: "hid/encoder.h".} =
+  ## Check if encoder button has falling edge
+  discard
+
+proc timeHeldMs*(enc: var Encoder): cfloat {.importcpp: "#.TimeHeldMs()", header: "hid/encoder.h".} =
+  ## Get time encoder button has been held
+  discard
+

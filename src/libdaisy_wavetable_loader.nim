@@ -56,7 +56,7 @@ emitWaveTableLoaderIncludes()
 
 # Forward declarations
 type
-  WaveTableResult* {.importcpp: "daisy::WaveTableLoader::Result", pure.} = enum
+  WaveTableResult* {.importcpp: "daisy::WaveTableLoader::Result", size: sizeof(cint).} = enum
     OK = "daisy::WaveTableLoader::Result::OK"
     ERR_TABLE_INFO_OVERFLOW = "daisy::WaveTableLoader::Result::ERR_TABLE_INFO_OVERFLOW"
     ERR_FILE_READ = "daisy::WaveTableLoader::Result::ERR_FILE_READ"

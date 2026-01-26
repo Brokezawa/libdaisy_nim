@@ -80,6 +80,10 @@ type
     oePinGpio*: GPIO
     currentDriverIdx*: int8  ## -1 when idle, 0..N-1 during transmission
 
+  ## Type alias for Daisy Field LED driver (26 LEDs, 2× PCA9685 chips)
+  ## This concrete type enables Field-specific wrapper procedures (v0.12.0 fix)
+  FieldLedDriver* = LedDriverPca9685[2, true]
+
 const
   PCA9685_I2C_BASE_ADDRESS* = 0b01000000'u8
   PCA9685_MODE1* = 0x00'u8
@@ -256,11 +260,9 @@ proc continueTransmission*[N, P](driver: var LedDriverPca9685[N, P])
 
 proc txCpltCallback(context: pointer, result: I2CResult) {.exportc, cdecl.} =
   ## Internal DMA completion callback
-  # Note: Type information is lost in callback, but we can cast back
-  # This is called from interrupt context, keep it minimal
-  when false:  # We can't safely access the driver here without type info
-    var driver = cast[ptr LedDriverPca9685](context)
-    driver[].continueTransmission()
+  # Note: Generic type information is lost in callback context
+  # Use Field-specific callback for working DMA (see fieldLedDriverDmaCallback below)
+  discard
 
 proc continueTransmission*[N, P](driver: var LedDriverPca9685[N, P]) =
   ## Continue DMA transmission to next chip (internal use)
@@ -332,3 +334,62 @@ proc swapBuffersAndTransmit*[N, P](driver: var LedDriverPca9685[N, P],
   driver.continueTransmission()
   
   return true  # Success
+
+# ============================================================================
+# Field-Specific LED Driver Wrappers (v0.12.0)
+# ============================================================================
+# These wrappers provide convenient access to Field LED driver functions
+# using the concrete FieldLedDriver type instead of generic parameters.
+# The Field has 26 LEDs controlled by 2× PCA9685 chips (daisy-chained).
+
+proc setLed*(driver: var FieldLedDriver, ledNum: int, brightness: float32) =
+  ## Set Field LED brightness (0.0-1.0) with gamma correction
+  ## 
+  ## **Parameters:**
+  ## - `ledNum` - LED index 0-25 (16 keyboard + 8 knob + 2 switch LEDs)
+  ## - `brightness` - Brightness level 0.0 (off) to 1.0 (full)
+  ## 
+  ## **LED Mapping:**
+  ## - LEDs 0-15: Keyboard LEDs (Chip 0, channels 0-15)
+  ## - LEDs 16-23: Knob LEDs (Chip 1, channels 0-7)
+  ## - LEDs 24-25: Switch LEDs (Chip 1, channels 8-9)
+  if ledNum < 0 or ledNum >= 26:
+    return
+  
+  let chipIdx = ledNum div 16  # Chip 0 has LEDs 0-15, Chip 1 has LEDs 16-25
+  let channelIdx = ledNum mod 16
+  
+  # Convert brightness to 12-bit PWM with gamma correction
+  let brightness8bit = uint8(brightness * 255.0)
+  let pwmValue = if brightness8bit < 256: GAMMA_TABLE[brightness8bit] else: 4095'u16
+  
+  # Update draw buffer
+  driver.drawBuffer[][chipIdx].leds[channelIdx].on = 0
+  driver.drawBuffer[][chipIdx].leds[channelIdx].off = pwmValue
+
+proc clearAllLeds*(driver: var FieldLedDriver) =
+  ## Turn off all Field LEDs (26 total)
+  for led in 0..<26:
+    driver.setLed(led, 0.0)
+
+proc swapBuffersAndTransmit*(driver: var FieldLedDriver): bool {.inline.} =
+  ## Swap buffers and transmit to Field LEDs via DMA
+  ## 
+  ## **Returns:** `true` if transmission started successfully
+  ## 
+  ## **Note:** Uses 100ms timeout for DMA transfer initialization
+  driver.swapBuffersAndTransmit(100)  # 100ms timeout
+
+# Field LED driver DMA callback (enables high-performance LED updates)
+proc fieldLedDriverDmaCallback(context: pointer, result: I2CResult) {.cdecl, exportc: "fieldLedDriverDmaCallback".} =
+  ## DMA completion callback for Field LED driver
+  ## 
+  ## Called from interrupt context when I2C DMA transfer completes.
+  ## Enables chaining multiple DMA transfers (one per PCA9685 chip)
+  ## without blocking the main thread.
+  ## 
+  ## **Context:** Pointer to FieldLedDriver instance
+  ## **Result:** I2C transfer result (I2C_OK or error code)
+  if result == I2C_OK:
+    var driver = cast[ptr FieldLedDriver](context)
+    driver[].continueTransmission()

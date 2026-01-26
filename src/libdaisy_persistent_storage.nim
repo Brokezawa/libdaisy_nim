@@ -378,73 +378,8 @@ template validateSettingsType*(T: typedesc) =
     {.warning: "PersistentStorage type is very large (" & $sizeof(T) & " bytes)".}
 
 # ============================================================================
-# Documentation Examples
+# Documentation Examples (see examples/settings_manager.nim for usage)
 # ============================================================================
-
-when false:
-  # This code is for documentation only, not compiled
-  
-  ## Example: Synth with persistent settings
-  ## =========================================
-  
-  type
-    SynthSettings {.bycopy, exportc: "SynthSettings".} = object
-      gain {.exportc.}: cfloat
-      frequency {.exportc.}: cfloat
-      filterCutoff {.exportc.}: cfloat
-      waveform {.exportc.}: uint8
-      octave {.exportc.}: uint8
-  
-  # C++ comparison operators required for dirty detection
-  # See module documentation for why this emit block is necessary
-  {.emit: """
-  inline bool operator==(const SynthSettings& a, const SynthSettings& b) {
-    return a.gain == b.gain && 
-           a.frequency == b.frequency && 
-           a.filterCutoff == b.filterCutoff &&
-           a.waveform == b.waveform &&
-           a.octave == b.octave;
-  }
-  inline bool operator!=(const SynthSettings& a, const SynthSettings& b) {
-    return !(a == b);
-  }
-  """.}
-  
-  proc synthMain() =
-    var daisy = initDaisy()
-    
-    # Initialize QSPI in memory-mapped mode
-    var qspi: QSPIHandle
-    var qspiConfig = QSPIConfig(
-      device: QSPIDevice.IS25LP064A,
-      mode: QSPIMode.MEMORY_MAPPED
-    )
-    discard qspi.init(qspiConfig)
-    
-    # Create persistent storage
-    validateSettingsType(SynthSettings)
-    var storage = newPersistentStorage[SynthSettings](qspi)
-    
-    # Factory defaults
-    let defaults = SynthSettings(
-      gain: 0.5,
-      frequency: 440.0,
-      filterCutoff: 2000.0,
-      waveform: 0,
-      octave: 4
-    )
-    
-    storage.init(defaults)
-    
-    # Load settings
-    var settings = storage.getSettings()
-    
-    # Use settings in audio callback...
-    
-    # When user changes a parameter:
-    settings.gain = 0.8
-    # Save later (NOT in audio callback!)
-    storage.save()
     
     # Factory reset button:
     storage.restoreDefaults()

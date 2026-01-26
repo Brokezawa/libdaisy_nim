@@ -75,7 +75,7 @@ emitQSPIIncludes()
 
 # Forward declarations
 type
-  QSPIResult* {.importcpp: "daisy::QSPIHandle::Result", pure.} = enum
+  QSPIResult* {.importcpp: "daisy::QSPIHandle::Result", size: sizeof(cint).} = enum
     OK = "daisy::QSPIHandle::Result::OK"
     ERR = "daisy::QSPIHandle::Result::ERR"
 

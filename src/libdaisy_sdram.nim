@@ -91,6 +91,10 @@ proc clearSdramBss*() =
   ## This should be called after SDRAM initialization if you want
   ## to ensure all SDRAM variables start at zero.
   ## 
+  ## **Safety:** Pointer arithmetic is safe because bounds are guaranteed
+  ## by linker symbols (_ssdram_bss, _esdram_bss) defined in the linker script.
+  ## Both symbols are aligned to 4-byte boundaries by the linker.
+  ## 
   ## Note: This is a slow operation and may take several milliseconds.
   var start = addr ssdram_bss
   let theEnd = addr esdram_bss

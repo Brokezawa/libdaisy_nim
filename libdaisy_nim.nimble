@@ -1,8 +1,8 @@
 # Package
 
-version       = "0.9.1"
+version       = "0.12.0"
 author        = "libDaisy Nim Wrapper Contributors"
-description   = "Nim bindings for libDaisy - Hardware Abstraction Library for the Daisy Audio Platform"
+description   = "Nim bindings for libDaisy - Hardware Abstraction Library for the Daisy Audio Platform (Seed, Patch, Pod, Field)"
 license       = "MIT"
 srcDir        = "."
 skipDirs      = @["examples", "examples_nim", "tests", "docs", "Drivers", "Middlewares", "core", "cmake", "ci", "resources"]

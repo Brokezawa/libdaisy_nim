@@ -1216,7 +1216,7 @@ proc restoreDefaults*[T](ps: var PersistentStorage[T], defaults: T)
 
 ## Phase 4: System & UI
 
-### Milestone: v0.14.0 - Advanced System Features
+### Milestone: v0.13.0 - Advanced System Features
 **Duration**: 3-4 weeks  
 **Effort**: 20-25 hours  
 **Goal**: Low-level system utilities and optimizations
@@ -1303,7 +1303,7 @@ proc restoreDefaults*[T](ps: var PersistentStorage[T], defaults: T)
 
 ---
 
-### Milestone: v0.15.0 - UI Framework ⚠️ **COMPLEX**
+### Milestone: v0.14.0 - UI Framework ⚠️ **COMPLEX**
 **Duration**: 5-6 weeks  
 **Effort**: 30-40 hours  
 **Goal**: Complete Nim-native UI system

@@ -21,7 +21,7 @@ const NUM_LEDS = 16
 
 var
   hw: DaisySeed
-  leds: DotStar
+  leds: DotStarSpi
   
   # Thread-safe peak detection using double buffering
   # Audio callback writes to peakCallback, main loop reads from peakDisplay

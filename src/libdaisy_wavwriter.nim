@@ -64,7 +64,7 @@ emitWavWriterIncludes()
 
 # Forward declarations
 type
-  WavWriterResult* {.importcpp: "daisy::WavWriter<32768>::Result", pure.} = enum
+  WavWriterResult* {.importcpp: "daisy::WavWriter<32768>::Result", size: sizeof(cint).} = enum
     OK = "daisy::WavWriter<32768>::Result::OK"
     ERROR = "daisy::WavWriter<32768>::Result::ERROR"
 

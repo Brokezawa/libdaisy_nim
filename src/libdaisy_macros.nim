@@ -159,6 +159,12 @@ const sr595* : seq[string] = @[]
 const sr4021* : seq[string] = @[]
 const max11300* : seq[string] = @[]
 
+# Board support module typedefs (v0.11.0)
+const podTypedefs* : seq[string] = @[]  # DaisyPod board (uses existing component types)
+const fieldTypedefs* = [
+  "LedDriverPca9685<2, true> FieldLedDriver"  # Field LED driver (2× PCA9685, persistent buffer)
+]
+
 # All typedefs combined (for full inclusion)
 const daisyTypedefsList* = @coreTypedefs & @controlsTypedefs & @adcTypedefs & @pwmTypedefs &
                            @oledTypedefs & @i2cTypedefs & @spiTypedefs & @sdramTypedefs & @usbTypedefs & @sdmmcTypedefs &
@@ -268,6 +274,12 @@ proc getModuleHeaders*(moduleName: string): string =
   of "persistent_storage":
     """#include "util/PersistentStorage.h"
 #include "sys/system.h"
+"""
+  of "pod":
+    """#include "daisy_pod.h"
+"""
+  of "field":
+    """#include "daisy_field.h"
 """
   else: ""
 
@@ -455,6 +467,8 @@ macro useDaisyModules*(modules: varargs[untyped]): untyped =
   var includeQspi = false
   var includeSpiMultislave = false
   var includePersistentStorage = false
+  var includePod = false
+  var includeField = false
   
   # Parse module arguments
   for module in modules:
@@ -490,6 +504,8 @@ macro useDaisyModules*(modules: varargs[untyped]): untyped =
     of "qspi": includeQspi = true
     of "spi_multislave": includeSpiMultislave = true
     of "persistent_storage": includePersistentStorage = true
+    of "pod": includePod = true
+    of "field": includeField = true
     of "core": discard  # Always included
     else:
       error("Unknown module: " & moduleName & 
@@ -497,7 +513,7 @@ macro useDaisyModules*(modules: varargs[untyped]): untyped =
             "codec_ak4556, codec_wm8731, codec_pcm3060, lcd_hd44780, oled_fonts, " &
             "icm20948, apds9960, dps310, tlv493d, mpr121, neotrellis, " &
             "leddriver, dotstar, neopixel, mcp23x17, sr595, sr4021, max11300, " &
-            "qspi, spi_multislave, persistent_storage")
+            "qspi, spi_multislave, persistent_storage, pod, field")
   
   # Build headers string
   var headersStr = "/*INCLUDESECTION*/\n"
@@ -532,6 +548,8 @@ macro useDaisyModules*(modules: varargs[untyped]): untyped =
   if includeQspi: headersStr.add(getModuleHeaders("qspi"))
   if includeSpiMultislave: headersStr.add(getModuleHeaders("spi_multislave"))
   if includePersistentStorage: headersStr.add(getModuleHeaders("persistent_storage"))
+  if includePod: headersStr.add(getModuleHeaders("pod"))
+  if includeField: headersStr.add(getModuleHeaders("field"))
   
   # 1. Emit header includes
   let includesEmit = newNimNode(nnkPragma)
@@ -571,6 +589,7 @@ macro useDaisyModules*(modules: varargs[untyped]): untyped =
   if includeOledFonts: typedefsStr.add(buildTypedefsString(oled_fontsTypedefs))
   if includeQspi: typedefsStr.add(buildTypedefsString(qspiTypedefs))
   if includePersistentStorage: typedefsStr.add(buildTypedefsString(persistentStorageTypedefs))
+  if includeField: typedefsStr.add(buildTypedefsString(fieldTypedefs))
   
   let typedefsEmit = newNimNode(nnkPragma)
   typedefsEmit.add(

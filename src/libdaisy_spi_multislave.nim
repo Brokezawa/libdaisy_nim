@@ -495,51 +495,5 @@ proc blockingTransmitAndReceive*(this: var MultiSlaveSpiHandle,
                                    timeout)
 
 # ============================================================================
-# Documentation Example
+# Documentation Example (see EXAMPLES.md for usage patterns)
 # ============================================================================
-
-when false:
-  ## Example: Multiple sensors on one SPI bus
-  ## =========================================
-  
-  proc multiSensorExample() =
-    var daisy = initDaisy()
-    
-    # Configure SPI bus with 3 devices:
-    # Device 0: Accelerometer
-    # Device 1: Magnetometer  
-    # Device 2: Pressure sensor
-    var config = MultiSlaveSpiConfig(
-      periph: SPI_1,
-      direction: SPI_TWO_LINES,
-      datasize: 8,
-      clock_polarity: SPI_CLOCK_POL_HIGH,
-      clock_phase: SPI_CLOCK_PHASE_2,
-      baud_prescaler: SPI_PS_32,
-      num_devices: 3
-    )
-    
-    config.pin_config.sclk = D7()
-    config.pin_config.miso = D8()
-    config.pin_config.mosi = D9()
-    config.pin_config.nss[0] = D10()  # Accel CS
-    config.pin_config.nss[1] = D11()  # Mag CS
-    config.pin_config.nss[2] = D12()  # Pressure CS
-    
-    var spi = initMultiSlaveSpi()
-    discard spi.init(config)
-    
-    # Read from accelerometer (device 0)
-    var accelCmd = [0x80'u8 or 0x28]  # Read X axis
-    var accelData: array[2, uint8]
-    discard spi.blockingTransmitAndReceive(0, accelCmd, accelData)
-    
-    # Read from magnetometer (device 1)
-    var magCmd = [0x03'u8]  # Read register
-    var magData: array[6, uint8]
-    discard spi.blockingTransmitAndReceive(1, magCmd, magData)
-    
-    # Read from pressure sensor (device 2)
-    var pressCmd = [0xF4'u8]
-    var pressData: array[3, uint8]
-    discard spi.blockingTransmitAndReceive(2, pressCmd, pressData)

@@ -15,9 +15,9 @@ This wrapper allows you to write firmware for the Daisy Seed embedded audio boar
 - ✅ **Type safety** - Nim's strong type system catches errors at compile time
 - ✅ **Clean API** - Idiomatic Nim interfaces to libDaisy functionality
 - ✅ **Comprehensive** - Covers core audio, peripherals, USB, storage, sensors, and more
-- ✅ **Production ready** - 50 tested examples demonstrating real-world usage
+- ✅ **Production ready** - 61 tested examples demonstrating real-world usage
 - ✅ **Well documented** - Complete API reference and technical documentation
-- ✅ **Many examples** - 50 working examples covering all features
+- ✅ **Many examples** - 61 working examples covering all features
 - ✅ **59 modules** - Comprehensive hardware and utility coverage including sensors, LED drivers, and I/O expansion
 
 ## Quick Start
@@ -166,13 +166,15 @@ The Daisy Seed is a powerful embedded audio platform perfect for:
   - Should be considered experimental until community validation
   - See CHANGELOG.md for implementation details
 
-### Boards
-- ✅ **Daisy Seed** - Core development board
-- ✅ **Daisy Patch** - Eurorack module format (NEW in v0.3.0)
+### Board Support (NEW in v0.11.0)
+- ✅ **Daisy Seed** - Base platform (STM32H750, 480MHz ARM Cortex-M7)
+- ✅ **Daisy Pod** - Desktop synthesizer format (encoder, 2 knobs, 2 buttons, RGB LEDs, MIDI)
+- ✅ **Daisy Patch** - Eurorack module format (OLED, encoder, 4 CV/knobs, gate I/O, MIDI)
+- ✅ **Daisy Field** - Keyboard/CV interface (16-key keyboard, 8 knobs, 26 RGB LEDs, 4 CV I/O)
 
 ## Examples
 
-The `examples/` directory contains 50 production-ready examples:
+The `examples/` directory contains 61 production-ready examples:
 
 | Category | Example | Description |
 |----------|---------|-------------|
@@ -209,6 +211,13 @@ The `examples/` directory contains 50 production-ready examples:
 | | `encoder.nim` | Rotary encoder reading |
 | | `usb_serial.nim` | USB CDC serial port |
 | | `sdram_test.nim` | External memory test |
+| **Board Examples** | `pod_simple.nim` | Daisy Pod LED/knob/button test (v0.11.0) |
+| | `pod_synth.nim` | Daisy Pod monophonic synthesizer (v0.11.0) |
+| | `pod_effect.nim` | Daisy Pod multi-effect processor (v0.11.0) |
+| | `patch_effect.nim` | Daisy Patch multi-effect with CV (v0.11.0) |
+| | `patch_cv_processor.nim` | Daisy Patch CV utilities (v0.11.0) |
+| | `field_keyboard.nim` | Daisy Field keyboard synthesizer (v0.11.0) |
+| | `field_modular.nim` | Daisy Field CV/gate sequencer (v0.11.0) |
 
 Each example is a complete, working program that compiles and runs on hardware.
 
@@ -216,6 +225,7 @@ Each example is a complete, working program that compiles and runs on hardware.
 
 - **[QUICKSTART.md](docs/QUICKSTART.md)** - Get started in 5 minutes
 - **[API_REFERENCE.md](docs/API_REFERENCE.md)** - Complete API documentation
+- **[BOARD_TESTING_GUIDE.md](docs/BOARD_TESTING_GUIDE.md)** - Hardware testing for Pod, Patch, Field (NEW in v0.11.0)
 - **[FLASH_GUIDE.md](docs/FLASH_GUIDE.md)** - QSPI flash memory usage guide (NEW in v0.10.0)
 - **[EXAMPLES.md](docs/EXAMPLES.md)** - Example testing matrix with expected behavior
 - **[TESTING_CHECKLIST.md](docs/TESTING_CHECKLIST.md)** - Printable hardware testing checklist
@@ -236,6 +246,7 @@ libdaisy_nim/
 ├── docs/                  # Documentation
 │   ├── QUICKSTART.md         # Quick start guide
 │   ├── API_REFERENCE.md      # Complete API documentation
+│   ├── BOARD_TESTING_GUIDE.md # Board testing guide (v0.11.0)
 │   ├── FLASH_GUIDE.md        # QSPI flash memory guide (v0.10.0)
 │   ├── EXAMPLES.md           # Example testing matrix
 │   ├── TESTING_CHECKLIST.md  # Hardware testing checklist

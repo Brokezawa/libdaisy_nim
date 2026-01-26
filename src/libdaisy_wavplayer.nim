@@ -51,7 +51,7 @@ emitWavPlayerIncludes()
 
 # Forward declarations
 type
-  WavPlayerResult* {.importcpp: "daisy::WavPlayer<4096>::Result", pure.} = enum
+  WavPlayerResult* {.importcpp: "daisy::WavPlayer<4096>::Result", size: sizeof(cint).} = enum
     Ok = "daisy::WavPlayer<4096>::Result::Ok"
     FileNotFoundError = "daisy::WavPlayer<4096>::Result::FileNotFoundError"
     PlaybackUnderrun = "daisy::WavPlayer<4096>::Result::PlaybackUnderrun"

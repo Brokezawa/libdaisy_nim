@@ -127,11 +127,18 @@ If you find a discrepancy:
 |---------|----------|-------------------|-------------------|---------------|--------|
 | **dac_simple.nim** | DAC | Voltmeter or scope on DAC pins | Outputs ramping voltage on DAC channel 1. Voltage sweeps from 0V to 3.3V continuously. ~1V per second typical. | Flat line = DAC not enabled; Wrong range = 12-bit config | ⬜ |
 
-### Board-Specific Examples
+### Board-Specific Examples (v0.11.0)
 
 | Example | Category | Hardware Required | Expected Behavior | Common Issues | Status |
 |---------|----------|-------------------|-------------------|---------------|--------|
 | **patch_simple.nim** | Patch Board | Daisy Patch | Initializes Patch hardware. May test controls (encoder, gate inputs) and OLED display. Audio passthrough with patch-specific routing. | Controls not working = check Patch Init board variant | ⬜ |
+| **pod_simple.nim** | Pod Board | Daisy Pod | LED/knob/button test. LED1 pulses rainbow. KNOB_1 controls color, KNOB_2 controls brightness. BUTTON_1 toggles LED2. Encoder controls LED2 brightness, button flashes LED2. No audio output. | LEDs dim = check power supply; Knobs not responding = ADC not started | ⬜ |
+| **pod_synth.nim** | Pod Board | Daisy Pod + Audio output | Monophonic synthesizer. Generates continuous tone. Encoder controls pitch (20Hz-2kHz). KNOB_1 selects waveform (sine/triangle/saw/square). KNOB_2 controls filter cutoff. BUTTON_1 triggers note. BUTTON_2 shifts octave. | No audio = check audio connections; Wrong pitch = encoder not initialized | ⬜ |
+| **pod_effect.nim** | Pod Board | Daisy Pod + Audio I/O | Multi-effect audio processor. Encoder cycles effects (Delay/Tremolo/Distortion/Bitcrusher). KNOB_1 controls effect parameter. KNOB_2 controls wet/dry mix. BUTTON_1 bypasses effect. LED1 shows effect type, LED2 shows bypass state. | Effect not changing = encoder issue; Bypass clicks = buffer problem | ⬜ |
+| **patch_effect.nim** | Patch Board | Daisy Patch + CV/Audio I/O | Advanced multi-effect with CV modulation. Encoder selects effects (Delay/Feedback/Distortion/Filter). CV1 (CTRL_1) controls effect parameter. CV2 (CTRL_2) controls mix. GATE_IN_1 toggles bypass. Seed LED shows bypass state. | No CV response = ADC not started; Gate not working = check gate voltage | ⬜ |
+| **patch_cv_processor.nim** | Patch Board | Daisy Patch + CV sources | CV utilities: CV1→Quantizer (chromatic/major/minor scales), CV2→Slew limiter, CV3→Sample&Hold (triggered by GATE_IN_1), CV4→Gate generator. CTRL knobs scale outputs. Encoder changes display mode. Encoder button cycles quantizer scale. GATE_IN_2 resets all. | Quantizer not musical = scale selection wrong; S&H not capturing = gate input issue | ⬜ |
+| **field_keyboard.nim** | Field Board | Daisy Field + Audio output | 16-key keyboard synthesizer. Touch keys 0-15 trigger notes. 8 knobs control synth parameters. Audio synthesis responds to key presses. Polyphonic note detection. LED feedback may be disabled (C++ template issue). | Keys not responding = keyboard not initialized; No audio = synthesis engine not started | ⬜ |
+| **field_modular.nim** | Field Board | Daisy Field + CV/Gate I/O | CV/Gate sequencer. Reads CV inputs 1-4. GATE_IN_1 advances sequencer steps. Keyboard programs step values. KNOB_1-8 set sequence data. Gate output generates rhythm. Display shows sequence state. | Sequence not advancing = gate input not detected; Wrong CV = check voltage range | ⬜ |
 
 ### Peripherals Examples (v0.4.0)
 
@@ -203,6 +210,16 @@ These examples work with Daisy Seed alone:
 - ✅ `timer_advanced.nim` - Serial output only (v0.4.0)
 - ✅ `control_mapping.nim` - Serial output only (v0.5.0)
 - ✅ `system_info.nim` - Serial output only (v0.5.0)
+
+### Board-Specific Examples (Require Daisy Pod/Patch/Field)
+
+These examples require complete board platforms (v0.11.0):
+- 🎛️ `pod_simple.nim`, `pod_synth.nim`, `pod_effect.nim` - Daisy Pod required
+- 🎚️ `patch_effect.nim`, `patch_cv_processor.nim` - Daisy Patch required  
+- ⌨️ `field_keyboard.nim`, `field_modular.nim` - Daisy Field required
+- 📟 `patch_simple.nim` - Daisy Patch required (legacy example)
+
+See "Board-Specific Setup" section below for detailed wiring and requirements.
 
 ### Basic GPIO Setup
 
@@ -696,7 +713,108 @@ more than 8 LEDs at high brightness. Keep global brightness
 low (5-10) to avoid overloading USB power.
 ```
 
-### Daisy Patch Setup
+### Board-Specific Setup (v0.11.0)
+
+#### Daisy Pod Setup
+
+**Required:** Daisy Pod board (desktop synth format)
+
+```
+Examples: pod_simple.nim, pod_synth.nim, pod_effect.nim
+
+Built-in hardware:
+  - 1x Rotary encoder with integrated button
+  - 2x Potentiometers (KNOB_1, KNOB_2)
+  - 2x Tactile buttons (BUTTON_1, BUTTON_2)
+  - 2x RGB LEDs (LED_1, LED_2)
+  - MIDI I/O (5-pin DIN jacks)
+  - Audio I/O (3.5mm line level jacks)
+
+No external wiring needed for basic examples.
+
+For audio examples:
+  INPUT ──── Audio source (synth, phone, etc.)
+  OUTPUT ─── Headphones or speakers
+  
+Power: USB or 9V DC barrel jack (center positive)
+```
+
+#### Daisy Patch Setup
+
+**Required:** Daisy Patch board (Eurorack module format)
+
+```
+Examples: patch_simple.nim, patch_effect.nim, patch_cv_processor.nim
+
+Built-in hardware:
+  - 4x CV/Knob inputs (CTRL_1 to CTRL_4)
+  - 2x Gate inputs (GATE_IN_1, GATE_IN_2)
+  - 1x Gate output
+  - 1x Rotary encoder with button
+  - OLED display (128x64, SPI)
+  - MIDI I/O (TRS jacks, Type A)
+  - Audio I/O (1/8" Eurorack jacks, ±5V)
+
+No external wiring needed for basic examples.
+
+For CV examples:
+  CV 1-4 ──── CV sources (LFO, envelope, sequencer, 0-5V)
+  GATE_IN_1 ─ Gate/trigger source (0V/5V)
+  GATE_IN_2 ─ Gate/trigger source (0V/5V)
+  GATE_OUT ── Gate destination (triggers envelopes, etc.)
+
+⚠️ WARNING: Eurorack audio levels are HOT (±5V).
+   Do NOT connect Patch output directly to headphones.
+   Use attenuator or Eurorack mixer.
+
+Power: Eurorack power (+12V, -12V) or USB (audio only, no CV)
+```
+
+#### Daisy Field Setup
+
+**Required:** Daisy Field board (large Eurorack format with keyboard)
+
+```
+Examples: field_keyboard.nim, field_modular.nim
+
+Built-in hardware:
+  - 16-key capacitive touch keyboard (2 rows of 8)
+  - 8x Potentiometers with RGB LEDs
+  - 4x CV inputs (±5V Eurorack)
+  - 2x CV outputs (0-5V via DAC)
+  - 2x Gate inputs
+  - 1x Gate output
+  - 2x Tactile switches with RGB LEDs
+  - OLED display (128x64, SPI)
+  - 26x RGB LEDs (16 keyboard, 8 knobs, 2 switches)
+  - MIDI I/O (TRS jacks, Type A)
+  - Audio I/O (1/8" Eurorack jacks)
+
+No external wiring needed for keyboard examples.
+
+For CV/sequencer examples:
+  CV_IN_1-4 ──── CV sources (0-5V Eurorack range)
+  GATE_IN_1 ──── Clock/trigger source (0V/5V)
+  GATE_IN_2 ──── Reset/trigger source (0V/5V)
+  GATE_OUT ───── Gate destination
+  CV_OUT_1-2 ─── CV destinations (0-5V output)
+
+Known issues:
+  - LED driver has C++ template type mismatch in v0.11.0
+  - Keyboard/knob LED feedback may be disabled in examples
+  - Audio and touch keyboard functionality work correctly
+
+Power: Eurorack power (+12V, -12V) or USB (limited functionality)
+```
+
+**Board Testing Resources:**
+- See [BOARD_TESTING_GUIDE.md](BOARD_TESTING_GUIDE.md) for detailed hardware testing procedures
+- All board examples compile successfully (100% as of v0.11.0)
+- Community hardware testing welcome (see HARDWARE_TESTING.md)
+
+---
+
+### Daisy Patch Setup (Legacy)
 
 **Required:** Daisy Patch board (not Daisy Seed)
 
@@ -735,10 +853,10 @@ make program-dfu
 cd examples
 ./test_all.sh
 
-# Expected output:
+# Expected output (as of v0.11.0):
 # ========================================
 # SUMMARY:
-#   Passed: 30
+#   Passed: 61
 #   Failed: 0
 # ========================================
 ```
