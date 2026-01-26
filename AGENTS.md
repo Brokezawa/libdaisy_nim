@@ -3,6 +3,79 @@
 This document provides essential information for AI coding agents working on **libdaisy_nim**, 
 a Nim wrapper for the libDaisy embedded audio platform (ARM Cortex-M7).
 
+## Project Philosophy: We Are a WRAPPER
+
+**CRITICAL PRINCIPLE**: libdaisy_nim is a **WRAPPER** for the C++ libDaisy library, NOT a reimplementation.
+
+### Default Approach: Wrap, Don't Rewrite
+
+When adding new features, **ALWAYS** follow this decision tree:
+
+1. ✅ **First, check if libDaisy already implements it**
+   - Search `libDaisy/src/` for existing C++ classes/functions
+   - If it exists in libDaisy → **wrap it with `importcpp`**
+   - Do NOT reimplement functionality that already exists
+
+2. ⚠️ **Only implement in pure Nim if:**
+   - libDaisy doesn't provide the functionality at all, OR
+   - The pure Nim approach is significantly simpler/cleaner, OR
+   - Nim's features provide clear advantages (generics, compile-time, safety)
+
+3. 📋 **Document your decision**
+   - If choosing pure Nim over wrapping, explain why in code comments
+   - Reference the architectural decision in module documentation
+
+### Examples of Correct Approach
+
+```nim
+# ✅ CORRECT: Wrap existing libDaisy class
+type
+  PersistentStorage*[T] {.importcpp: "daisy::PersistentStorage<'0>",
+                           header: "util/PersistentStorage.h".} = object
+
+# ✅ CORRECT: Pure Nim for fixed-size data structures (better than C++ templates)
+type
+  RingBuffer*[N: static int, T] = object
+    data: array[N, T]  # Nim generics are simpler than C++ templates here
+
+# ❌ WRONG: Reimplementing libDaisy functionality
+# Don't write your own PersistentStorage when libDaisy has one!
+```
+
+### How to Find Existing libDaisy Features
+
+Before implementing ANY new module:
+
+1. **Search libDaisy directory structure**:
+   ```bash
+   # Search for class/function names
+   grep -r "ClassName" libDaisy/src/ --include="*.h"
+   
+   # List available modules
+   ls libDaisy/src/per/   # Peripherals
+   ls libDaisy/src/dev/   # Device drivers  
+   ls libDaisy/src/hid/   # Human interface devices
+   ls libDaisy/src/util/  # Utilities
+   ```
+
+2. **Check libDaisy documentation**:
+   - Headers in `libDaisy/src/` contain doxygen comments
+   - Read class/function descriptions before wrapping
+
+3. **Look for C++ templates**:
+   - Templates like `template<typename T> class Foo` can be wrapped with Nim generics
+   - Use `importcpp: "daisy::Foo<'0>"` pattern
+
+### Wrapper Quality Standards
+
+When wrapping libDaisy functionality:
+
+- ✅ Wrap ALL public methods of the C++ class
+- ✅ Match C++ type signatures exactly (use C types: cint, cfloat, csize_t)
+- ✅ Preserve C++ semantics (const, reference, pointer)
+- ✅ Document which C++ header/class is being wrapped
+- ✅ Include usage examples that match libDaisy patterns
+
 ## Project Overview
 
 - **Language**: Nim 2.0+ (cross-compiles to C++ for ARM Cortex-M7)
@@ -180,7 +253,7 @@ proc importantFunction*(param: int): bool =
 import libdaisy
 import libdaisy_macros
 
-# 2. Macro invocations
+# 2. Macro invocations - USE THE MACRO SYSTEM, NOT RAW EMIT!
 useDaisyModules(feature_name)
 
 # 3. Pragma blocks (optional)
@@ -201,6 +274,163 @@ proc myProc*() = discard
 {.pop.}
 {.pop.}
 ```
+
+### Using the Macro System (REQUIRED)
+
+**CRITICAL**: All wrapper modules MUST use `src/libdaisy_macros.nim` for C++ headers and type definitions.
+
+**❌ WRONG - Do NOT use raw emit blocks:**
+```nim
+# Don't do this!
+{.emit: """
+#include "per/spi.h"
+using namespace daisy;
+typedef SpiHandle::Result SpiResult;
+typedef SpiHandle::Config SpiConfig;
+""".}
+```
+
+**✅ CORRECT - Use the macro system:**
+```nim
+import libdaisy_macros
+useDaisyModules(spi)  # Automatically includes headers and typedefs
+```
+
+### Adding Macro Support for New Modules
+
+When wrapping a new libDaisy module, you MUST update `src/libdaisy_macros.nim`:
+
+**Step 1: Add typedef list** (around line 15-160)
+```nim
+# Your module typedefs
+const myModuleTypedefs* = [
+  "MyClass::Result MyResult",
+  "MyClass::Config MyConfig",
+  "MyClass::Config::Mode MyMode"
+]
+```
+
+**Step 2: Add header mapping** (in `getModuleHeaders()` around line 173)
+```nim
+proc getModuleHeaders*(moduleName: string): string =
+  case moduleName
+  # ... existing cases ...
+  of "my_module":
+    """#include "per/my_module.h"
+"""
+```
+
+**Step 3: Add to useDaisyModules** (around line 427-500)
+
+Add variable declaration:
+```nim
+var includeMyModule = false
+```
+
+Add case branch:
+```nim
+of "my_module": includeMyModule = true
+```
+
+Add to error message:
+```nim
+error("Unknown module: " & moduleName & 
+      ". Available: core, controls, ..., my_module")
+```
+
+Add header inclusion:
+```nim
+if includeMyModule: headersStr.add(getModuleHeaders("my_module"))
+```
+
+Add typedef inclusion:
+```nim
+if includeMyModule: typedefsStr.add(buildTypedefsString(myModuleTypedefs))
+```
+
+**Step 4: Use in your wrapper module**
+```nim
+import libdaisy_macros
+useDaisyModules(my_module)  # Now available!
+```
+
+### Real Example: QSPI Module
+
+See `src/libdaisy_qspi.nim` and `src/libdaisy_macros.nim` for reference.
+
+**In libdaisy_macros.nim:**
+```nim
+# Typedef list (line 104-108)
+const qspiTypedefs* = [
+  "QSPIHandle::Result QSPIResult",
+  "QSPIHandle::Config::Mode QSPIMode",
+  "QSPIHandle::Config::Device QSPIDevice"
+]
+
+# Header mapping (line 262-264)
+of "qspi":
+  """#include "per/qspi.h"
+"""
+
+# Variables, cases, and inclusions added to useDaisyModules
+```
+
+**In libdaisy_qspi.nim:**
+```nim
+import libdaisy_macros
+
+useDaisyModules(qspi)  # ← One line replaces ~15 lines of emit code!
+
+{.push header: "per/qspi.h".}
+# ... rest of wrapper
+```
+
+### When Raw Emit IS Acceptable
+
+**Only use `{.emit.}` blocks for:**
+
+1. **C++ Operators** (cannot be exported from Nim)
+   ```nim
+   # For PersistentStorage dirty detection
+   {.emit: """
+   inline bool operator==(const MySettings& a, const MySettings& b) {
+     return a.field1 == b.field1 && a.field2 == b.field2;
+   }
+   """.}
+   ```
+   See `examples/settings_manager.nim` for detailed explanation.
+
+2. **Custom C++ Helper Functions** (rare cases)
+   ```nim
+   {.emit: """
+   inline void customHelper() {
+     // C++-specific logic that can't be wrapped
+   }
+   """.}
+   ```
+
+**Everything else MUST use the macro system.**
+
+### Benefits of the Macro System
+
+- ✅ **Consistency**: All modules use the same pattern
+- ✅ **Maintainability**: Type definitions centralized in one file
+- ✅ **Reduced Boilerplate**: ~15 lines → 1 line
+- ✅ **Compile-time**: Zero runtime overhead
+- ✅ **Type Safety**: Compile errors if module name is misspelled
+- ✅ **Documentation**: Module dependencies are explicit
+
+### Migration Checklist
+
+When converting old emit-based code to macros:
+
+- [ ] Identify all `{.emit.}` blocks with headers and typedefs
+- [ ] Extract typedef list to `libdaisy_macros.nim`
+- [ ] Add header mapping to `getModuleHeaders()`
+- [ ] Add module support to `useDaisyModules()`
+- [ ] Replace emit block with `useDaisyModules(module_name)`
+- [ ] Test compilation with `make clean && make`
+- [ ] Verify no typedef-related errors
 
 ### Formatting Rules
 
@@ -264,14 +494,22 @@ using namespace daisy;
 ### Step-by-Step Process
 
 1. **Study C++ interface** in `libDaisy/src/per/peripheral.h` or `libDaisy/src/dev/device.h`
-2. **Create module** `src/libdaisy_peripheral.nim` or `src/dev/device_name.nim`
-3. **Add types** using `importcpp` pragma
-4. **Add procedures** with correct `importcpp` patterns
-5. **Add macro support** to `src/libdaisy_macros.nim` for includes and typedefs
-6. **Create example** in `examples/peripheral_test.nim`
-7. **Document example in EXAMPLES.md** (see "Contributing New Examples" below)
-8. **Test compilation** with `./test_all.sh`
-9. **Document API** in module comments and `API_REFERENCE.md`
+2. **Add macro support FIRST** to `src/libdaisy_macros.nim`:
+   - Add typedef list for your module's types
+   - Add header mapping in `getModuleHeaders()`
+   - Add module name to `useDaisyModules()` macro
+   - See "Adding Macro Support for New Modules" section above
+3. **Create module** `src/libdaisy_peripheral.nim` or `src/dev/device_name.nim`:
+   - Import `libdaisy_macros`
+   - Use `useDaisyModules(your_module)` - NO raw emit for headers!
+   - Add types using `importcpp` pragma
+   - Add procedures with correct `importcpp` patterns
+4. **Create example** in `examples/peripheral_test.nim`
+5. **Document example in EXAMPLES.md** (see "Contributing New Examples" below)
+6. **Test compilation** with `./test_all.sh`
+7. **Document API** in module comments and `API_REFERENCE.md`
+
+**IMPORTANT**: Step 2 (macro support) is NOT optional. All modules must use the macro system.
 
 See CONTRIBUTING.md lines 99-317 for detailed tutorial.
 

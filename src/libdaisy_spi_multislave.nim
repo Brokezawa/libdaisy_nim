@@ -116,20 +116,9 @@
 
 import libdaisy  # For Pin type
 import libdaisy_spi
+import libdaisy_macros
 
-{.emit: """
-#include "daisy_seed.h"
-#include "per/spiMultislave.h"
-using namespace daisy;
-
-// Type aliases for Nim wrapper compatibility
-typedef SpiHandle::Result SpiResult;
-typedef SpiHandle::Config::Peripheral SpiPeripheral;
-typedef SpiHandle::Config::Direction SpiDirection;
-typedef SpiHandle::Config::ClockPolarity SpiClockPolarity;
-typedef SpiHandle::Config::ClockPhase SpiClockPhase;
-typedef SpiHandle::Config::BaudPrescaler SpiBaudPrescaler;
-""".}
+useDaisyModules(spi, spi_multislave)
 
 {.push header: "per/spiMultislave.h".}
 

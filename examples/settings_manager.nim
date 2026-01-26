@@ -1,8 +1,24 @@
-## Persistent Settings Manager Example - Simplified
-## =================================================
+## Persistent Settings Manager Example
+## ====================================
 ##
-## Demonstrates persistent settings storage in QSPI flash.
-## This is a minimal example to verify compilation.
+## Demonstrates persistent settings storage in QSPI flash memory.
+## Shows how to create type-safe settings that survive power cycles.
+##
+## **Hardware Required:**
+## - Daisy Seed (any version)
+## - USB connection for serial output
+##
+## **Key Features Demonstrated:**
+## - QSPI flash initialization in memory-mapped mode
+## - Factory default settings
+## - Dirty detection (only writes when changed)
+## - Settings state tracking (UNKNOWN/FACTORY/USER)
+## - Factory reset functionality
+##
+## **Expected Behavior:**
+## - First boot: Writes factory defaults, shows "FACTORY" state
+## - Subsequent boots: Loads saved settings, shows "USER" state
+## - LED turns on when example completes successfully
 
 import ../src/libdaisy
 import ../src/libdaisy_qspi
@@ -11,23 +27,58 @@ import ../src/libdaisy_serial
 
 useDaisyNamespace()
 
-# Define settings struct with exportc for stable name
+# =============================================================================
+# Settings Type Definition
+# =============================================================================
+
 type
   SynthSettings {.bycopy, exportc: "SynthSettings".} = object
-    gain {.exportc.}: cfloat
-    frequency {.exportc.}: cfloat
-    waveform {.exportc.}: uint8
+    ## Settings structure for a synthesizer
+    ## 
+    ## **IMPORTANT**: Settings structs for PersistentStorage must:
+    ## - Use only POD (Plain Old Data) types: cfloat, cint, uint8, etc.
+    ## - Avoid Nim types: string, seq, ref, ptr
+    ## - Mark with {.bycopy, exportc.} for stable C++ compatibility
+    ## - Mark all fields with {.exportc.}
+    gain {.exportc.}: cfloat        ## Output gain (0.0 - 1.0)
+    frequency {.exportc.}: cfloat   ## Base frequency in Hz
+    waveform {.exportc.}: uint8     ## Waveform type (0-3)
 
-# Implement == and != operators for dirty detection
+# =============================================================================
+# C++ Comparison Operators (Required for PersistentStorage)
+# =============================================================================
+#
+# **Why this emit block is necessary:**
+#
+# The PersistentStorage<T> class uses C++ operator== internally to detect if
+# settings have changed (dirty detection). When you call storage.save(), it
+# compares the current settings against what's in flash using operator==.
+#
+# Nim cannot export C++ operators using {.exportcpp.} or {.exportc.} because:
+# 1. Nim generates functions with Nim calling conventions (N_NIMCALL)
+# 2. C++ operators require specific signatures with const& parameters
+# 3. Operators must have C++ linkage, not extern "C" linkage
+# 4. Nim's FFI doesn't support the exact C++ operator syntax
+#
+# Therefore, this small emit block is the **correct and only** solution for
+# defining C++ operators that PersistentStorage can use.
+#
+# **Pattern to follow for your own settings:**
+# 1. Compare all fields with && (logical AND)
+# 2. Use const references (const SettingsType& a)
+# 3. Mark as inline for performance
+# 4. Define operator!= in terms of operator==
+#
+# **This is NOT boilerplate** - it's a necessary C++ FFI boundary.
+# =============================================================================
+
 {.emit: """
-// Type alias for PersistentStorage state enum
-typedef daisy::PersistentStorage<int>::State StorageState;
-
 inline bool operator==(const SynthSettings& a, const SynthSettings& b) {
   return a.gain == b.gain && 
          a.frequency == b.frequency && 
          a.waveform == b.waveform;
 }
+
 inline bool operator!=(const SynthSettings& a, const SynthSettings& b) {
   return !(a == b);
 }

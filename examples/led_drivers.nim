@@ -65,7 +65,9 @@ while true:
     driver.setLed(led, brightness)
   
   # Update LEDs (non-blocking DMA transfer)
-  driver.swapBuffersAndTransmit()
+  if not driver.swapBuffersAndTransmit():
+    # Timeout occurred - LED update may be delayed but continue anyway
+    discard
   
   # Update at 10Hz
   delayMs(100)

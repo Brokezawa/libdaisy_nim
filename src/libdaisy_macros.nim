@@ -100,6 +100,21 @@ const usbTypedefs* = [
   "UsbHandle::UsbPeriph UsbPeriph"
 ]
 
+# QSPI module typedefs
+const qspiTypedefs* = [
+  "QSPIHandle::Result QSPIResult",
+  "QSPIHandle::Config::Mode QSPIMode",
+  "QSPIHandle::Config::Device QSPIDevice"
+]
+
+# SPI Multi-Slave module typedefs (uses SPI typedefs)
+const spiMultislaveTypedefs* : seq[string] = @[]  # Uses SPI typedefs, no additional types
+
+# Persistent Storage module typedefs
+const persistentStorageTypedefs* = [
+  "PersistentStorage<int>::State StorageState"
+]
+
 # SDMMC module typedefs
 const sdmmcTypedefs* = [
   "SdmmcHandler::Result SdmmcResult",
@@ -147,7 +162,8 @@ const max11300* : seq[string] = @[]
 # All typedefs combined (for full inclusion)
 const daisyTypedefsList* = @coreTypedefs & @controlsTypedefs & @adcTypedefs & @pwmTypedefs &
                            @oledTypedefs & @i2cTypedefs & @spiTypedefs & @sdramTypedefs & @usbTypedefs & @sdmmcTypedefs &
-                           @codec_wm8731Typedefs & @codec_pcm3060Typedefs & @lcd_hd44780Typedefs & @oled_fontsTypedefs
+                           @codec_wm8731Typedefs & @codec_pcm3060Typedefs & @lcd_hd44780Typedefs & @oled_fontsTypedefs &
+                           @qspiTypedefs & @persistentStorageTypedefs
 
 # ============================================================================
 # C++ Header Includes
@@ -242,6 +258,16 @@ proc getModuleHeaders*(moduleName: string): string =
 """
   of "max11300":
     """#include "dev/max11300.h"
+"""
+  of "qspi":
+    """#include "per/qspi.h"
+"""
+  of "spi_multislave":
+    """#include "per/spiMultislave.h"
+"""
+  of "persistent_storage":
+    """#include "util/PersistentStorage.h"
+#include "sys/system.h"
 """
   else: ""
 
@@ -378,6 +404,9 @@ macro useDaisyModules*(modules: varargs[untyped]): untyped =
   ## - `serial` - UART types
   ## - `sdram` - SDRAM types (Result, helper functions)
   ## - `usb` - USB types (Result, UsbPeriph)
+  ## - `qspi` - QSPI flash types (Result, Mode, Device)
+  ## - `spi_multislave` - Multi-slave SPI (uses SPI typedefs)
+  ## - `persistent_storage` - Persistent storage types (StorageState)
   ##
   ## Usage:
   ## ```nim
@@ -423,6 +452,9 @@ macro useDaisyModules*(modules: varargs[untyped]): untyped =
   var includeSr595 = false
   var includeSr4021 = false
   var includeMax11300 = false
+  var includeQspi = false
+  var includeSpiMultislave = false
+  var includePersistentStorage = false
   
   # Parse module arguments
   for module in modules:
@@ -455,13 +487,17 @@ macro useDaisyModules*(modules: varargs[untyped]): untyped =
     of "sr595": includeSr595 = true
     of "sr4021": includeSr4021 = true
     of "max11300": includeMax11300 = true
+    of "qspi": includeQspi = true
+    of "spi_multislave": includeSpiMultislave = true
+    of "persistent_storage": includePersistentStorage = true
     of "core": discard  # Always included
     else:
       error("Unknown module: " & moduleName & 
             ". Available: core, controls, adc, pwm, oled, i2c, spi, serial, sdram, usb, " &
             "codec_ak4556, codec_wm8731, codec_pcm3060, lcd_hd44780, oled_fonts, " &
             "icm20948, apds9960, dps310, tlv493d, mpr121, neotrellis, " &
-            "leddriver, dotstar, neopixel, mcp23x17, sr595, sr4021, max11300")
+            "leddriver, dotstar, neopixel, mcp23x17, sr595, sr4021, max11300, " &
+            "qspi, spi_multislave, persistent_storage")
   
   # Build headers string
   var headersStr = "/*INCLUDESECTION*/\n"
@@ -493,6 +529,9 @@ macro useDaisyModules*(modules: varargs[untyped]): untyped =
   if includeSr595: headersStr.add(getModuleHeaders("sr595"))
   if includeSr4021: headersStr.add(getModuleHeaders("sr4021"))
   if includeMax11300: headersStr.add(getModuleHeaders("max11300"))
+  if includeQspi: headersStr.add(getModuleHeaders("qspi"))
+  if includeSpiMultislave: headersStr.add(getModuleHeaders("spi_multislave"))
+  if includePersistentStorage: headersStr.add(getModuleHeaders("persistent_storage"))
   
   # 1. Emit header includes
   let includesEmit = newNimNode(nnkPragma)
@@ -530,6 +569,8 @@ macro useDaisyModules*(modules: varargs[untyped]): untyped =
   if includeCodecPcm3060: typedefsStr.add(buildTypedefsString(codec_pcm3060Typedefs))
   if includeLcdHd44780: typedefsStr.add(buildTypedefsString(lcd_hd44780Typedefs))
   if includeOledFonts: typedefsStr.add(buildTypedefsString(oled_fontsTypedefs))
+  if includeQspi: typedefsStr.add(buildTypedefsString(qspiTypedefs))
+  if includePersistentStorage: typedefsStr.add(buildTypedefsString(persistentStorageTypedefs))
   
   let typedefsEmit = newNimNode(nnkPragma)
   typedefsEmit.add(

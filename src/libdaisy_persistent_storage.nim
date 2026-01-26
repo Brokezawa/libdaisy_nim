@@ -15,7 +15,42 @@
 ## - Settings struct MUST use POD (Plain Old Data) types only
 ## - No pointers, Nim strings, seqs, or ref types
 ## - Use C-compatible types: `cfloat`, `cint`, `uint8`, `uint16`, etc.
-## - Settings struct MUST implement `==` operator for dirty detection
+## - Settings struct MUST implement C++ `operator==` for dirty detection
+## - Settings struct MUST implement C++ `operator!=`
+##
+## **About the C++ Operator Requirement:**
+## 
+## PersistentStorage uses C++ `operator==` internally to detect if settings have
+## changed. This is called "dirty detection" - the `save()` method only writes to
+## flash if the settings are different from what's already stored.
+##
+## **Why you need a {.emit.} block:**
+## 
+## Nim cannot export C++ operators using `{.exportcpp.}` or `{.exportc.}` because
+## Nim's FFI doesn't support the exact C++ operator syntax required. The generated
+## code would have Nim calling conventions and wrong parameter types.
+##
+## Therefore, you MUST define the operators in a small `{.emit.}` block:
+##
+## ```nim
+## type
+##   MySettings {.bycopy, exportc: "MySettings".} = object
+##     param1 {.exportc.}: cfloat
+##     param2 {.exportc.}: uint8
+##
+## # This emit block is REQUIRED - no pure-Nim alternative exists
+## {.emit: """
+## inline bool operator==(const MySettings& a, const MySettings& b) {
+##   return a.param1 == b.param1 && a.param2 == b.param2;
+## }
+## inline bool operator!=(const MySettings& a, const MySettings& b) {
+##   return !(a == b);
+## }
+## """.}
+## ```
+##
+## This is NOT boilerplate - it's a necessary FFI boundary for C++ interop.
+## See `examples/settings_manager.nim` for a complete working example.
 ##
 ## **QSPI Flash Layout:**
 ## - Each PersistentStorage instance uses `sizeof(SettingsStruct) + 4 bytes`
@@ -32,17 +67,21 @@
 ##
 ## # Define settings struct (POD types only!)
 ## type
-##   SynthSettings {.bycopy.} = object
-##     gain: cfloat
-##     frequency: cfloat
-##     waveform: uint8
+##   SynthSettings {.bycopy, exportc: "SynthSettings".} = object
+##     gain {.exportc.}: cfloat
+##     frequency {.exportc.}: cfloat
+##     waveform {.exportc.}: uint8
 ##
-## # Implement == operator for dirty detection
+## # Implement C++ comparison operators (REQUIRED for dirty detection)
+## # This cannot be done in pure Nim - emit block is necessary
 ## {.emit: """
-## bool operator==(const SynthSettings& a, const SynthSettings& b) {
+## inline bool operator==(const SynthSettings& a, const SynthSettings& b) {
 ##   return a.gain == b.gain && 
 ##          a.frequency == b.frequency && 
 ##          a.waveform == b.waveform;
+## }
+## inline bool operator!=(const SynthSettings& a, const SynthSettings& b) {
+##   return !(a == b);
 ## }
 ## """.}
 ##
@@ -66,7 +105,7 @@
 ## storage.init(defaults, address_offset = 0)
 ##
 ## # Check state
-## if storage.getState() == StorageState.FACTORY:
+## if storage.getState() == FACTORY:
 ##   echo "First boot - using factory settings"
 ## else:
 ##   echo "User settings loaded"
@@ -97,18 +136,9 @@
 ## ```
 
 import libdaisy_qspi
+import libdaisy_macros
 
-{.emit: """
-#include "daisy_seed.h"
-#include "sys/system.h"
-#include "per/qspi.h"
-#include "util/PersistentStorage.h"
-using namespace daisy;
-
-// Type alias for Nim wrapper compatibility
-// All PersistentStorage<T>::State enums are the same, so use int as representative
-typedef PersistentStorage<int>::State StorageState;
-""".}
+useDaisyModules(qspi, persistent_storage)
 
 {.push header: "util/PersistentStorage.h".}
 
@@ -358,21 +388,25 @@ when false:
   ## =========================================
   
   type
-    SynthSettings {.bycopy.} = object
-      gain: cfloat
-      frequency: cfloat
-      filterCutoff: cfloat
-      waveform: uint8
-      octave: uint8
+    SynthSettings {.bycopy, exportc: "SynthSettings".} = object
+      gain {.exportc.}: cfloat
+      frequency {.exportc.}: cfloat
+      filterCutoff {.exportc.}: cfloat
+      waveform {.exportc.}: uint8
+      octave {.exportc.}: uint8
   
-  # Implement == operator for dirty detection
+  # C++ comparison operators required for dirty detection
+  # See module documentation for why this emit block is necessary
   {.emit: """
-  bool operator==(const SynthSettings& a, const SynthSettings& b) {
+  inline bool operator==(const SynthSettings& a, const SynthSettings& b) {
     return a.gain == b.gain && 
            a.frequency == b.frequency && 
            a.filterCutoff == b.filterCutoff &&
            a.waveform == b.waveform &&
            a.octave == b.octave;
+  }
+  inline bool operator!=(const SynthSettings& a, const SynthSettings& b) {
+    return !(a == b);
   }
   """.}
   

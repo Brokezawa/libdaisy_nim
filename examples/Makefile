@@ -6,7 +6,7 @@
 #   make program-dfu  # Flash to Daisy Seed via DFU
 #
 # Set your Nim source file here
-TARGET = system_info
+TARGET = flash_storage
 NIM_SRC = $(TARGET).nim
 
 # Build directory

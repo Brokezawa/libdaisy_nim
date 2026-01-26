@@ -45,6 +45,13 @@ type
     Playing
     Overdubbing
 
+  LooperStateManager = object
+    ## Thread-safe state manager using double buffering
+    current: LooperState       # Read-only in audio callback (ISR context)
+    next: LooperState          # Written by main loop (normal context)
+    changeRequested: bool      # Atomic flag: main loop requests change
+    changeAcknowledged: bool   # Atomic flag: callback acknowledges change
+
 var
   daisy: DaisySeed
   sdmmc: SDMMCHandler
@@ -53,16 +60,49 @@ var
   recordButton: Switch
   playButton: Switch
   
-  state = Idle
+  stateMgr = LooperStateManager(
+    current: Idle,
+    next: Idle,
+    changeRequested: false,
+    changeAcknowledged: false
+  )
   loopFile = "loop.wav"
+
+proc requestStateChange(newState: LooperState) =
+  ## Request state change from main loop (non-ISR context)
+  ## Waits for audio callback to acknowledge the change
+  stateMgr.next = newState
+  stateMgr.changeRequested = true
+  stateMgr.changeAcknowledged = false
+  
+  # Wait for acknowledgment with timeout (2ms = ~100 audio buffers at 48kHz/48samples)
+  # This ensures the audio callback has seen and applied the change
+  var timeoutUs = 2000  # 2ms timeout
+  while not stateMgr.changeAcknowledged and timeoutUs > 0:
+    # Busy wait in 10us increments
+    daisy.delay(0)  # Yield to allow audio callback to run
+    timeoutUs -= 10
+  
+  # If timeout occurred, force the change anyway (shouldn't happen in practice)
+  if timeoutUs <= 0:
+    stateMgr.changeRequested = false
 
 proc audioCallback(input, output: AudioBuffer, size: int) {.cdecl.} =
   ## Audio callback - handle recording, playback, and overdubbing
+  ## Thread-safe: Only reads current state, only writes acknowledgment flag
+  
+  # Check for state change request at start of callback
+  if stateMgr.changeRequested and not stateMgr.changeAcknowledged:
+    stateMgr.current = stateMgr.next
+    stateMgr.changeAcknowledged = true
+    stateMgr.changeRequested = false
+  
   for i in 0..<size:
     var playbackL = 0.0'f32
     var playbackR = 0.0'f32
     
-    case state
+    # Use stateMgr.current throughout (never access stateMgr.next)
+    case stateMgr.current
     of Recording:
       # Record input only
       var frame = [input[0][i], input[1][i]]
@@ -107,12 +147,12 @@ proc startRecording() =
   writer.openFile(loopFile.cstring)
   
   if writer.isRecording():
-    state = Recording
+    requestStateChange(Recording)
 
 proc stopRecording() =
   ## Stop recording and prepare for playback
   writer.saveFile()
-  state = Idle
+  requestStateChange(Idle)
 
 proc startPlayback() =
   ## Start playing the recorded loop
@@ -126,7 +166,7 @@ proc startPlayback() =
   """.}
   player.setLooping(true)
   player.play()
-  state = Playing
+  requestStateChange(Playing)
   {.emit: """
   }
   """.}
@@ -135,7 +175,7 @@ proc stopPlayback() =
   ## Stop playback
   player.stop()
   discard player.close()
-  state = Idle
+  requestStateChange(Idle)
 
 proc main() =
   # Initialize hardware
@@ -178,8 +218,9 @@ proc main() =
     playButton.debounce()
     
     # Record button state machine
+    # Read current state (safe - only audio callback writes to stateMgr.current)
     if recordButton.risingEdge():
-      case state
+      case stateMgr.current
       of Idle:
         startRecording()
       of Recording:
@@ -190,7 +231,7 @@ proc main() =
         # First, restart player to sync
         player.restart()
         startRecording()
-        state = Overdubbing
+        requestStateChange(Overdubbing)
       of Overdubbing:
         stopRecording()
         stopPlayback()
@@ -198,7 +239,7 @@ proc main() =
     
     # Play/Stop button
     if playButton.risingEdge():
-      case state
+      case stateMgr.current
       of Playing, Overdubbing:
         stopPlayback()
         stopRecording()  # In case we're overdubbing
@@ -208,7 +249,7 @@ proc main() =
         stopRecording()
     
     # Handle file I/O
-    case state
+    case stateMgr.current
     of Recording, Overdubbing:
       writer.write()
     of Playing:
@@ -217,7 +258,7 @@ proc main() =
       discard
     
     # LED indication
-    case state
+    case stateMgr.current
     of Recording, Overdubbing:
       # Blink during recording
       ledBlink += 1
