@@ -7,6 +7,80 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-01-26
+
+### Added
+
+**System Utilities (6 new modules):**
+- `src/libdaisy_system.nim` - System-level functions (689 lines)
+  - Clock configuration (`getSysClkFreq()`, `getHClkFreq()`, `getPClkFreq()`)
+  - Timing functions (`getNow()`, `getUs()`, `getUsPerSecond()`)
+  - Bootloader control (`resetToBootloader()`, `resetToBootloaderWithTimeout()`)
+  - Memory region access (SRAM, DTCM, ITCM addresses and sizes)
+- `src/libdaisy_dma.nim` - DMA cache management (343 lines)
+  - Cache clearing templates for DMA buffers
+  - Cache invalidation for DMA read operations
+  - STM32H750-specific cache coherency utilities
+- `src/libdaisy_voct_calibration.nim` - V/Oct calibration system (526 lines)
+  - 1V/octave pitch CV calibration for Eurorack modules
+  - Multi-point calibration recording
+  - Calibrated voltage processing with offset/scale correction
+  - Persistent storage helpers
+- `src/libdaisy_scoped_irq.nim` - Interrupt blocking utilities (431 lines)
+  - RAII-style critical sections
+  - Scoped IRQ disable templates (`withoutInterrupts`, `criticalSection`, `atomicBlock`)
+  - Safe interrupt state management
+- `src/libdaisy_logger.nim` - USB/UART logging system (498 lines)
+  - USB logger types (`LoggerInternal`, `LoggerExternal`)
+  - UART logger support (`LoggerSemihost`)
+  - Zero-overhead null logger (`LoggerNone`)
+  - String-based logging API (uses Nim `strformat`, NOT C printf)
+- `src/libdaisy_file_table.nim` - FAT filesystem indexing (591 lines)
+  - File table template for FAT filesystem navigation
+  - Directory scanning and file entry management
+  - Path-to-index mapping for fast file access
+
+**Examples (2 new):**
+- `system_control.nim` - System information and timing demo (208 lines, 76,480 bytes FLASH)
+  - Displays system clock frequencies via USB serial
+  - LED blinks at 1 Hz with heartbeat messages every 10 seconds
+  - Demonstrates timing functions and memory region access
+- `advanced_logging.nim` - Performance profiling with logger (164 lines, 76,340 bytes FLASH)
+  - Microsecond-precision timing measurements
+  - Structured logging patterns with periodic heartbeats
+  - LED blinks at 500ms with timing statistics every 5 seconds
+
+**Macro System Updates:**
+- Added system module support to `src/libdaisy_macros.nim`:
+  - `systemTypedefs` - System clock and timing types
+  - `dmaTypedefs` - DMA cache management types
+  - `voctTypedefs` - Calibration system types
+  - `irqTypedefs` - Interrupt control types
+  - `loggerTypedefs` - Logger destination and configuration types
+  - `fileTableTypedefs` - File entry and table types
+- Extended `useDaisyModules()` macro with 6 new system modules
+- Added header mappings for all system modules in `getModuleHeaders()`
+
+### Fixed
+
+- **Logger template instantiation bug**: Fixed C++ template parameter issue
+  - C++ `Logger` template uses non-type template parameters (enum values)
+  - Previous approach used Nim generics which generated invalid C++ code
+  - Solution: Created individual types for each logger destination instead of generic `Logger[dest]`
+  - Each type (`LoggerInternal`, `LoggerExternal`, etc.) has correct `importcpp` pragma
+
+### Documentation
+
+- Updated `docs/API_REFERENCE.md` with complete system module documentation (~800 lines)
+- Updated `docs/EXAMPLES.md` with new testing matrix section for system examples
+- All 71 examples now documented with expected behavior and troubleshooting
+
+### Testing
+
+- **Full test suite**: 71/71 examples compile successfully (100% pass rate)
+- No regressions from previous versions
+- All new modules tested with C++ backend compilation
+
 ## [0.13.0] - 2026-01-26
 
 ### Added

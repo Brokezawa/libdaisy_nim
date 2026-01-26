@@ -171,6 +171,21 @@ const petalTypedefs* = [
 const versioTypedefs*: seq[string] = @[]  # DaisyVersio board (uses existing component types)
 const legioTypedefs*: seq[string] = @[]   # DaisyLegio board (uses existing component types)
 
+# System utilities typedefs (v0.14.0+)
+const systemTypedefs* = [
+  "System::Config SystemConfig",
+  "System::Config::SysClkFreq SysClkFreq",
+  "System::MemoryRegion MemoryRegion",
+  "System::BootInfo BootInfo"
+]
+const dmaTypedefs*: seq[string] = @[]  # DMA utilities (C functions only, no typedefs needed)
+const voctTypedefs*: seq[string] = @[]  # V/Oct calibration (simple class, no nested types)
+const scopedIrqTypedefs*: seq[string] = @[]  # Scoped IRQ blocker (simple class, no nested types)
+const loggerTypedefs* = [
+  "LoggerDestination LoggerDestination"
+]
+const fileTableTypedefs*: seq[string] = @[]  # FileTable (template class, instantiated as needed)
+
 # All typedefs combined (for full inclusion)
 const daisyTypedefsList* = @coreTypedefs & @controlsTypedefs & @adcTypedefs & @pwmTypedefs &
                            @oledTypedefs & @i2cTypedefs & @spiTypedefs & @sdramTypedefs & @usbTypedefs & @sdmmcTypedefs &
@@ -298,6 +313,24 @@ proc getModuleHeaders*(moduleName: string): string =
 """
   of "legio":
     """#include "daisy_legio.h"
+"""
+  of "system":
+    """#include "sys/system.h"
+"""
+  of "dma":
+    """#include "sys/dma.h"
+"""
+  of "voct":
+    """#include "util/VoctCalibration.h"
+"""
+  of "scoped_irq":
+    """#include "util/scopedirqblocker.h"
+"""
+  of "logger":
+    """#include "hid/logger.h"
+"""
+  of "file_table":
+    """#include "util/FileTable.h"
 """
   else: ""
 
@@ -491,6 +524,12 @@ macro useDaisyModules*(modules: varargs[untyped]): untyped =
   var includePetal = false
   var includeVersio = false
   var includeLegio = false
+  var includeSystem = false
+  var includeDma = false
+  var includeVoct = false
+  var includeScopedIrq = false
+  var includeLogger = false
+  var includeFileTable = false
   
   # Parse module arguments
   for module in modules:
@@ -532,6 +571,12 @@ macro useDaisyModules*(modules: varargs[untyped]): untyped =
     of "petal": includePetal = true
     of "versio": includeVersio = true
     of "legio": includeLegio = true
+    of "system": includeSystem = true
+    of "dma": includeDma = true
+    of "voct": includeVoct = true
+    of "scoped_irq": includeScopedIrq = true
+    of "logger": includeLogger = true
+    of "file_table": includeFileTable = true
     of "core": discard  # Always included
     else:
       error("Unknown module: " & moduleName & 
@@ -539,7 +584,8 @@ macro useDaisyModules*(modules: varargs[untyped]): untyped =
             "codec_ak4556, codec_wm8731, codec_pcm3060, lcd_hd44780, oled_fonts, " &
             "icm20948, apds9960, dps310, tlv493d, mpr121, neotrellis, " &
             "leddriver, dotstar, neopixel, mcp23x17, sr595, sr4021, max11300, " &
-            "qspi, spi_multislave, persistent_storage, pod, field, patch_sm, petal, versio, legio")
+            "qspi, spi_multislave, persistent_storage, pod, field, patch_sm, petal, versio, legio, " &
+            "system, dma, voct, scoped_irq, logger, file_table")
   
   # Build headers string
   var headersStr = "/*INCLUDESECTION*/\n"
@@ -580,6 +626,12 @@ macro useDaisyModules*(modules: varargs[untyped]): untyped =
   if includePetal: headersStr.add(getModuleHeaders("petal"))
   if includeVersio: headersStr.add(getModuleHeaders("versio"))
   if includeLegio: headersStr.add(getModuleHeaders("legio"))
+  if includeSystem: headersStr.add(getModuleHeaders("system"))
+  if includeDma: headersStr.add(getModuleHeaders("dma"))
+  if includeVoct: headersStr.add(getModuleHeaders("voct"))
+  if includeScopedIrq: headersStr.add(getModuleHeaders("scoped_irq"))
+  if includeLogger: headersStr.add(getModuleHeaders("logger"))
+  if includeFileTable: headersStr.add(getModuleHeaders("file_table"))
   
   # 1. Emit header includes
   let includesEmit = newNimNode(nnkPragma)
@@ -624,6 +676,12 @@ macro useDaisyModules*(modules: varargs[untyped]): untyped =
   if includePetal: typedefsStr.add(buildTypedefsString(petalTypedefs))
   if includeVersio: typedefsStr.add(buildTypedefsString(versioTypedefs))
   if includeLegio: typedefsStr.add(buildTypedefsString(legioTypedefs))
+  if includeSystem: typedefsStr.add(buildTypedefsString(systemTypedefs))
+  if includeDma: typedefsStr.add(buildTypedefsString(dmaTypedefs))
+  if includeVoct: typedefsStr.add(buildTypedefsString(voctTypedefs))
+  if includeScopedIrq: typedefsStr.add(buildTypedefsString(scopedIrqTypedefs))
+  if includeLogger: typedefsStr.add(buildTypedefsString(loggerTypedefs))
+  if includeFileTable: typedefsStr.add(buildTypedefsString(fileTableTypedefs))
   
   let typedefsEmit = newNimNode(nnkPragma)
   typedefsEmit.add(

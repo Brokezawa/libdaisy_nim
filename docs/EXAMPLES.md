@@ -182,6 +182,13 @@ If you find a discrepancy:
 - Status "⚠️" indicates compilation verified but untested on actual hardware
 - Sensor addresses shown in parentheses (verify with i2c_scanner.nim if issues)
 
+### System Examples (v0.14.0)
+
+| Example | Category | Hardware Required | Expected Behavior | Common Issues | Status |
+|---------|----------|-------------------|-------------------|---------------|--------|
+| **system_control.nim** | System | None (onboard LED + USB serial) | Prints system clock frequencies (CPU, AHB, APB1, APB2) to USB serial on startup. LED blinks at 1 Hz (500ms on/off). Heartbeat message every 10 seconds showing uptime, memory region info. Demonstrates `getSysClkFreq()`, `getNow()`, timing functions. | No serial output = USB not connected; LED not blinking = check LED initialization | ⬜ |
+| **advanced_logging.nim** | System/Logging | None (onboard LED + USB serial) | Performance profiling demo. Prints system info on startup. LED blinks at 500ms. Every 5 seconds prints heartbeat with: uptime (seconds), loop count, performance measurements (LED toggle time, delay timing). Demonstrates `getUs()` for microsecond timing and structured logging patterns. | No serial = USB logger not started; Performance measurements = 0 = timing issue | ⬜ |
+
 ### LED Drivers & I/O Expansion Examples (v0.9.0)
 
 | Example | Category | Hardware Required | Expected Behavior | Common Issues | Status |
@@ -218,6 +225,8 @@ These examples work with Daisy Seed alone:
 - ✅ `timer_advanced.nim` - Serial output only (v0.4.0)
 - ✅ `control_mapping.nim` - Serial output only (v0.5.0)
 - ✅ `system_info.nim` - Serial output only (v0.5.0)
+- ✅ `system_control.nim` - Serial output + LED (v0.14.0)
+- ✅ `advanced_logging.nim` - Serial output + LED (v0.14.0)
 
 ### Board-Specific Examples (Require Daisy Pod/Patch/Field/PatchSM/Petal/Versio/Legio)
 
@@ -865,10 +874,10 @@ make program-dfu
 cd examples
 ./test_all.sh
 
-# Expected output (as of v0.11.0):
+# Expected output (as of v0.14.0):
 # ========================================
 # SUMMARY:
-#   Passed: 61
+#   Passed: 71
 #   Failed: 0
 # ========================================
 ```

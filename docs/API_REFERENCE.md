@@ -3315,6 +3315,500 @@ if pixi.init(config) == MAX_OK:
 
 ---
 
+## System Features & Utilities (v0.14.0)
+
+### System Module (libdaisy_system.nim)
+
+**Import:**
+```nim
+import src/libdaisy_system
+```
+
+**Description:**
+System-level utilities for clock configuration, timing, memory management, and bootloader control on STM32H750.
+
+**System Configuration:**
+```nim
+type
+  SystemConfig* = object
+    ## System clock configuration
+    ## Access via getSystemConfig()
+
+proc getSystemConfig*(): SystemConfig
+  ## Get current system configuration
+  ## Pre-configured for 400MHz operation
+
+proc boostSystemConfig*(): SystemConfig
+  ## Get boosted configuration (480MHz)
+  ## Higher performance, higher power consumption
+```
+
+**Timing Functions:**
+```nim
+proc getNow*(): uint32
+  ## Get milliseconds since boot
+  ## 32-bit counter, wraps after ~49 days
+  
+proc getUs*(): uint32
+  ## Get microseconds since boot
+  ## For high-precision timing
+  
+proc getTick*(): uint32
+  ## Get SysTick counter value
+  ## 1kHz tick rate
+
+proc delay*(ms: uint32)
+  ## Blocking delay in milliseconds
+  
+proc delayUs*(us: uint32)
+  ## Blocking delay in microseconds
+  
+proc delayTicks*(ticks: uint32)
+  ## Blocking delay in SysTick ticks
+```
+
+**Clock Information:**
+```nim
+proc getSysClkFreq*(): uint32
+  ## System clock frequency in Hz
+  ## Typically 400MHz or 480MHz
+
+proc getHClkFreq*(): uint32
+  ## AHB bus clock frequency in Hz
+  
+proc getPClk1Freq*(): uint32
+  ## APB1 peripheral clock frequency in Hz
+  
+proc getPClk2Freq*(): uint32
+  ## APB2 peripheral clock frequency in Hz
+  
+proc getTickFreq*(): uint32
+  ## SysTick frequency in Hz (typically 1000)
+```
+
+**Bootloader Control:**
+```nim
+type
+  BootloaderMode* = enum
+    SYSTEM     ## System bootloader (DFU mode)
+    INTERNAL   ## Internal flash boot
+
+proc resetToBootloader*(mode: BootloaderMode)
+  ## Reboot into bootloader
+  ## SYSTEM mode enters DFU for firmware updates
+```
+
+**Memory Regions:**
+```nim
+type
+  MemoryRegion* = enum
+    INTERNAL_FLASH
+    QSPI_FLASH
+    SRAM
+    SDRAM
+    DTCM_RAM
+    ITCM_RAM
+
+proc getProgramMemoryRegion*(): MemoryRegion
+  ## Get region where code is running from
+  
+proc getMemoryRegion*(address: pointer): MemoryRegion
+  ## Detect which region an address belongs to
+```
+
+**Example:**
+```nim
+import src/libdaisy_system
+
+# Clock info
+let cpuFreq = getSysClkFreq()
+echo "CPU: ", cpuFreq, " Hz"
+
+# High-precision timing
+let start = getUs()
+# ... operation ...
+let elapsed = getUs() - start
+echo "Took: ", elapsed, " microseconds"
+
+# Enter DFU mode for firmware update
+resetToBootloader(SYSTEM)
+```
+
+---
+
+### DMA Cache Management Module (libdaisy_dma.nim)
+
+**Import:**
+```nim
+import src/libdaisy_dma
+```
+
+**Description:**
+Cache coherency management for DMA operations on STM32H750. Ensures data consistency between CPU cache and memory.
+
+**Templates:**
+```nim
+template dmaClearCache*[T](data: var T)
+  ## Flush CPU cache to RAM before DMA TX
+  ## Call BEFORE starting DMA transmit
+
+template dmaClearCache*[T](data: var openArray[T])
+  ## Array version for buffers
+
+template dmaInvalidateCache*[T](data: var T)
+  ## Invalidate CPU cache after DMA RX
+  ## Call AFTER DMA receive completes
+
+template dmaInvalidateCache*[T](data: var openArray[T])
+  ## Array version for buffers
+```
+
+**Usage Pattern:**
+```nim
+var txBuffer: array[256, uint8]
+var rxBuffer: array[256, uint8]
+
+# Before DMA TX: flush to RAM
+dmaClearCache(txBuffer)
+startDmaTransmit(txBuffer)
+
+# After DMA RX: invalidate cache
+waitForDmaReceive()
+dmaInvalidateCache(rxBuffer)
+# Now rxBuffer contains DMA data
+```
+
+**When to Use:**
+- **Always** when using DMA on STM32H7 series
+- Before DMA transmit: `dmaClearCache()`
+- After DMA receive: `dmaInvalidateCache()`
+- Not needed for non-DMA transfers
+
+---
+
+### V/Oct Calibration Module (libdaisy_voct_calibration.nim)
+
+**Import:**
+```nim
+import src/libdaisy_voct_calibration
+```
+
+**Description:**
+1V/octave pitch CV calibration for Eurorack modular synthesis. Converts analog CV to accurate MIDI note numbers using two-point calibration.
+
+**Type:**
+```nim
+type
+  VoctCalibration* = object
+    ## Calibration state (opaque C++ object)
+```
+
+**Calibration:**
+```nim
+proc record*(this: var VoctCalibration, val1V, val3V: cfloat): bool
+  ## Perform two-point calibration
+  ## val1V: ADC reading at 1.000V
+  ## val3V: ADC reading at 3.000V
+  ## Returns: true on success
+
+proc setData*(this: var VoctCalibration, scale, offset: cfloat)
+  ## Manually set calibration parameters
+  
+proc getData*(this: var VoctCalibration, 
+              scale, offset: var cfloat): bool
+  ## Retrieve calibration parameters
+```
+
+**Processing:**
+```nim
+proc processInput*(this: var VoctCalibration, inval: cfloat): cfloat
+  ## Convert calibrated CV to MIDI note number
+  ## inval: Raw ADC voltage (0-5V range)
+  ## Returns: MIDI note (0-127, float for pitch bend)
+```
+
+**Helpers:**
+```nim
+proc midiNoteToFreq*(midiNote: float32): float32
+  ## Convert MIDI note to frequency in Hz
+  ## Supports fractional notes (pitch bend)
+
+proc midiNoteToName*(midiNote: int): string
+  ## Convert MIDI note to name (e.g., "C4", "A#5")
+  
+proc cvToNoteName*(this: var VoctCalibration, 
+                   cvInput: float32): string
+  ## Direct CV → note name conversion
+
+proc cvToMidiNote*(this: var VoctCalibration,
+                   cvInput: float32): float32
+  ## Alias for processInput()
+
+proc isCalibrated*(this: var VoctCalibration): bool
+  ## Check if calibration has been performed
+```
+
+**Example:**
+```nim
+import src/libdaisy_voct_calibration
+
+var voct: VoctCalibration
+
+# Calibration procedure:
+# 1. User sets CV to 1.000V
+let adc1V = readAdc()  # e.g., 0.2 (on 0-5V scale)
+
+# 2. User sets CV to 3.000V  
+let adc3V = readAdc()  # e.g., 0.6
+
+# 3. Record calibration
+if voct.record(adc1V, adc3V):
+  echo "Calibration successful!"
+
+# Use calibrated CV:
+while true:
+  let rawCv = readAdc()
+  let midiNote = voct.processInput(rawCv)
+  let noteName = voct.cvToNoteName(rawCv)
+  echo noteName, " (MIDI ", midiNote, ")"
+```
+
+---
+
+### Scoped IRQ Blocking Module (libdaisy_scoped_irq.nim)
+
+**Import:**
+```nim
+import src/libdaisy_scoped_irq
+```
+
+**Description:**
+RAII-style interrupt blocking for thread-safe critical sections. Automatically restores interrupt state on scope exit.
+
+**Templates:**
+```nim
+template withoutInterrupts*(body: untyped)
+  ## Execute code block with interrupts disabled
+  ## Interrupts automatically restored on exit
+
+template criticalSection*(body: untyped)
+  ## Alias for withoutInterrupts (clearer naming)
+
+template atomicBlock*(body: untyped)
+  ## Alias for withoutInterrupts (C++ style)
+```
+
+**Example:**
+```nim
+import src/libdaisy_scoped_irq
+
+var sharedCounter: int = 0
+
+proc incrementSafe() =
+  # Critical section - no interrupts
+  withoutInterrupts:
+    sharedCounter += 1
+    # Interrupts automatically restored here
+  
+  # Interrupts enabled again
+
+# Alternative names:
+criticalSection:
+  # Modify shared data safely
+  sharedCounter = 42
+
+atomicBlock:
+  # Atomic operation
+  sharedCounter *= 2
+```
+
+**Use Cases:**
+- Modifying variables accessed by interrupts
+- Multi-step operations that must be atomic
+- Protecting hardware register sequences
+
+**Important:**
+- Keep critical sections **short** (microseconds)
+- Long blocks will affect real-time performance
+- Nested blocks are safe (uses RAII)
+
+---
+
+### Logger Module (libdaisy_logger.nim)
+
+**Import:**
+```nim
+import src/libdaisy_logger
+```
+
+**Description:**
+USB and UART logging for debugging. String-based API (use Nim's `strformat` for formatting, NOT C printf).
+
+**Logger Types:**
+```nim
+type
+  LoggerInternal*  ## USB internal port (most common)
+  LoggerExternal*  ## USB external port (if available)
+  LoggerSemihost*  ## Debugger stdout
+  LoggerNone*      ## Disabled (zero overhead)
+  
+  # Convenient aliases:
+  UsbLogger* = LoggerInternal
+  NullLogger* = LoggerNone
+```
+
+**Methods (all loggers):**
+```nim
+proc startLog*(T: typedesc[LoggerInternal], 
+               wait_for_pc: bool = false)
+  ## Initialize logging
+  ## wait_for_pc: Block until terminal connects
+
+proc printLine*(T: typedesc[LoggerInternal], 
+                format: cstring)
+  ## Print with newline
+
+proc print*(T: typedesc[LoggerInternal], 
+            format: cstring)
+  ## Print without newline
+
+proc log*(T: typedesc[LoggerInternal], msg: string)
+  ## Convenience: print Nim string with newline
+```
+
+**String Formatting:**
+Use Nim's `strformat` module, NOT C printf:
+```nim
+import std/strformat
+import src/libdaisy_logger
+
+UsbLogger.startLog(false)
+
+# Option 1: Direct literals
+UsbLogger.printLine("Hello from Daisy!")
+
+# Option 2: String concatenation
+let value = 42
+UsbLogger.printLine(cstring("Value: " & $value))
+
+# Option 3: strformat (recommended)
+let temp = 25.3
+let msg = &"Temperature: {temp:.1f} °C"
+UsbLogger.printLine(cstring(msg))
+
+# Option 4: log() helper
+UsbLogger.log(&"Counter: {counter}")
+```
+
+**Production Builds:**
+```nim
+# Conditional logging:
+when defined(release):
+  type AppLogger = NullLogger  # Zero overhead
+else:
+  type AppLogger = UsbLogger   # Debug builds
+
+# Use throughout code:
+AppLogger.log("Debug message")  # No-op in release
+```
+
+**Example:**
+```nim
+import src/libdaisy_logger
+import std/strformat
+
+# Start logger (non-blocking)
+UsbLogger.startLog(false)
+
+UsbLogger.printLine("=== System Start ===")
+
+var counter = 0
+while true:
+  let msg = &"Loop {counter}"
+  UsbLogger.log(msg)
+  counter += 1
+  delay(1000)
+```
+
+---
+
+### File Table Module (libdaisy_file_table.nim)
+
+**Import:**
+```nim
+import src/libdaisy_file_table
+```
+
+**Description:**
+FAT filesystem file indexing for audio sample libraries on SD card or QSPI flash. Efficiently manages file lists with compile-time size limits.
+
+**Type:**
+```nim
+type
+  FileTable*[N: static int] = object
+    ## File index with max N entries
+    ## N is compile-time constant
+```
+
+**Methods:**
+```nim
+proc fill*(ft: var FileTable, path, extension: cstring): bool
+  ## Scan directory for files with extension
+  ## path: Directory to scan (e.g., "/samples")
+  ## extension: Filter (e.g., ".wav", ".raw")
+  ## Returns: true on success
+
+proc getFileCount*(ft: FileTable): int
+  ## Number of files found (0 to N)
+
+proc getFileName*(ft: FileTable, index: int): string
+  ## Get filename at index
+  ## Returns empty string if index out of range
+
+proc getFileSize*(ft: FileTable, index: int): uint32
+  ## Get file size in bytes
+  ## Returns 0 if index out of range
+  
+proc getFilePath*(ft: FileTable, index: int): string
+  ## Get full path to file
+```
+
+**Iterator:**
+```nim
+iterator items*(ft: FileTable): tuple[index: int, 
+                                      name: string,
+                                      size: uint32]
+  ## Iterate over all files
+```
+
+**Example:**
+```nim
+import src/libdaisy_file_table
+
+# Create table for up to 128 samples
+var samples: FileTable[128]
+
+# Scan SD card for WAV files
+if samples.fill("/samples", ".wav"):
+  echo "Found ", samples.getFileCount(), " samples"
+  
+  # List all files
+  for (idx, name, size) in samples.items():
+    echo idx, ": ", name, " (", size, " bytes)"
+  
+  # Access specific file
+  let firstSample = samples.getFileName(0)
+  echo "Loading: ", firstSample
+```
+
+**Use Cases:**
+- Audio sample libraries for samplers
+- Preset management systems
+- File browser UIs
+- Batch processing workflows
+
+---
+
 For more examples, see [EXAMPLES.md](EXAMPLES.md).
 
 For technical details, see [TECHNICAL_REPORT.md](TECHNICAL_REPORT.md).
