@@ -7,6 +7,95 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-01-26
+
+### Added
+
+**Board Support (4 new Eurorack/pedal platforms):**
+- `src/libdaisy_patch_sm.nim` - Daisy Patch SM compact Eurorack module (639 lines)
+  - 12 CV inputs, 3 CV outputs, 4 gate inputs
+  - High-quality audio codec (PCM3060, 24-bit/48kHz)
+  - ADC/DAC control, gate input processing, LED control
+- `src/libdaisy_petal.nim` - Daisy Petal guitar pedal platform (524 lines)
+  - 7 footswitches, 6 knobs, rotary encoder with button
+  - 8 RGB ring LEDs + 4 footswitch LEDs (via PCA9685 LED driver)
+  - Switch debouncing, encoder handling, LED patterns
+- `src/libdaisy_versio.nim` - Daisy Versio (Noise Engineering) Eurorack module (431 lines)
+  - 7 knobs/CV inputs, gate input, 2 three-position switches
+  - 4 RGB LEDs (direct PWM control)
+  - Compact design for CV processing and audio effects
+- `src/libdaisy_legio.nim` - Daisy Legio (Virt Iter) compact utility module (429 lines)
+  - Rotary encoder with button, 3 CV inputs, gate input
+  - 2 three-position switches, 2 RGB LEDs
+  - Minimal footprint Eurorack utility/expander
+
+**Examples (8 new):**
+- `patch_sm_cv_processor.nim` - CV summing and mixing demo (74,404 bytes FLASH)
+- `patch_sm_quantizer.nim` - Musical CV quantizer with sample & hold (74,460 bytes)
+- `petal_simple.nim` - LED control and footswitch demo (83,320 bytes)
+- `petal_overdrive.nim` - Guitar overdrive effect with VU meter (88,392 bytes)
+- `versio_simple.nim` - LED and control input demo (75,956 bytes)
+- `versio_reverb.nim` - Schroeder reverb effect (82,132 bytes, 217KB SRAM)
+- `legio_simple.nim` - Basic control and LED demo (76,408 bytes)
+- `legio_cv_meter.nim` - CV meter with audio passthrough (81,304 bytes)
+
+**Macro System Enhancements:**
+- Added board-specific typedefs to `src/libdaisy_macros.nim`:
+  - `patchSmTypedefs` - PCM3060 codec, gate input, DAC types
+  - `petalTypedefs` - PCA9685 LED driver, switch types
+  - `versioTypedefs` - Switch3, gate input, control types
+  - `legioTypedefs` - Encoder, Switch3, control types
+- Extended `useDaisyModules()` macro with 4 new board modules
+- Added header mappings for all new boards in `getModuleHeaders()`
+
+### Fixed
+
+**Audio Callback Type Consistency:**
+- Removed duplicate `AudioCallback` type definitions from board modules
+- All boards now use unified types from `libdaisy.nim`:
+  - `AudioCallback = proc(input, output: AudioBuffer, size: int) {.cdecl.}`
+  - `InterleavingAudioCallback = proc(input, output: InterleavedAudioBuffer, size: int) {.cdecl.}`
+- Fixed callback wrapper functions to properly cast C++ pointers:
+  - `cast[AudioBuffer](input)` instead of raw `ptr ptr cfloat` passing
+  - `size.int` conversion for csize_t → int compatibility
+- Updated examples to use AudioBuffer array indexing (no `.emit` needed)
+
+**Board-Specific Callback Globals:**
+- Implemented unique global callback variables per board:
+  - `globalPatchSmAudioCallback` (Patch SM)
+  - `globalPetalAudioCallback` (Petal)
+  - `globalVersioAudioCallback` (Versio)
+  - `globalLegioAudioCallback` (Legio)
+- Prevents symbol conflicts when multiple board modules are linked
+
+### Improved
+
+**Code Quality:**
+- Consistent audio callback pattern across all 8 board modules
+- Unified LED control interfaces (RGB LEDs via PWM or LED driver)
+- Three-position switch support (`Switch3` type) for Versio/Legio
+- Embedded-safe math functions (inline `round()`, `abs()`, `clamp()`)
+
+**Documentation:**
+- Comprehensive module-level usage examples for all 4 new boards
+- Detailed control mapping documentation (switches, knobs, LEDs, gates)
+- Audio callback signature examples with proper buffer indexing
+- LED driver usage patterns (direct PWM vs PCA9685 chip)
+
+### Testing
+
+- **Compilation success rate: 69/69 examples (100% pass rate)**
+- All 8 new examples verified (compilation-only, no hardware required)
+- No regressions in existing 61 examples
+- Memory usage validation (FLASH/SRAM within STM32H750 limits)
+
+### Technical Notes
+
+- **LED Driver Pattern**: Petal uses PCA9685 LED driver chip (26 LEDs), while Versio/Legio use direct PWM (4-2 LEDs)
+- **Reverb Implementation**: versio_reverb uses 4 comb filters + 2 allpass filters (Schroeder design)
+- **CV Quantizer**: patch_sm_quantizer implements 12-TET musical quantization with embedded-safe rounding
+- **Switch Debouncing**: All board modules use libDaisy's hardware debouncing (no software filtering needed)
+
 ## [0.12.0] - 2026-01-26
 
 ### Fixed

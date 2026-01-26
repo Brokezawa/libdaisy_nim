@@ -139,6 +139,14 @@ If you find a discrepancy:
 | **patch_cv_processor.nim** | Patch Board | Daisy Patch + CV sources | CV utilities: CV1→Quantizer (chromatic/major/minor scales), CV2→Slew limiter, CV3→Sample&Hold (triggered by GATE_IN_1), CV4→Gate generator. CTRL knobs scale outputs. Encoder changes display mode. Encoder button cycles quantizer scale. GATE_IN_2 resets all. | Quantizer not musical = scale selection wrong; S&H not capturing = gate input issue | ⬜ |
 | **field_keyboard.nim** | Field Board | Daisy Field + Audio output | 16-key keyboard synthesizer. Touch keys 0-15 trigger notes. 8 knobs control synth parameters. Audio synthesis responds to key presses. Polyphonic note detection. LED feedback may be disabled (C++ template issue). | Keys not responding = keyboard not initialized; No audio = synthesis engine not started | ⬜ |
 | **field_modular.nim** | Field Board | Daisy Field + CV/Gate I/O | CV/Gate sequencer. Reads CV inputs 1-4. GATE_IN_1 advances sequencer steps. Keyboard programs step values. KNOB_1-8 set sequence data. Gate output generates rhythm. Display shows sequence state. | Sequence not advancing = gate input not detected; Wrong CV = check voltage range | ⬜ |
+| **patch_sm_cv_processor.nim** | Patch SM Board | Daisy Patch SM + CV I/O | CV summing and mixing demo. Reads 12 CV inputs (CV_1 through CV_12), performs summing/scaling operations. Outputs results to 3 CV outputs (CV_OUT_1/2/BOTH). LED indicators show activity. Demonstrates ADC multi-channel reading and DAC output. | No CV output = check DAC init; Incorrect scaling = verify voltage divider | ⬜ |
+| **patch_sm_quantizer.nim** | Patch SM Board | Daisy Patch SM + CV I/O | Musical CV quantizer with sample & hold. Quantizes CV_1 to 12-TET chromatic scale. Embedded-safe rounding (no std/math). Gate inputs trigger quantization. Multiple musical scales supported. Useful for generating melodies from random/continuous CV. | Wrong notes = check quantization scale; No quantization = gate input issue | ⬜ |
+| **petal_simple.nim** | Petal Board | Daisy Petal | LED control demo. 6 knobs (KNOB_0-5) control RGB ring LED colors. 7 footswitches toggle footswitch LEDs. Encoder adjusts global brightness. Demonstrates PCA9685 LED driver usage (26 LEDs total: 8 RGB ring + 4 footswitch). No audio processing. | LEDs not responding = LED driver I2C issue; Wrong colors = check RGB channel mapping | ⬜ |
+| **petal_overdrive.nim** | Petal Board | Daisy Petal + Audio I/O | Guitar overdrive effect with VU meter. Soft-clipping algorithm for warm distortion. Knobs control gain, tone, mix. Footswitches toggle bypass and boost. RGB ring LEDs show VU meter with color gradient. Audio passthrough when bypassed. | Harsh distortion = reduce gain; No effect = bypass stuck on; VU meter not moving = audio level too low | ⬜ |
+| **versio_simple.nim** | Versio Board | Daisy Versio | LED and control demo. 7 knobs (KNOB_0-6) control 4 RGB LED colors/patterns. 2 three-position switches (SW_0/1) change LED modes (individual/chase/all) and speed. Gate input triggers white flash effect on all LEDs. Direct PWM control (no LED driver chip). | LEDs dim = check PWM frequency; Switch positions wrong = verify Switch3 wiring | ⬜ |
+| **versio_reverb.nim** | Versio Board | Daisy Versio + Audio I/O | Schroeder reverb effect. Implements 4 comb filters + 2 allpass filters for high-quality reverb. Knobs control: size, damping, dry/wet mix, pre-delay, diffusion. 3-position switches select quality mode and VU meter source. Gate input freezes reverb tail. Uses 217KB SRAM for reverb buffers. | No reverb = check mix knob; Metallic sound = adjust damping; Memory issue = buffer size too large | ⬜ |
+| **legio_simple.nim** | Legio Board | Daisy Legio | Basic control and LED demo. Encoder rotates to change brightness, button press toggles mode. 3 CV inputs (CONTROL_PITCH/KNOB_TOP/BOTTOM) control 2 RGB LED colors. 2 three-position switches change LED patterns and brightness presets. Gate input triggers flash. Compact utility module demo. | Encoder not responding = check encoder init; CV inputs not working = ADC not started | ⬜ |
+| **legio_cv_meter.nim** | Legio Board | Daisy Legio + Audio I/O | CV meter with audio passthrough. Displays CV input levels on RGB LEDs. Audio passthrough with gain control (encoder adjusts gain). 3-position switches control routing (stereo/mono L/mono R) and gain range. Meter mode toggles between CV display and audio level VU meter. Gate input holds/freezes CV readings. | Audio distortion = reduce gain; Meter not updating = check meter mode; Hold not working = gate voltage too low | ⬜ |
 
 ### Peripherals Examples (v0.4.0)
 
@@ -211,13 +219,17 @@ These examples work with Daisy Seed alone:
 - ✅ `control_mapping.nim` - Serial output only (v0.5.0)
 - ✅ `system_info.nim` - Serial output only (v0.5.0)
 
-### Board-Specific Examples (Require Daisy Pod/Patch/Field)
+### Board-Specific Examples (Require Daisy Pod/Patch/Field/PatchSM/Petal/Versio/Legio)
 
-These examples require complete board platforms (v0.11.0):
+These examples require complete board platforms (v0.11.0 - v0.13.0):
 - 🎛️ `pod_simple.nim`, `pod_synth.nim`, `pod_effect.nim` - Daisy Pod required
 - 🎚️ `patch_effect.nim`, `patch_cv_processor.nim` - Daisy Patch required  
 - ⌨️ `field_keyboard.nim`, `field_modular.nim` - Daisy Field required
 - 📟 `patch_simple.nim` - Daisy Patch required (legacy example)
+- 🔌 `patch_sm_cv_processor.nim`, `patch_sm_quantizer.nim` - Daisy Patch SM required (v0.13.0)
+- 🎸 `petal_simple.nim`, `petal_overdrive.nim` - Daisy Petal required (v0.13.0)
+- 🎛️ `versio_simple.nim`, `versio_reverb.nim` - Daisy Versio required (v0.13.0)
+- 🔧 `legio_simple.nim`, `legio_cv_meter.nim` - Daisy Legio required (v0.13.0)
 
 See "Board-Specific Setup" section below for detailed wiring and requirements.
 

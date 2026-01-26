@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.12.0"
+version       = "0.13.0"
 author        = "libDaisy Nim Wrapper Contributors"
 description   = "Nim bindings for libDaisy - Hardware Abstraction Library for the Daisy Audio Platform (Seed, Patch, Pod, Field)"
 license       = "MIT"

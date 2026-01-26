@@ -159,11 +159,17 @@ const sr595* : seq[string] = @[]
 const sr4021* : seq[string] = @[]
 const max11300* : seq[string] = @[]
 
-# Board support module typedefs (v0.11.0)
+# Board support module typedefs (v0.11.0+)
 const podTypedefs* : seq[string] = @[]  # DaisyPod board (uses existing component types)
 const fieldTypedefs* = [
   "LedDriverPca9685<2, true> FieldLedDriver"  # Field LED driver (2× PCA9685, persistent buffer)
 ]
+const patchSmTypedefs*: seq[string] = @[]  # DaisyPatchSM board (uses existing component types)
+const petalTypedefs* = [
+  "LedDriverPca9685<2, true> PetalLedDriver"  # Petal LED driver (2× PCA9685, persistent buffer)
+]
+const versioTypedefs*: seq[string] = @[]  # DaisyVersio board (uses existing component types)
+const legioTypedefs*: seq[string] = @[]   # DaisyLegio board (uses existing component types)
 
 # All typedefs combined (for full inclusion)
 const daisyTypedefsList* = @coreTypedefs & @controlsTypedefs & @adcTypedefs & @pwmTypedefs &
@@ -280,6 +286,18 @@ proc getModuleHeaders*(moduleName: string): string =
 """
   of "field":
     """#include "daisy_field.h"
+"""
+  of "patch_sm":
+    """#include "daisy_patch_sm.h"
+"""
+  of "petal":
+    """#include "daisy_petal.h"
+"""
+  of "versio":
+    """#include "daisy_versio.h"
+"""
+  of "legio":
+    """#include "daisy_legio.h"
 """
   else: ""
 
@@ -469,6 +487,10 @@ macro useDaisyModules*(modules: varargs[untyped]): untyped =
   var includePersistentStorage = false
   var includePod = false
   var includeField = false
+  var includePatchSm = false
+  var includePetal = false
+  var includeVersio = false
+  var includeLegio = false
   
   # Parse module arguments
   for module in modules:
@@ -506,6 +528,10 @@ macro useDaisyModules*(modules: varargs[untyped]): untyped =
     of "persistent_storage": includePersistentStorage = true
     of "pod": includePod = true
     of "field": includeField = true
+    of "patch_sm": includePatchSm = true
+    of "petal": includePetal = true
+    of "versio": includeVersio = true
+    of "legio": includeLegio = true
     of "core": discard  # Always included
     else:
       error("Unknown module: " & moduleName & 
@@ -513,7 +539,7 @@ macro useDaisyModules*(modules: varargs[untyped]): untyped =
             "codec_ak4556, codec_wm8731, codec_pcm3060, lcd_hd44780, oled_fonts, " &
             "icm20948, apds9960, dps310, tlv493d, mpr121, neotrellis, " &
             "leddriver, dotstar, neopixel, mcp23x17, sr595, sr4021, max11300, " &
-            "qspi, spi_multislave, persistent_storage, pod, field")
+            "qspi, spi_multislave, persistent_storage, pod, field, patch_sm, petal, versio, legio")
   
   # Build headers string
   var headersStr = "/*INCLUDESECTION*/\n"
@@ -550,6 +576,10 @@ macro useDaisyModules*(modules: varargs[untyped]): untyped =
   if includePersistentStorage: headersStr.add(getModuleHeaders("persistent_storage"))
   if includePod: headersStr.add(getModuleHeaders("pod"))
   if includeField: headersStr.add(getModuleHeaders("field"))
+  if includePatchSm: headersStr.add(getModuleHeaders("patch_sm"))
+  if includePetal: headersStr.add(getModuleHeaders("petal"))
+  if includeVersio: headersStr.add(getModuleHeaders("versio"))
+  if includeLegio: headersStr.add(getModuleHeaders("legio"))
   
   # 1. Emit header includes
   let includesEmit = newNimNode(nnkPragma)
@@ -590,6 +620,10 @@ macro useDaisyModules*(modules: varargs[untyped]): untyped =
   if includeQspi: typedefsStr.add(buildTypedefsString(qspiTypedefs))
   if includePersistentStorage: typedefsStr.add(buildTypedefsString(persistentStorageTypedefs))
   if includeField: typedefsStr.add(buildTypedefsString(fieldTypedefs))
+  if includePatchSm: typedefsStr.add(buildTypedefsString(patchSmTypedefs))
+  if includePetal: typedefsStr.add(buildTypedefsString(petalTypedefs))
+  if includeVersio: typedefsStr.add(buildTypedefsString(versioTypedefs))
+  if includeLegio: typedefsStr.add(buildTypedefsString(legioTypedefs))
   
   let typedefsEmit = newNimNode(nnkPragma)
   typedefsEmit.add(
