@@ -187,62 +187,21 @@ The Daisy Seed is a powerful embedded audio platform perfect for:
 
 ## Examples
 
-The `examples/` directory contains 71 production-ready examples:
+The `examples/` directory contains **71 production-ready examples** covering:
 
-| Category | Example | Description |
-|----------|---------|-------------|
-| **Basic** | `blink.nim` | LED blink - your first program |
-| | `button_led.nim` | Button input controlling LED |
-| | `gpio_input.nim` | Reading GPIO pins |
-| **Audio** | `audio_passthrough.nim` | Pass audio input to output |
-| | `distortion_effect.nim` | Simple overdrive effect |
-| | `sine_wave.nim` | Generate sine waves |
-| **File I/O** | `wav_player.nim` | WAV file playback with track navigation (v0.6.0) |
-| | `wav_recorder.nim` | Record audio to SD in WAV format (v0.6.0) |
-| | `sampler.nim` | Trigger and play multiple WAV samples (v0.6.0) |
-| | `looper.nim` | Record and loop audio with overdub (v0.6.0) |
-| | `wavetable_synth.nim` | Wavetable synthesis from SD (v0.6.0) |
-| | `qspi_storage.nim` | QSPI flash memory operations (v0.6.0) |
-| **ADC** | `adc_simple.nim` | Single analog input |
-| | `adc_multichannel.nim` | Multiple ADC channels |
-| | `adc_multiplexed.nim` | Multiplexed inputs |
-| | `adc_config.nim` | Custom ADC configuration |
-| | `analog_knobs.nim` | Real-world analog controls |
-| **PWM** | `pwm_led.nim` | LED brightness control |
-| | `pwm_rgb.nim` | RGB LED color mixing |
-| | `pwm_servo.nim` | Servo motor control |
-| **Displays** | `oled_basic.nim` | Basic OLED text |
-| | `oled_graphics.nim` | Drawing shapes and graphics |
-| | `oled_spi.nim` | SPI-based OLED |
-| | `oled_visualizer.nim` | Audio level visualizer |
-| **Peripherals** | `i2c_scanner.nim` | Scan I2C bus for devices |
-| | `spi_basic.nim` | Basic SPI communication |
-| **Data & Utils** | `data_structures.nim` | FIFO/Stack/RingBuffer with audio delay |
-| | `control_mapping.nim` | Parameter curves and value mapping |
-| | `system_info.nim` | Device ID and CPU load monitoring |
-| **Advanced** | `midi_input.nim` | MIDI note input |
-| | `encoder.nim` | Rotary encoder reading |
-| | `usb_serial.nim` | USB CDC serial port |
-| | `sdram_test.nim` | External memory test |
-| **Board Examples** | `pod_simple.nim` | Daisy Pod LED/knob/button test (v0.11.0) |
-| | `pod_synth.nim` | Daisy Pod monophonic synthesizer (v0.11.0) |
-| | `pod_effect.nim` | Daisy Pod multi-effect processor (v0.11.0) |
-| | `patch_effect.nim` | Daisy Patch multi-effect with CV (v0.11.0) |
-| | `patch_cv_processor.nim` | Daisy Patch CV utilities (v0.11.0) |
-| | `field_keyboard.nim` | Daisy Field keyboard synthesizer (v0.11.0) |
-| | `field_modular.nim` | Daisy Field CV/gate sequencer (v0.11.0) |
-| | `patch_sm_cv_processor.nim` | Patch SM CV summing/mixing (v0.13.0) |
-| | `patch_sm_quantizer.nim` | Patch SM musical quantizer (v0.13.0) |
-| | `petal_simple.nim` | Petal LED/footswitch demo (v0.13.0) |
-| | `petal_overdrive.nim` | Petal guitar overdrive with VU (v0.13.0) |
-| | `versio_simple.nim` | Versio LED/control demo (v0.13.0) |
-| | `versio_reverb.nim` | Versio Schroeder reverb (v0.13.0) |
-| | `legio_simple.nim` | Legio control/LED demo (v0.13.0) |
-| | `legio_cv_meter.nim` | Legio CV meter with audio (v0.13.0) |
-| **System** | `system_control.nim` | System info, timing, bootloader control (v0.14.0) |
-| | `advanced_logging.nim` | Performance profiling with USB logger (v0.14.0) |
+- **Basic** - GPIO, LEDs, buttons (blink, button_led, gpio_input)
+- **Audio** - Passthrough, synthesis, effects (sine_wave, distortion_effect)
+- **File I/O** - WAV playback/recording, samplers, loopers, QSPI flash
+- **Peripherals** - ADC, PWM, I2C, SPI, UART, USB, MIDI
+- **Displays** - OLED (I2C/SPI), LCD HD44780 character displays
+- **Sensors** - IMU, gesture, pressure, magnetic, touch controllers
+- **LED Drivers** - PCA9685, DotStar, NeoPixel, shift registers
+- **I/O Expansion** - MCP23017 GPIO expander, MAX11300 PIXI
+- **Data Structures** - FIFO, Stack, RingBuffer, fixed strings
+- **Board-Specific** - Pod, Patch, Field, Patch SM, Petal, Versio, Legio examples
+- **System** - Clock config, logging, timing, CPU monitoring
 
-Each example is a complete, working program that compiles and runs on hardware.
+📖 **See [EXAMPLES.md](docs/EXAMPLES.md)** for complete testing matrix with expected behavior, hardware requirements, and troubleshooting for all 71 examples.
 
 ## Documentation
 
