@@ -156,7 +156,8 @@ The Daisy Seed is a powerful embedded audio platform perfect for:
 
 ### Device Drivers & Expansion (NEW in v0.9.0)
 - ✅ **PCA9685** - 16-channel 12-bit PWM LED driver - I2C
-- ✅ **DotStar** - High-speed RGB LED strips - SPI
+- ✅ **DotStar** - High-speed RGB LED strips (APA102/SK9822) - SPI
+- ✅ **NeoPixel** - WS2812B RGB LEDs via I2C bridge (Adafruit Seesaw) - I2C
 - ✅ **74HC595** - 8-bit shift register (output) - SPI
 - ✅ **74HC4021** - 8-bit shift register (input) - SPI
 - ✅ **MCP23017** - 16-channel GPIO expander - I2C
@@ -166,11 +167,15 @@ The Daisy Seed is a powerful embedded audio platform perfect for:
   - Should be considered experimental until community validation
   - See CHANGELOG.md for implementation details
 
-### Board Support (NEW in v0.11.0)
+### Board Support (v0.11.0, v0.13.0)
 - ✅ **Daisy Seed** - Base platform (STM32H750, 480MHz ARM Cortex-M7)
-- ✅ **Daisy Pod** - Desktop synthesizer format (encoder, 2 knobs, 2 buttons, RGB LEDs, MIDI)
-- ✅ **Daisy Patch** - Eurorack module format (OLED, encoder, 4 CV/knobs, gate I/O, MIDI)
-- ✅ **Daisy Field** - Keyboard/CV interface (16-key keyboard, 8 knobs, 26 RGB LEDs, 4 CV I/O)
+- ✅ **Daisy Pod** - Desktop synthesizer format (encoder, 2 knobs, 2 buttons, RGB LEDs, MIDI) - v0.11.0
+- ✅ **Daisy Patch** - Eurorack module format (OLED, encoder, 4 CV/knobs, gate I/O, MIDI) - v0.11.0
+- ✅ **Daisy Field** - Keyboard/CV interface (16-key keyboard, 8 knobs, 26 RGB LEDs, 4 CV I/O) - v0.11.0
+- ✅ **Daisy Patch SM** - Compact Eurorack (12 CV in, 3 CV out, 4 gate in, PCM3060 codec) - v0.13.0
+- ✅ **Daisy Petal** - Guitar pedal (7 footswitches, 6 knobs, encoder, 12 RGB LEDs) - v0.13.0
+- ✅ **Daisy Versio** - Eurorack effect (7 knobs/CV, gate in, 2 switches, 4 RGB LEDs) - v0.13.0
+- ✅ **Daisy Legio** - Compact utility (encoder, 3 CV in, gate in, 2 switches, 2 RGB LEDs) - v0.13.0
 
 ### System Features (NEW in v0.14.0)
 - ✅ **System Control** - Clock configuration, timing functions (ms/μs), bootloader access
@@ -226,6 +231,14 @@ The `examples/` directory contains 71 production-ready examples:
 | | `patch_cv_processor.nim` | Daisy Patch CV utilities (v0.11.0) |
 | | `field_keyboard.nim` | Daisy Field keyboard synthesizer (v0.11.0) |
 | | `field_modular.nim` | Daisy Field CV/gate sequencer (v0.11.0) |
+| | `patch_sm_cv_processor.nim` | Patch SM CV summing/mixing (v0.13.0) |
+| | `patch_sm_quantizer.nim` | Patch SM musical quantizer (v0.13.0) |
+| | `petal_simple.nim` | Petal LED/footswitch demo (v0.13.0) |
+| | `petal_overdrive.nim` | Petal guitar overdrive with VU (v0.13.0) |
+| | `versio_simple.nim` | Versio LED/control demo (v0.13.0) |
+| | `versio_reverb.nim` | Versio Schroeder reverb (v0.13.0) |
+| | `legio_simple.nim` | Legio control/LED demo (v0.13.0) |
+| | `legio_cv_meter.nim` | Legio CV meter with audio (v0.13.0) |
 | **System** | `system_control.nim` | System info, timing, bootloader control (v0.14.0) |
 | | `advanced_logging.nim` | Performance profiling with USB logger (v0.14.0) |
 
@@ -270,22 +283,34 @@ libdaisy_nim/
 │   ├── libdaisy.nim          # Core API (GPIO, audio, system)
 │   ├── libdaisy_macros.nim   # Compile-time macro system
 │   ├── libdaisy_adc.nim      # ADC (analog input)
+│   ├── libdaisy_dac.nim      # DAC (analog output)
 │   ├── libdaisy_pwm.nim      # PWM (pulse width modulation)
+│   ├── libdaisy_gatein.nim   # Gate input detection
+│   ├── libdaisy_timer.nim    # Hardware timers
+│   ├── libdaisy_rng.nim      # Random number generator
 │   ├── libdaisy_oled.nim     # OLED displays (SSD1306)
 │   ├── libdaisy_i2c.nim      # I2C communication
 │   ├── libdaisy_spi.nim      # SPI communication
+│   ├── libdaisy_spi_multislave.nim # Multi-device SPI (v0.10.0)
 │   ├── libdaisy_serial.nim   # UART serial
 │   ├── libdaisy_midi.nim     # MIDI I/O
 │   ├── libdaisy_usb.nim      # USB device/host/MIDI
 │   ├── libdaisy_sdmmc.nim    # SD card & FatFS
+│   ├── libdaisy_qspi.nim     # QSPI flash memory (v0.6.0)
+│   ├── libdaisy_persistent_storage.nim # Settings storage (v0.10.0)
 │   ├── libdaisy_sdram.nim    # External SDRAM
 │   ├── libdaisy_controls.nim # Switches & encoders
 │   ├── libdaisy_switch.nim   # Debounced button/switch (v0.6.0)
+│   ├── libdaisy_switch3.nim  # 3-position switch
+│   ├── libdaisy_led.nim      # Single LED control
+│   ├── libdaisy_rgbled.nim   # RGB LED control
+│   ├── libdaisy_color.nim    # Color utilities
+│   ├── libdaisy_shift_register.nim # Shift register helper
+│   ├── libdaisy_wavformat.nim # WAV file format constants
 │   ├── libdaisy_wavparser.nim # WAV file parser (v0.6.0)
 │   ├── libdaisy_wavplayer.nim # WAV streaming player (v0.6.0)
 │   ├── libdaisy_wavwriter.nim # WAV recorder (v0.6.0)
 │   ├── libdaisy_wavetable_loader.nim # Wavetable loader (v0.6.0)
-│   ├── libdaisy_qspi.nim     # QSPI flash memory (v0.6.0)
 │   ├── libdaisy_fifo.nim     # Lock-free FIFO queue (v0.5.0)
 │   ├── libdaisy_stack.nim    # Fixed-capacity stack (v0.5.0)
 │   ├── libdaisy_ringbuffer.nim # Circular buffer (v0.5.0)
@@ -300,7 +325,33 @@ libdaisy_nim/
 │   ├── libdaisy_scoped_irq.nim # RAII interrupt blocking (v0.14.0)
 │   ├── libdaisy_logger.nim   # Debug logging (v0.14.0)
 │   ├── libdaisy_file_table.nim # FAT filesystem indexing (v0.14.0)
-│   └── panicoverride.nim     # Embedded panic handler
+│   ├── libdaisy_pod.nim      # Daisy Pod board (v0.11.0)
+│   ├── libdaisy_patch.nim    # Daisy Patch board (v0.11.0)
+│   ├── libdaisy_field.nim    # Daisy Field board (v0.11.0)
+│   ├── libdaisy_patch_sm.nim # Daisy Patch SM board (v0.13.0)
+│   ├── libdaisy_petal.nim    # Daisy Petal board (v0.13.0)
+│   ├── libdaisy_versio.nim   # Daisy Versio board (v0.13.0)
+│   ├── libdaisy_legio.nim    # Daisy Legio board (v0.13.0)
+│   ├── panicoverride.nim     # Embedded panic handler
+│   │
+│   └── dev/                  # Device drivers (17 modules)
+│       ├── codec_ak4556.nim      # AK4556 audio codec (v0.7.0)
+│       ├── codec_wm8731.nim      # WM8731 audio codec (v0.7.0)
+│       ├── codec_pcm3060.nim     # PCM3060 audio codec (v0.7.0)
+│       ├── lcd_hd44780.nim       # HD44780 character LCD (v0.7.0)
+│       ├── icm20948.nim          # 9-axis IMU sensor (v0.8.0)
+│       ├── apds9960.nim          # Gesture/light sensor (v0.8.0)
+│       ├── dps310.nim            # Pressure sensor (v0.8.0)
+│       ├── tlv493d.nim           # 3D magnetic sensor (v0.8.0)
+│       ├── mpr121.nim            # Touch controller (v0.8.0)
+│       ├── neotrellis.nim        # RGB button matrix (v0.8.0)
+│       ├── leddriver.nim         # PCA9685 LED driver (v0.9.0)
+│       ├── dotstar.nim           # APA102 LED strips (v0.9.0)
+│       ├── neopixel.nim          # WS2812B via seesaw (v0.9.0)
+│       ├── mcp23x17.nim          # GPIO expander (v0.9.0)
+│       ├── sr595.nim             # 74HC595 shift register (v0.9.0)
+│       ├── sr4021.nim            # 74HC4021 shift register (v0.9.0)
+│       └── max11300.nim          # MAX11300 PIXI (v0.9.0)
 │
 └── examples/              # Example programs (71)
     ├── Makefile              # Build system
