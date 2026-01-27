@@ -15,10 +15,10 @@ This wrapper allows you to write firmware for the Daisy Seed embedded audio boar
 - ✅ **Type safety** - Nim's strong type system catches errors at compile time
 - ✅ **Clean API** - Idiomatic Nim interfaces to libDaisy functionality
 - ✅ **Comprehensive** - Covers core audio, peripherals, USB, storage, sensors, and more
-- ✅ **Production ready** - 61 tested examples demonstrating real-world usage
+- ✅ **Production ready** - 71 tested examples demonstrating real-world usage
 - ✅ **Well documented** - Complete API reference and technical documentation
-- ✅ **Many examples** - 61 working examples covering all features
-- ✅ **59 modules** - Comprehensive hardware and utility coverage including sensors, LED drivers, and I/O expansion
+- ✅ **Many examples** - 71 working examples covering all features
+- ✅ **65 modules** - Comprehensive hardware and utility coverage including sensors, LED drivers, I/O expansion, and system utilities
 
 ## Quick Start
 
@@ -172,9 +172,17 @@ The Daisy Seed is a powerful embedded audio platform perfect for:
 - ✅ **Daisy Patch** - Eurorack module format (OLED, encoder, 4 CV/knobs, gate I/O, MIDI)
 - ✅ **Daisy Field** - Keyboard/CV interface (16-key keyboard, 8 knobs, 26 RGB LEDs, 4 CV I/O)
 
+### System Features (NEW in v0.14.0)
+- ✅ **System Control** - Clock configuration, timing functions (ms/μs), bootloader access
+- ✅ **DMA Cache Coherency** - Cache management for STM32H750 DMA operations
+- ✅ **V/Oct Calibration** - Eurorack pitch CV calibration (1V/octave tracking)
+- ✅ **Scoped IRQ Blocking** - RAII-pattern interrupt control for critical sections
+- ✅ **Logger** - USB/UART debug logging with string-based API
+- ✅ **File Table** - FAT filesystem indexing for fast file access
+
 ## Examples
 
-The `examples/` directory contains 61 production-ready examples:
+The `examples/` directory contains 71 production-ready examples:
 
 | Category | Example | Description |
 |----------|---------|-------------|
@@ -218,6 +226,8 @@ The `examples/` directory contains 61 production-ready examples:
 | | `patch_cv_processor.nim` | Daisy Patch CV utilities (v0.11.0) |
 | | `field_keyboard.nim` | Daisy Field keyboard synthesizer (v0.11.0) |
 | | `field_modular.nim` | Daisy Field CV/gate sequencer (v0.11.0) |
+| **System** | `system_control.nim` | System info, timing, bootloader control (v0.14.0) |
+| | `advanced_logging.nim` | Performance profiling with USB logger (v0.14.0) |
 
 Each example is a complete, working program that compiles and runs on hardware.
 
@@ -256,7 +266,7 @@ libdaisy_nim/
 │   ├── HARDWARE_TESTING.md   # Community testing guide
 │   └── CHANGELOG.md          # Version history
 │
-├── src/                   # Wrapper source code (59 modules)
+├── src/                   # Wrapper source code (65 modules)
 │   ├── libdaisy.nim          # Core API (GPIO, audio, system)
 │   ├── libdaisy_macros.nim   # Compile-time macro system
 │   ├── libdaisy_adc.nim      # ADC (analog input)
@@ -284,9 +294,15 @@ libdaisy_nim/
 │   ├── libdaisy_mapped_value.nim # Value utilities (v0.5.0)
 │   ├── libdaisy_uniqueid.nim # Device unique ID (v0.5.0)
 │   ├── libdaisy_cpuload.nim  # CPU load monitoring (v0.5.0)
+│   ├── libdaisy_system.nim   # System control & timing (v0.14.0)
+│   ├── libdaisy_dma.nim      # DMA cache coherency (v0.14.0)
+│   ├── libdaisy_voct_calibration.nim # V/Oct CV calibration (v0.14.0)
+│   ├── libdaisy_scoped_irq.nim # RAII interrupt blocking (v0.14.0)
+│   ├── libdaisy_logger.nim   # Debug logging (v0.14.0)
+│   ├── libdaisy_file_table.nim # FAT filesystem indexing (v0.14.0)
 │   └── panicoverride.nim     # Embedded panic handler
 │
-└── examples/              # Example programs (36)
+└── examples/              # Example programs (71)
     ├── Makefile              # Build system
     ├── nim.cfg               # Nim compiler configuration
     ├── test_all.sh           # Test all examples
@@ -393,12 +409,15 @@ Contributions are welcome! See **[CONTRIBUTING.md](docs/CONTRIBUTING.md)** for:
 
 ## Status
 
-**Current Version:** 0.10.0
+**Current Version:** 0.14.0
 
-**Latest Updates (v0.10.0):**
-- ✅ **Persistent Storage** - Type-safe settings storage with dirty detection
-- ✅ **Multi-Slave SPI** - Share SPI bus between up to 4 devices
-- ✅ **Flash Guide** - Comprehensive QSPI flash memory usage guide
+**Latest Updates (v0.14.0):**
+- ✅ **System Control** - Clock config, timing, bootloader access (689 lines)
+- ✅ **DMA Cache Coherency** - Cache management for STM32H750 (343 lines)
+- ✅ **V/Oct Calibration** - Eurorack pitch CV calibration (526 lines)
+- ✅ **Scoped IRQ** - RAII interrupt blocking for critical sections (431 lines)
+- ✅ **Logger** - USB/UART debug logging with string API (498 lines)
+- ✅ **File Table** - FAT filesystem indexing (591 lines)
 
 **Stability:**
 - ✅ Core API - Stable, tested
@@ -411,7 +430,8 @@ Contributions are welcome! See **[CONTRIBUTING.md](docs/CONTRIBUTING.md)** for:
 - ✅ DAC - working (v0.3.0)
 - ✅ Daisy Patch board - working (v0.3.0)
 - ✅ File I/O - WAV playback/recording, QSPI flash working (v0.6.0)
-- 🚧 Other boards - Planned (Pod, Field, Petal, etc.)
+- ✅ System Features - Clock control, logging, calibration working (v0.14.0)
+- 🚧 Other boards - Pod, Patch, Field working (v0.11.0), Petal/Versio/PatchSM/Legio added (v0.13.0)
 
 **Production Readiness:** Experimental - use at your own risk. APIs may change.
 
